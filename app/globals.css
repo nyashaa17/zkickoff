@@ -1,0 +1,52 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@theme {
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-poppins), system-ui, sans-serif;
+  
+  --color-zim-green: #009739;
+  --color-zim-yellow: #FFD100;
+  --color-zim-red: #D62828;
+  --color-zim-black: #111111;
+  --color-zim-white: #ffffff;
+}
+
+@layer utilities {
+  /* Pulsing live badge and other visual effects */
+  .pulse-live {
+    box-shadow: 0 0 0 0 rgba(214, 40, 40, 0.7);
+    animation: livePulse 2s infinite;
+  }
+}
+
+@keyframes livePulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(214, 40, 40, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(214, 40, 40, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(214, 40, 40, 0);
+  }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #009739;
+}

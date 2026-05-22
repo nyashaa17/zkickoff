@@ -1,0 +1,6 @@
+{
+  "name": "ZimKickOff",
+  "description": "Fast, clean, mobile-first football live streaming platform with a unique Zimbabwe-inspired identity. Watch live football matches free with no signup required.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
