@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
 import { getTeamLogoUrl } from '@/lib/bzzoiro-api';
 
 export async function GET(req: NextRequest) {
