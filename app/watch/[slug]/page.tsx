@@ -29,6 +29,7 @@ import { Match } from '@/lib/matches-data';
 import { DetailedPageSkeleton } from '@/components/skeleton-loader';
 import { TeamLogo } from '@/components/team-logo';
 import Breadcrumbs from '@/components/breadcrumbs';
+import { fetchLivescoresDirect, fetchMatchButtonsDirect, fetchCommentaryDirect } from '@/lib/totalsports-client';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -72,15 +73,10 @@ export default function WatchPage({ params }: PageProps) {
     return () => clearTimeout(timer);
   }, []);
 
-  const fetcher = (url: string) => fetch(url).then(res => {
-    if (!res.ok) throw new Error('Fetch failed');
-    return res.json();
-  });
-
   const matchId = slug.split('-').pop() || '0';
 
-  // 1. Fetch Livescore
-  const { data: lData } = useSWR('/api/livescore', fetcher, {
+  // 1. Fetch Livescore directly
+  const { data: lData } = useSWR('livescores-direct', () => fetchLivescoresDirect(), {
     refreshInterval: 20000,
     revalidateOnFocus: true,
   });
@@ -93,10 +89,10 @@ export default function WatchPage({ params }: PageProps) {
     match = allMatches.find((m: Match) => m.id === matchId);
   }
 
-  // 2. Fetch Match buttons (servers)
-  const homeParam = encodeURIComponent(fallbackData.homeName);
-  const awayParam = encodeURIComponent(fallbackData.awayName);
-  const { data: bData } = useSWR(`/api/match-buttons/${matchId}?home=${homeParam}&away=${awayParam}`, fetcher, {
+  // 2. Fetch Match buttons (servers) directly on browser
+  const homeParam = fallbackData.homeName;
+  const awayParam = fallbackData.awayName;
+  const { data: bData } = useSWR(`match-buttons-${matchId}`, () => fetchMatchButtonsDirect(matchId, homeParam, awayParam), {
     revalidateOnFocus: true,
   });
 
@@ -109,8 +105,8 @@ export default function WatchPage({ params }: PageProps) {
     }
   }
 
-  // 3. Fetch Commentary
-  const { data: cData } = useSWR(`/api/commentary/${matchId}`, fetcher, {
+  // 3. Fetch Commentary directly on browser
+  const { data: cData } = useSWR(`commentary-${matchId}`, () => fetchCommentaryDirect(matchId), {
     refreshInterval: 15000,
     revalidateOnFocus: true,
   });

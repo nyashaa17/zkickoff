@@ -22,6 +22,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Match } from '@/lib/matches-data';
 import MatchCard from '@/components/match-card';
 import { MatchGridSkeleton } from '@/components/skeleton-loader';
+import { fetchLivescoresDirect, fetchStatsDirect } from '@/lib/totalsports-client';
 
 interface PlayerStat {
   rank: number;
@@ -50,14 +51,14 @@ function HomeContent() {
     return res.json();
   });
 
-  // Load real scores from the Livescore API Proxy using SWR
-  const { data: livescoreData, error: livescoreError, isLoading: loading } = useSWR('/api/livescore', fetcher, {
+  // Load real scores directly on the client to avoid server-side request blocking
+  const { data: livescoreData, error: livescoreError, isLoading: loading } = useSWR('livescores-direct', () => fetchLivescoresDirect(), {
     refreshInterval: 25000,
     revalidateOnFocus: true,
     keepPreviousData: true,
   });
 
-  const matches = React.useMemo(() => {
+  const matches = React.useMemo<Match[]>(() => {
     if (livescoreData && livescoreData.matches) {
       const topLeagues = ['premier league', 'laliga', 'la liga', 'serie a', 'bundesliga', 'ligue 1', 'champions league', 'europa league', 'zpsl', 'zimbabwe premier soccer league', 'j1 league', 'j2 league', 'j3 league', 'j.league', 'j-league', 'japanese league', 'japan'];
       return livescoreData.matches.filter((m: Match) => 
@@ -84,7 +85,7 @@ function HomeContent() {
           venue: 'Rufaro Stadium',
           spectators: '15,000',
           servers: []
-        },
+        } as Match,
         {
           id: 'mock-2',
           slug: 'highlanders-vs-fc-platinum-mock-2',
@@ -101,14 +102,14 @@ function HomeContent() {
           venue: 'Barbourfields Stadium',
           spectators: '12,000',
           servers: []
-        }
+        } as Match
       ];
     }
     return [];
   }, [livescoreData, livescoreError]);
 
-  // Load player statistics from cap API proxy using SWR
-  const { data: statsData, isLoading: statsLoading } = useSWR('/api/stats?competition=premier-league&dateOrCategory=england', fetcher, {
+  // Load player statistics directly on the client to avoid server-side request blocking
+  const { data: statsData, isLoading: statsLoading } = useSWR('stats-direct', () => fetchStatsDirect(), {
     revalidateOnFocus: false,
     keepPreviousData: true,
   });

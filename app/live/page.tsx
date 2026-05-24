@@ -19,14 +19,10 @@ import { Match } from '@/lib/matches-data';
 import MatchCard from '@/components/match-card';
 import { MatchGridSkeleton } from '@/components/skeleton-loader';
 import Breadcrumbs from '@/components/breadcrumbs';
+import { fetchLivescoresDirect } from '@/lib/totalsports-client';
 
 export default function LivePage() {
-  const fetcher = (url: string) => fetch(url).then(res => {
-    if (!res.ok) throw new Error('Fetch failed');
-    return res.json();
-  });
-
-  const { data, isLoading: loading, error } = useSWR('/api/livescore', fetcher, {
+  const { data, isLoading: loading, error } = useSWR('livescores-direct', () => fetchLivescoresDirect(), {
     refreshInterval: 25000,
     revalidateOnFocus: true,
   });
