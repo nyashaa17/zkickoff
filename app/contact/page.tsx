@@ -21,139 +21,73 @@ export default function ContactPage() {
     <div className="w-full max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-10">
       <Breadcrumbs items={[{ label: 'Contact Us' }]} className="mb-6" />
 
-      <div className="bg-white border border-neutral-200/50 rounded-3xl p-6 md:p-10 shadow-xs max-w-4xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-          
-          {/* Details Column */}
-          <div className="lg:col-span-5 space-y-6">
-            <div>
-              <span className="text-[11px] font-mono font-black text-zim-green bg-[#e8f3ec] px-3 py-1 rounded-full uppercase tracking-wider">
-                Get In Touch
-              </span>
-              <h1 className="text-xl md:text-2xl font-display font-black text-neutral-900 mt-3 mb-4 tracking-tight">
-                Support Desk
-              </h1>
-              <p className="text-neutral-500 text-xs md:text-sm leading-relaxed">
-                Have alignment recommendations, feedback, or content complaints? Submit your message to the ZimKickOff administrative team.
+      <div className="bg-white border border-neutral-200/50 rounded-3xl p-6 md:p-10 shadow-xs max-w-3xl mx-auto">
+        <div className="text-center pb-6 mb-8 border-b border-neutral-150">
+          <span className="text-[11px] font-mono font-black text-zim-green bg-[#e8f3ec] px-3 py-1 rounded-full uppercase tracking-wider">
+            Active Support Channel
+          </span>
+          <h1 className="text-xl md:text-3xl font-display font-black text-neutral-900 mt-4 mb-2 tracking-tight">
+            Get in Touch
+          </h1>
+          <p className="text-neutral-500 text-xs md:text-sm max-w-md mx-auto">
+            Have alignment recommendations, feedback, content complaints, or DMCA requests? Reach out directly through our active support method.
+          </p>
+        </div>
+
+        <div className="space-y-6">
+          {/* Primary Telegram Card */}
+          <div className="border border-neutral-200/70 rounded-2xl p-6 md:p-8 bg-neutral-50/50 text-center space-y-4 hover:border-neutral-300 transition-all">
+            <div className="w-14 h-14 bg-[#0088cc]/10 text-[#0088cc] rounded-full flex items-center justify-center mx-auto shadow-xs">
+              <Send className="w-7 h-7 transform rotate-45 -translate-x-0.5 translate-y-0.5" />
+            </div>
+            
+            <div className="space-y-1">
+              <h3 className="text-base md:text-lg font-display font-black text-neutral-900">
+                Official Telegram Support
+              </h3>
+              <p className="text-xs text-neutral-500 max-w-sm mx-auto">
+                Our team is active and answers inquiries on Telegram. Click the button below to message our support desk instantly.
               </p>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-start gap-3.5 p-4 border border-neutral-100 rounded-2xl bg-neutral-50/50">
-                <Mail className="w-5 h-5 text-zim-green shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-sm font-extrabold text-neutral-900">Email Address</h4>
-                  <p className="text-xs text-neutral-500 mt-1">support@zimkickoff.com</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3.5 p-4 border border-neutral-100 rounded-2xl bg-neutral-50/50">
-                <Clock className="w-5 h-5 text-zim-yellow shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-sm font-extrabold text-neutral-900">Response Period</h4>
-                  <p className="text-xs text-neutral-500 mt-1">Our standard team feedback delay is 24 to 48 working hours.</p>
-                </div>
-              </div>
+            <div className="pt-2">
+              <a 
+                href="https://t.me/Eratech_zw" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-[#0088cc] hover:bg-[#0088cb]/95 text-white text-xs font-black px-6 py-3.5 rounded-xl shadow-md md:shadow-lg transition-transform hover:-translate-y-0.5 cursor-pointer"
+              >
+                <Send className="w-3.5 h-3.5" />
+                Open Telegram Chat
+              </a>
             </div>
-
-            <div className="p-4 border border-zim-red/10 rounded-2xl bg-zim-red/[0.02] text-neutral-500 text-xs leading-relaxed flex gap-3.5 items-start">
-              <AlertCircle className="w-5 h-5 text-zim-red shrink-0" />
-              <span>
-                <strong>Take Note:</strong> We are strictly an aggregator index. Content removal notifications will be fast-tracked to appropriate external hosts.
-              </span>
+            
+            <div className="text-[10px] text-neutral-400 font-mono">
+              Link: https://t.me/Eratech_zw
             </div>
           </div>
 
-          {/* Form Column */}
-          <div className="lg:col-span-7 bg-neutral-50 rounded-2xl p-5 md:p-8 border border-neutral-200/60">
-            {submitted ? (
-              <div className="text-center py-12 px-4">
-                <div className="w-12 h-12 bg-[#e8f3ec] text-zim-green border border-zim-green/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Send className="w-6 h-6" />
-                </div>
-                <h3 className="text-sm font-display font-extrabold text-neutral-900 mb-2">Message Sent</h3>
-                <p className="text-xs text-neutral-500 leading-relaxed max-w-xs mx-auto mb-4">
-                  Thank you! Your ticket was generated with reference #{ticketReference}. We will follow up.
+          {/* Guidelines / Response period Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-start gap-3.5 p-4 border border-neutral-100 rounded-2xl bg-white/50">
+              <Clock className="w-4 h-4 text-zim-yellow shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-xs font-extrabold text-neutral-900">Estimated Reply Delay</h4>
+                <p className="text-[11px] text-neutral-500 mt-0.5 leading-normal">
+                  Most inquiries sent during working hours are reviewed within a few hours. Complete processing takes under 24 hours.
                 </p>
-                <button
-                  type="button"
-                  onClick={() => setSubmitted(false)}
-                  className="text-xs font-bold text-zim-green hover:underline cursor-pointer"
-                >
-                  Send another message
-                </button>
               </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label htmlFor="form-name" className="block text-xs font-bold text-neutral-700 mb-1.5 uppercase tracking-wide">
-                    Full Name
-                  </label>
-                  <input
-                    id="form-name"
-                    type="text"
-                    required
-                    placeholder="Enter your name"
-                    value={formData.name}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                    className="w-full text-xs bg-white text-neutral-900 border border-neutral-200 hover:border-neutral-300 focus:border-zim-green rounded-xl py-3 px-4 outline-hidden transition-all placeholder:text-neutral-400"
-                  />
-                </div>
+            </div>
 
-                <div>
-                  <label htmlFor="form-email" className="block text-xs font-bold text-neutral-700 mb-1.5 uppercase tracking-wide">
-                    Email Address
-                  </label>
-                  <input
-                    id="form-email"
-                    type="email"
-                    required
-                    placeholder="name@domain.com"
-                    value={formData.email}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
-                    className="w-full text-xs bg-white text-neutral-900 border border-neutral-200 hover:border-neutral-300 focus:border-zim-green rounded-xl py-3 px-4 outline-hidden transition-all placeholder:text-neutral-400"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="form-subject" className="block text-xs font-bold text-neutral-700 mb-1.5 uppercase tracking-wide">
-                    Subject
-                  </label>
-                  <input
-                    id="form-subject"
-                    type="text"
-                    required
-                    placeholder="Complaint, suggestion, or partnership..."
-                    value={formData.subject}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, subject: e.target.value }))}
-                    className="w-full text-xs bg-white text-neutral-900 border border-neutral-200 hover:border-neutral-300 focus:border-zim-green rounded-xl py-3 px-4 outline-hidden transition-all placeholder:text-neutral-400"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="form-message" className="block text-xs font-bold text-neutral-700 mb-1.5 uppercase tracking-wide">
-                    Your Message
-                  </label>
-                  <textarea
-                    id="form-message"
-                    required
-                    rows={4}
-                    placeholder="Explain your inquiry in detail..."
-                    value={formData.message}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, message: e.target.value }))}
-                    className="w-full text-xs bg-white text-neutral-900 border border-neutral-200 hover:border-neutral-300 focus:border-zim-green rounded-xl py-3 px-4 outline-hidden transition-all placeholder:text-neutral-400 resize-none"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full bg-zim-green hover:bg-zim-green/90 text-white font-display font-bold text-xs rounded-xl py-3 px-4 shadow-sm hover:shadow-md cursor-pointer transition-all flex items-center justify-center gap-2"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                  Submit Inquiry
-                </button>
-              </form>
-            )}
+            <div className="flex items-start gap-3.5 p-4 border border-neutral-100 rounded-2xl bg-white/50">
+              <AlertCircle className="w-4 h-4 text-zim-red shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-xs font-extrabold text-neutral-900">Index Aggregator Notice</h4>
+                <p className="text-[11px] text-neutral-500 mt-0.5 leading-normal">
+                  We function as an aggregator index. Removal notices and feed reports will be addressed expeditiously directly on our lists.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

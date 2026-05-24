@@ -25,6 +25,9 @@ export const metadata: Metadata = {
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
     <html lang="en" className={`${inter.variable} ${poppins.variable}`}>
+      <head>
+        <script src="https://pl29495869.effectivecpmnetwork.com/9b/80/d6/9b80d664eeb4b02b5df5aa047fb0f37a.js" defer></script>
+      </head>
       <body className="font-sans bg-[#F9F9FB] text-neutral-900 selection:bg-[#009739] selection:text-white antialiased min-h-screen flex flex-col" suppressHydrationWarning>
         <Navbar />
         <main className="flex-1 pb-12">

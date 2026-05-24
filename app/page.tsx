@@ -21,6 +21,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { Match } from '@/lib/matches-data';
 import MatchCard from '@/components/match-card';
+import BannerAd from '@/components/banner-ad';
 import { MatchGridSkeleton } from '@/components/skeleton-loader';
 import { fetchLivescoresDirect, fetchStatsDirect } from '@/lib/totalsports-client';
 
@@ -134,36 +135,55 @@ function HomeContent() {
     }
   }, [initialCategory, initialTab]);
 
-  const filteredMatches = matches.filter((match: Match) => {
-    // 1. Status Filter
-    const matchesStatus = match.status === activeTab;
-    
-    // 2. League Filter
-    if (activeCategory === 'ALL') {
-      return matchesStatus;
-    }
-    return matchesStatus && match.competition === activeCategory;
-  });
+  const filteredMatches = React.useMemo(() => {
+    return matches.filter((match: Match) => {
+      // 1. Status Filter
+      const matchesStatus = match.status === activeTab;
+      
+      // 2. League Filter
+      if (activeCategory === 'ALL') {
+        return matchesStatus;
+      }
+      return matchesStatus && match.competition === activeCategory;
+    });
+  }, [matches, activeTab, activeCategory]);
 
-  const liveCount = matches.filter((m: Match) => m.status === 'LIVE').length;
-  const todayCount = matches.filter((m: Match) => m.status === 'TODAY').length;
-  const upcomingCount = matches.filter((m: Match) => m.status === 'UPCOMING').length;
-  const finishedCount = matches.filter((m: Match) => m.status === 'FINISHED').length;
+  const liveCount = React.useMemo(() => matches.filter((m: Match) => m.status === 'LIVE').length, [matches]);
+  const todayCount = React.useMemo(() => matches.filter((m: Match) => m.status === 'TODAY').length, [matches]);
+  const upcomingCount = React.useMemo(() => matches.filter((m: Match) => m.status === 'UPCOMING').length, [matches]);
+  const finishedCount = React.useMemo(() => matches.filter((m: Match) => m.status === 'FINISHED').length, [matches]);
 
-  const majorLeagues = ['English Premier League', 'LaLiga', 'Serie A', 'Bundesliga', 'Ligue 1', 'Champions League', 'Europa League', 'ZPSL', 'Zimbabwe Premier Soccer League'];
+  const majorLeagues = React.useMemo(() => [
+    'English Premier League', 'LaLiga', 'Serie A', 'Bundesliga', 'Ligue 1', 
+    'Champions League', 'Europa League', 'ZPSL', 'Zimbabwe Premier Soccer League'
+  ], []);
   
-  const tabMatches = matches.filter((m: Match) => m.status === activeTab);
-  const uniqueLeaguesList = Array.from(new Set(tabMatches.map((m: Match) => m.competition as string))) as string[];
-  
-  const sortedLeagues = uniqueLeaguesList.sort((a: string, b: string) => {
-     const aIsMajor = majorLeagues.some(ml => a.toLowerCase().includes(ml.toLowerCase()));
-     const bIsMajor = majorLeagues.some(ml => b.toLowerCase().includes(ml.toLowerCase()));
-     if (aIsMajor && !bIsMajor) return -1;
-     if (!aIsMajor && bIsMajor) return 1;
-     return a.localeCompare(b);
-  });
-  
-  const leagueFilters = ['ALL', ...sortedLeagues];
+  const tabMatches = React.useMemo(() => {
+    return matches.filter((m: Match) => m.status === activeTab);
+  }, [matches, activeTab]);
+
+  // Pre-compute a map of competition -> leagueLogoUrl to optimize filter map rendering
+  const leagueLogoMap = React.useMemo(() => {
+    const map: Record<string, string> = {};
+    matches.forEach((m: Match) => {
+      if (m.competition && m.leagueLogoUrl) {
+        map[m.competition] = m.leagueLogoUrl;
+      }
+    });
+    return map;
+  }, [matches]);
+
+  const leagueFilters = React.useMemo(() => {
+    const uniqueLeaguesList = Array.from(new Set(tabMatches.map((m: Match) => m.competition as string))) as string[];
+    const sorted = uniqueLeaguesList.sort((a: string, b: string) => {
+      const aIsMajor = majorLeagues.some(ml => a.toLowerCase().includes(ml.toLowerCase()));
+      const bIsMajor = majorLeagues.some(ml => b.toLowerCase().includes(ml.toLowerCase()));
+      if (aIsMajor && !bIsMajor) return -1;
+      if (!aIsMajor && bIsMajor) return 1;
+      return a.localeCompare(b);
+    });
+    return ['ALL', ...sorted];
+  }, [tabMatches, majorLeagues]);
 
   const groupedTodayMatches = React.useMemo(() => {
     const groups: Record<string, { leagueName: string; leagueLogoUrl?: string; matches: Match[] }> = {};
@@ -198,7 +218,7 @@ function HomeContent() {
             Watch Live Football <br className="hidden md:inline" /> Matches <span className="text-zim-green underline decoration-zim-yellow decoration-3">Free</span>
           </h1>
           <p className="text-neutral-500 font-medium text-sm md:text-base max-w-lg">
-            Fast. Reliable. No signup required. Stream your favourite Zimbabwe Premier Soccer League & European action directly from your device.
+            Watch Free Live Football Streams In HD No Signup Required Stream Premier League UEFA Champions League La Liga And Top Matches Worldwide Instantly
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-3 pt-2">
             <button 
@@ -243,6 +263,9 @@ function HomeContent() {
         </div>
       </section>
 
+      {/* Banner Ad Section */}
+      <BannerAd />
+
       {/* Main Grid: Match Feed vs Standings Column */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
@@ -260,7 +283,7 @@ function HomeContent() {
 
               <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin pb-2 max-w-full">
                 {leagueFilters.map((league) => {
-                  const leagueLogo = league !== 'ALL' ? tabMatches.find((m: Match) => m.competition === league)?.leagueLogoUrl : undefined;
+                  const leagueLogo = league !== 'ALL' ? leagueLogoMap[league] : undefined;
 
                   return (
                     <button
@@ -339,80 +362,80 @@ function HomeContent() {
             <MatchGridSkeleton count={3} />
           ) : (
             <div className="space-y-6">
-              <AnimatePresence mode="popLayout">
-                {filteredMatches.length > 0 ? (
-                  activeTab === 'TODAY' ? (
-                    // Grouped by league on Today's tab
-                    groupedTodayMatches.map((group) => (
-                      <motion.div
-                        key={group.leagueName}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="space-y-3"
-                      >
-                        <div className="flex items-center gap-2 px-1 py-1">
-                          {group.leagueLogoUrl ? (
-                            <Image
-                              src={group.leagueLogoUrl}
-                              alt={group.leagueName}
-                              width={16}
-                              height={16}
-                              className="object-contain shrink-0"
-                              referrerPolicy="no-referrer"
-                            />
-                          ) : (
-                            <div className="w-4 h-4 rounded-full bg-neutral-150 flex items-center justify-center border border-neutral-300 text-[8px] font-bold text-neutral-500 shrink-0">
-                              {group.leagueName.charAt(0)}
-                            </div>
-                          )}
-                          <h3 className="font-display font-bold text-xs md:text-sm text-neutral-800 tracking-tight uppercase">
-                            {group.leagueName}
-                          </h3>
-                          <span className="text-[10px] font-mono font-bold bg-neutral-100 text-neutral-500 px-2 py-0.5 rounded-full border border-neutral-200/50">
-                            {group.matches.length}
-                          </span>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={`${activeTab}-${activeCategory}`}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                  className="space-y-6"
+                >
+                  {filteredMatches.length > 0 ? (
+                    activeTab === 'TODAY' ? (
+                      // Grouped by league on Today's tab
+                      groupedTodayMatches.map((group) => (
+                        <div key={group.leagueName} className="space-y-3">
+                          <div className="flex items-center gap-2 px-1 py-1">
+                            {group.leagueLogoUrl ? (
+                              <Image
+                                src={group.leagueLogoUrl}
+                                alt={group.leagueName}
+                                width={16}
+                                height={16}
+                                className="object-contain shrink-0"
+                                referrerPolicy="no-referrer"
+                              />
+                            ) : (
+                              <div className="w-4 h-4 rounded-full bg-neutral-150 flex items-center justify-center border border-neutral-300 text-[8px] font-bold text-neutral-500 shrink-0">
+                                {group.leagueName.charAt(0)}
+                              </div>
+                            )}
+                            <h3 className="font-display font-bold text-xs md:text-sm text-neutral-800 tracking-tight uppercase">
+                              {group.leagueName}
+                            </h3>
+                            <span className="text-[10px] font-mono font-bold bg-neutral-100 text-neutral-500 px-2 py-0.5 rounded-full border border-neutral-200/50">
+                              {group.matches.length}
+                            </span>
+                          </div>
+                          <div className="space-y-3">
+                            {group.matches.map((match: Match) => (
+                              <MatchCard key={match.id} match={match} />
+                            ))}
+                          </div>
                         </div>
-                        <div className="space-y-3">
-                          {group.matches.map((match: Match) => (
-                            <MatchCard key={match.id} match={match} />
-                          ))}
-                        </div>
-                      </motion.div>
-                    ))
+                      ))
+                    ) : (
+                      // Normal flat list for other tabs
+                      <div className="space-y-3">
+                        {filteredMatches.map((match: Match) => (
+                          <MatchCard key={match.id} match={match} />
+                        ))}
+                      </div>
+                    )
                   ) : (
-                    // Normal flat list for other tabs
-                    filteredMatches.map((match: Match) => (
-                      <MatchCard key={match.id} match={match} />
-                    ))
-                  )
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="bg-white border border-neutral-200/60 rounded-2xl p-10 text-center flex flex-col items-center justify-center gap-3 my-4 shadow-2xs"
-                  >
-                    <div className="w-12 h-12 rounded-full bg-neutral-50 border border-neutral-100 flex items-center justify-center text-neutral-400">
-                      <AlertCircle className="w-6 h-6" />
+                    <div className="bg-white border border-neutral-200/60 rounded-2xl p-10 text-center flex flex-col items-center justify-center gap-3 my-4 shadow-2xs">
+                      <div className="w-12 h-12 rounded-full bg-neutral-50 border border-neutral-100 flex items-center justify-center text-neutral-400">
+                        <AlertCircle className="w-6 h-6" />
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="font-display font-bold text-neutral-900 text-sm">No matches in this league</h4>
+                        <p className="text-neutral-400 text-xs">
+                          There are currently no {activeTab.toLowerCase()} matches listed under {activeCategory === 'ALL' ? 'any' : activeCategory} league. Check back later or view our full schedules.
+                        </p>
+                      </div>
+                      {/* Fallback actions */}
+                      {activeCategory !== 'ALL' && (
+                        <button
+                          onClick={() => setActiveCategory('ALL')}
+                          className="mt-2 text-xs font-display font-semibold text-zim-green hover:underline cursor-pointer"
+                        >
+                          Reset filters to view all matches
+                        </button>
+                      )}
                     </div>
-                    <div className="space-y-1">
-                      <h4 className="font-display font-bold text-neutral-900 text-sm">No matches in this league</h4>
-                      <p className="text-neutral-400 text-xs">
-                        There are currently no {activeTab.toLowerCase()} matches listed under {activeCategory === 'ALL' ? 'any' : activeCategory} league. Check back later or view our full schedules.
-                      </p>
-                    </div>
-                    {/* Fallback actions */}
-                    {activeCategory !== 'ALL' && (
-                      <button
-                        onClick={() => setActiveCategory('ALL')}
-                        className="mt-2 text-xs font-display font-semibold text-zim-green hover:underline cursor-pointer"
-                      >
-                        Reset filters to view all matches
-                      </button>
-                    )}
-                  </motion.div>
-                )}
+                  )}
+                </motion.div>
               </AnimatePresence>
             </div>
           )}

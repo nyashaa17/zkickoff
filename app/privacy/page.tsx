@@ -53,7 +53,7 @@ export default function PrivacyPage() {
           <section className="space-y-2 pb-4">
             <h2 className="text-sm font-display font-bold text-neutral-900">5. Contact and Revision Inquiries</h2>
             <p>
-              Any inquiries concerning our anonymous privacy workflows should be directed through our Contact desk or addressed to support@zimkickoff.com.
+              Any inquiries concerning our anonymous privacy workflows should be directed through our official <a href="https://t.me/Eratech_zw" target="_blank" rel="noopener noreferrer" className="text-zim-green font-bold hover:underline">Telegram Channel (https://t.me/Eratech_zw)</a> or submitted on our <a href="/contact" className="text-zim-green font-bold hover:underline">Contact page</a>.
             </p>
           </section>
         </div>

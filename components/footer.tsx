@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Mail, Shield, FileText, ExternalLink, Play, Keyboard, Award } from 'lucide-react';
+import { Mail, Shield, FileText, ExternalLink, Play, Keyboard, Award, Scale } from 'lucide-react';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -22,10 +22,6 @@ export default function Footer() {
                 <span className="text-zim-red">Off</span>
               </span>
             </Link>
-            <p className="text-neutral-500 text-sm leading-relaxed max-w-sm">
-              Zimbabwe&apos;s leading platform for zero-latency local football standings, real-time match results, and live soccer streaming feeds. Follow the Castle Lager Premier Soccer League with peerless accuracy.
-            </p>
-
           </div>
 
           {/* Navigation Links Column */}
@@ -82,11 +78,20 @@ export default function Footer() {
                   Terms &amp; Conditions
                 </Link>
               </li>
+              <li>
+                <Link href="/dmca" className="text-neutral-500 hover:text-zim-green transition-colors inline-flex items-center gap-1.5">
+                  <Scale className="w-3.5 h-3.5 text-neutral-400" />
+                  DMCA Policy
+                </Link>
+              </li>
               <li className="pt-2">
-                <div className="border border-neutral-200/60 rounded-2xl p-3.5 bg-neutral-50">
-                  <h5 className="text-[11px] font-bold text-neutral-700 uppercase mb-1">Disclaimer Notice</h5>
-                  <p className="text-[11px] text-neutral-400 leading-normal">
-                    ZimKickOff is an sports news aggregator. Video content embedded in player states corresponds to third-party public broadcasts. We do not host or broadcast any copyright materials.
+                <div className="border border-neutral-200/60 rounded-2xl p-4 bg-neutral-50 space-y-2">
+                  <h5 className="text-[11px] font-bold text-neutral-700 uppercase tracking-wider">Disclaimer Notice</h5>
+                  <p className="text-[11px] text-neutral-500 leading-relaxed font-medium">
+                    Disclaimer: ZimKickOff is an aggregation platform that provides links to publicly available sports content. We do not host, upload, encode, or produce any streaming content.
+                  </p>
+                  <p className="text-[11px] text-neutral-500 leading-relaxed font-medium">
+                    All streams are sourced from third parties and remain their responsibility. Users access third-party streams at their own risk. ZimKickOff is not liable for content quality, availability, legality, or interruptions. We comply with DMCA takedown requests and encourage users to support official broadcasters.
                   </p>
                 </div>
               </li>

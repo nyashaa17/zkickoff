@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, use } from 'react';
+import React, { useState, useEffect, use, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import useSWR from 'swr';
+import { toPng } from 'html-to-image';
 import { 
   Play, 
   Tv, 
@@ -22,7 +23,11 @@ import {
   Clock,
   Flame,
   MessageSquare,
-  Sparkles
+  Sparkles,
+  Download,
+  Copy,
+  Check,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Match } from '@/lib/matches-data';
@@ -64,6 +69,11 @@ export default function WatchPage({ params }: PageProps) {
   const [copiedLink, setCopiedLink] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [detailTab, setDetailTab] = useState<'COMMENTARY' | 'DETAILS'>('COMMENTARY');
+
+  // Custom states and refs for image extraction
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const shareCardRef = useRef<HTMLDivElement>(null);
 
   // Set isMounted to true on client load
   useEffect(() => {
@@ -110,6 +120,26 @@ export default function WatchPage({ params }: PageProps) {
     refreshInterval: 15000,
     revalidateOnFocus: true,
   });
+
+  // 4. Fetch all logos mapping from github Myfixture repository
+  const { data: allLogos } = useSWR<Record<string, string>>('github-all-logos', () => 
+    fetch('https://raw.githubusercontent.com/Vicecap/Myfixture/main/all_logos.json')
+      .then(res => res.json())
+  );
+
+  const getLogoForTeam = (teamName?: string) => {
+    if (!teamName || !allLogos) return null;
+    const nameLower = teamName.toLowerCase().trim();
+    const keys = Object.keys(allLogos);
+    
+    // Check direct / fuzzy key mapping
+    const foundKey = keys.find(k => {
+      const kLower = k.toLowerCase().trim();
+      return kLower === nameLower || kLower.includes(nameLower) || nameLower.includes(kLower);
+    });
+    
+    return foundKey ? allLogos[foundKey] : null;
+  };
 
   let commentary: { time: number; text: string }[] = [];
   if (cData) {
@@ -163,11 +193,46 @@ export default function WatchPage({ params }: PageProps) {
     servers: []
   };
 
+  const homeLogoUrl = getLogoForTeam(queryMatch.teams.home.name);
+  const awayLogoUrl = getLogoForTeam(queryMatch.teams.away.name);
+
   const relatedMatches = allMatches
     .filter((m) => m.id !== queryMatch.id && m.status !== 'FINISHED' && m.dateString !== 'Yesterday' && (m.category === queryMatch.category || m.status === 'LIVE'))
     .slice(0, 4);
 
   const isLive = queryMatch.status === 'LIVE';
+
+  // Download share card handler using html-to-image
+  const downloadShareCard = async () => {
+    if (shareCardRef.current === null) {
+      return;
+    }
+    setIsGeneratingImage(true);
+    try {
+      // Delay briefly to ensure DOM paint settles
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      const dataUrl = await toPng(shareCardRef.current, {
+        cacheBust: true,
+        style: {
+          transform: 'scale(1)',
+          transformOrigin: 'top left',
+          width: '600px',
+          height: '315px',
+        },
+        width: 600,
+        height: 315,
+        backgroundColor: '#ffffff',
+      });
+      const link = document.createElement('a');
+      link.download = `${queryMatch.teams.home.name.toLowerCase().replace(/\s+/g, '-')}-vs-${queryMatch.teams.away.name.toLowerCase().replace(/\s+/g, '-')}-matchday.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error('Error generating card image:', err);
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
 
   // Rendering server helper tags
   const renderServersList = servers.length > 0 ? servers : [
@@ -327,11 +392,11 @@ export default function WatchPage({ params }: PageProps) {
               {/* Fast interactive tools */}
               <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end shrink-0">
                 <button
-                  onClick={copyShareLink}
-                  className="cursor-pointer px-3.5 py-2 bg-white hover:bg-neutral-100 border border-neutral-200 text-neutral-700 rounded-xl text-xs font-display font-medium flex items-center justify-center gap-1.5 transition-colors"
+                  onClick={() => setIsShareModalOpen(true)}
+                  className="cursor-pointer px-3.5 py-2 bg-white hover:bg-neutral-100 border border-neutral-200 text-neutral-750 rounded-xl text-xs font-display font-bold flex items-center justify-center gap-1.5 transition-colors shadow-4xs"
                 >
-                  <Share2 className="w-3.5 h-3.5" />
-                  {copiedLink ? 'Link Copied!' : 'Share Stream'}
+                  <Share2 className="w-3.5 h-3.5 text-zim-green animate-pulse" />
+                  Share & Extract Stream Card
                 </button>
               </div>
 
@@ -601,6 +666,193 @@ export default function WatchPage({ params }: PageProps) {
 
       </div>
 
-    </div>
-  );
+      {/* Dynamic Client-side Share Image Generator Modal */}
+    <AnimatePresence>
+      {isShareModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsShareModalOpen(false)}
+            className="absolute inset-0 bg-neutral-950/75 backdrop-blur-xs"
+          />
+          
+          {/* Dialog Content */}
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0, y: 15 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.95, opacity: 0, y: 15 }}
+            transition={{ type: 'spring', duration: 0.3 }}
+            className="relative w-full max-w-2xl bg-white border border-neutral-200 shadow-2xl rounded-3xl p-6 md:p-8 z-10 overflow-hidden flex flex-col gap-6"
+          >
+            <div className="flex items-center justify-between border-b border-neutral-100 pb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-[#009739]">
+                  <Share2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-base font-display font-black text-neutral-900 leading-none font-display">Share This Match</h2>
+                  <p className="text-[10px] text-neutral-400 font-medium uppercase tracking-wider mt-1">Extract Match Card Graphic &amp; Links</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsShareModalOpen(false)}
+                className="cursor-pointer text-neutral-400 hover:text-neutral-700 p-1.5 hover:bg-neutral-100 rounded-full transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Dynamic Preview Box */}
+            <div className="flex flex-col items-center gap-4">
+              <p className="text-xs font-mono font-bold text-neutral-400 uppercase tracking-widest self-start">
+                PREVIEW GRAPHIC CARD (600x315)
+              </p>
+              
+              {/* Fixed printable-container scaled gracefully using container styling if needed */}
+              <div className="w-full overflow-x-auto py-1 scrollbar-none flex justify-center bg-neutral-50/50 rounded-2xl border border-neutral-200/50 p-4">
+                {/* Card Element to be extracted */}
+                <div
+                  id="printable-share-card"
+                  ref={shareCardRef}
+                  className="w-[600px] h-[315px] shrink-0 bg-white relative flex flex-col items-center justify-center px-8 py-6 text-neutral-900 overflow-hidden rounded-xl border border-neutral-150"
+                  style={{
+                    backgroundImage: 'radial-gradient(circle at top right, rgba(0, 151, 57, 0.08) 0%, transparent 45%)',
+                  }}
+                >
+                  
+                  {/* Bottom Border Accent */}
+                  <div className="absolute bottom-3 left-8 right-8 h-1 bg-[#009739] rounded-full" />
+
+                  <div className="relative z-10 flex flex-col items-center text-center w-full">
+                    {/* Top Badges */}
+                    <div className="flex items-center gap-2.5 mb-6">
+                      <span className="bg-red-600 text-[10px] font-black tracking-wider px-2.5 py-1 rounded-md text-white whitespace-nowrap">
+                        • LIVE STREAM
+                      </span>
+                      <span className="bg-green-50 text-[#009739] text-[10px] whitespace-nowrap font-black tracking-wider px-2.5 py-1 rounded-md border border-[#009739]/20">
+                        ZIMKICKOFF.COM
+                      </span>
+                    </div>
+
+                    {/* Opponents columns */}
+                    <div className="flex items-center justify-between w-full mt-4">
+                      {/* Home team */}
+                      <div className="flex flex-col items-center text-center w-[220px]">
+                        {/* Circle Avatar */}
+                        <div className="w-16 h-16 rounded-full bg-neutral-50 border border-neutral-200 flex items-center justify-center shadow-inner mb-2.5 overflow-hidden">
+                          {homeLogoUrl ? (
+                            <img 
+                              src={homeLogoUrl} 
+                              alt={queryMatch.teams.home.name} 
+                              className="w-14 h-14 object-contain"
+                              crossOrigin="anonymous"
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : (
+                            <span className="font-mono font-bold text-lg text-[#009739] uppercase tracking-tighter">
+                              {queryMatch.teams.home.name.substring(0, 3)}
+                            </span>
+                          )}
+                        </div>
+                        <span className="font-sans font-black text-neutral-900 text-base leading-tight tracking-tight line-clamp-2">
+                          {queryMatch.teams.home.name}
+                        </span>
+                        <span className="text-[9px] font-bold text-[#009739] uppercase tracking-widest mt-1">HOME SQUAD</span>
+                      </div>
+
+                      {/* VS center icon */}
+                      <div className="flex flex-col items-center justify-center mx-4 shrink-0">
+                        <div className="w-12 h-12 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center text-sm font-black text-amber-600 shadow-md tracking-tighter">
+                          VS
+                        </div>
+                        <span className="text-[9px] font-mono text-neutral-500 uppercase tracking-widest mt-2">MATCHDAY</span>
+                      </div>
+
+                      {/* Away team */}
+                      <div className="flex flex-col items-center text-center w-[220px]">
+                        {/* Circle Avatar */}
+                        <div className="w-16 h-16 rounded-full bg-neutral-50 border border-neutral-200 flex items-center justify-center shadow-inner mb-2.5 overflow-hidden">
+                          {awayLogoUrl ? (
+                            <img 
+                              src={awayLogoUrl} 
+                              alt={queryMatch.teams.away.name} 
+                              className="w-14 h-14 object-contain"
+                              crossOrigin="anonymous"
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : (
+                            <span className="font-mono font-bold text-lg text-neutral-600 uppercase tracking-tighter">
+                              {queryMatch.teams.away.name.substring(0, 3)}
+                            </span>
+                          )}
+                        </div>
+                        <span className="font-sans font-black text-neutral-900 text-base leading-tight tracking-tight line-clamp-2">
+                          {queryMatch.teams.away.name}
+                        </span>
+                        <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-widest mt-1">AWAY SQUAD</span>
+                      </div>
+                    </div>
+
+                    {/* Info footer */}
+                    <p className="text-[12px] text-neutral-600 font-medium max-w-sm leading-relaxed mt-6">
+                      Free streaming, HD video feed. Scan matches, schedules, results instantly on ZimKickOff.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action operations controls */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              <button
+                onClick={downloadShareCard}
+                disabled={isGeneratingImage}
+                className="cursor-pointer w-full bg-[#009739] hover:bg-[#009739]/90 text-white font-display font-bold text-xs rounded-xl py-3.5 px-4 shadow-sm hover:translate-y-[-1px] transition-all flex items-center justify-center gap-2 disabled:bg-neutral-200 disabled:text-neutral-400 disabled:pointer-events-none"
+              >
+                {isGeneratingImage ? (
+                  <>
+                    <RefreshCcw className="w-3.5 h-3.5 animate-spin" />
+                    EXTRACTING IMAGE...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-3.5 h-3.5" />
+                    DOWNLOAD PNG CARD
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={copyShareLink}
+                className="cursor-pointer w-full bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-display font-bold text-xs rounded-xl py-3.5 px-4 transition-all flex items-center justify-center gap-2"
+              >
+                {copiedLink ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-green-600" />
+                    LINK COPIED TO CLIPBOARD
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5 text-neutral-500" />
+                    COPY MATCHLINK URL
+                  </>
+                )}
+              </button>
+            </div>
+
+            <div className="bg-neutral-50 border border-neutral-100 rounded-xl p-3 text-center">
+              <p className="text-[10px] text-neutral-500 leading-normal">
+                💡 <strong>Tip:</strong> Share the downloaded matchups card on Telegram status or WhatsApp groups to invite friends to join the stream.
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+
+  </div>
+);
 }
