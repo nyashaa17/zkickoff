@@ -8,3 +8,28 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+[[redirects]]
+  from = "/api/livescore"
+  to = "/.netlify/functions/livescore"
+  status = 200
+
+[[redirects]]
+  from = "/api/standings"
+  to = "/.netlify/functions/standings"
+  status = 200
+
+[[redirects]]
+  from = "/api/stats"
+  to = "/.netlify/functions/stats"
+  status = 200
+
+[[redirects]]
+  from = "/api/match-buttons/:matchId"
+  to = "/.netlify/functions/match-buttons?matchId=:matchId"
+  status = 200
+
+[[redirects]]
+  from = "/api/commentary/:matchId"
+  to = "/.netlify/functions/commentary?matchId=:matchId"
+  status = 200
