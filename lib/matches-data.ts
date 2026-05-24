@@ -2,6 +2,9 @@ export interface Team {
   name: string;
   code: string;
   logoColor: string; // High-fidelity color representation of the team jersey
+  logoUrl?: string;  // Explicit brand/badge logo from Bzzoiro Sports API
+  bzzBadge?: string | null;
+  lsBadge?: string | null;
 }
 
 export interface Match {
@@ -19,6 +22,7 @@ export interface Match {
   minute?: number;
   eps?: string;
   competition: string;
+  leagueLogoUrl?: string; // Explicit league logo from Bzzoiro Sports API
   kickoffTime: string; // e.g., "15:00"
   dateString: string;  // e.g., "Today", "Tomorrow"
   category: 'ZPSL' | 'INTERNATIONAL' | 'AFRICA';

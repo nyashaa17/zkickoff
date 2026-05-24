@@ -5,6 +5,38 @@ import {
   LivescoreResponseRaw 
 } from '@/lib/totalsports-api';
 import { Match } from '@/lib/matches-data';
+import { getTeamLogoUrl, getLeagueLogoUrl } from '@/lib/bzzoiro-api';
+
+// Helper to enrich matches with dynamic Bzzoiro Sports Data API logos
+async function enrichMatchesWithLogos(matches: Match[]): Promise<Match[]> {
+  try {
+    return await Promise.all(
+      matches.map(async (m) => {
+        try {
+          const [homeLogo, awayLogo, leagueLogo] = await Promise.all([
+            getTeamLogoUrl(m.teams.home.name),
+            getTeamLogoUrl(m.teams.away.name),
+            getLeagueLogoUrl(m.competition)
+          ]);
+          return {
+            ...m,
+            teams: {
+              home: { ...m.teams.home, logoUrl: homeLogo, bzzBadge: homeLogo || null },
+              away: { ...m.teams.away, logoUrl: awayLogo, bzzBadge: awayLogo || null }
+            },
+            leagueLogoUrl: leagueLogo
+          };
+        } catch (err) {
+          console.error(`Error enriching match logo for ${m.id}:`, err);
+          return m;
+        }
+      })
+    );
+  } catch (err) {
+    console.error('enrichMatchesWithLogos error:', err);
+    return matches;
+  }
+}
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -20,17 +52,19 @@ export async function GET(req: NextRequest) {
         throw new Error(`Failed to fetch from backend score provider: ${res.status}`);
       }
       const data: LivescoreResponseRaw = await res.json();
-      const matches: Match[] = [];
+      const rawMatches: Match[] = [];
       
       if (data.Stages) {
-        data.Stages.forEach((stage) => {
-          if (stage.Events) {
-            stage.Events.forEach((event) => {
-              matches.push(parseRawEventToMatch(event, stage.Snm, stage.Cnm, 'Today'));
-            });
-          }
-        });
+         data.Stages.forEach((stage) => {
+           if (stage.Events) {
+             stage.Events.forEach((event) => {
+               rawMatches.push(parseRawEventToMatch(event, stage.Snm, stage.Cnm, 'Today'));
+             });
+           }
+         });
       }
+
+      const matches = await enrichMatchesWithLogos(rawMatches);
       return NextResponse.json({ matches });
     } else {
       // Parallel fetch for Yesterday, Today, and Tomorrow to fully populate all tabs
@@ -71,7 +105,8 @@ export async function GET(req: NextRequest) {
         processResponse(tomorrowRes, 'Tomorrow')
       ]);
 
-      const matches = [...yesterdayMatches, ...todayMatches, ...tomorrowMatches];
+      const rawMatches = [...yesterdayMatches, ...todayMatches, ...tomorrowMatches];
+      const matches = await enrichMatchesWithLogos(rawMatches);
 
       return NextResponse.json({ matches });
     }

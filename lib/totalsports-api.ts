@@ -70,8 +70,8 @@ export function getFormattedDateString(offsetDays = 0): string {
 // Map the TotalSportsLive Endpoint item to our internal Match layout
 export interface ListEventRaw {
   Eid: string; // Event ID
-  T1: { Nm: string }[]; // Home team
-  T2: { Nm: string }[]; // Away team
+  T1: { Nm: string; Img?: string; ID?: string }[]; // Home team
+  T2: { Nm: string; Img?: string; ID?: string }[]; // Away team
   Esd: string | number; // Start datetime (YYYYMMDDHHMMSS)
   Tr1?: string; // T1 score
   Tr2?: string; // T2 score
@@ -92,15 +92,38 @@ export interface LivescoreResponseRaw {
 }
 
 export function parseRawEventToMatch(event: ListEventRaw, stageName: string, countryName: string, dateStringOption = 'Today'): Match {
-  const homeName = event.T1?.[0]?.Nm || 'Home Team';
-  const awayName = event.T2?.[0]?.Nm || 'Away Team';
+  const homeRaw = event.T1?.[0];
+  const awayRaw = event.T2?.[0];
+
+  const homeName = homeRaw?.Nm || 'Home Team';
+  const awayName = awayRaw?.Nm || 'Away Team';
   const id = event.Eid;
   const slug = `${slugify(homeName)}-vs-${slugify(awayName)}-${id}`;
+
+  const homeImg = homeRaw?.Img;
+  const awayImg = awayRaw?.Img;
+
+  const homeId = homeRaw?.ID;
+  const awayId = awayRaw?.ID;
+
+  let homeLsBadge: string | null = null;
+  if (homeImg) {
+    homeLsBadge = `https://static.livescore.com/v2/images/teams/large/${homeImg}`;
+  } else if (homeId) {
+    homeLsBadge = `https://static.livescore.com/v2/images/teams/large/t${homeId}.png`;
+  }
+
+  let awayLsBadge: string | null = null;
+  if (awayImg) {
+    awayLsBadge = `https://static.livescore.com/v2/images/teams/large/${awayImg}`;
+  } else if (awayId) {
+    awayLsBadge = `https://static.livescore.com/v2/images/teams/large/t${awayId}.png`;
+  }
 
   const kickoffTime = formatEsTime(event.Esd);
   const eps = event.Eps || 'NS';
   const isFinished = ['FT', 'AET', 'AP', 'FT_PEN', 'POSTP', 'CANCL', 'Postp.', 'Canc.', 'Postp', 'Canc', 'Abd', 'Abd.'].includes(eps);
-  const isLive = ['1H', 'HT', '2H', 'ET', 'AP', 'Pen', 'LIVE'].includes(eps) || (!isFinished && !['NS', 'Postp', 'Canc', 'Postp.', 'Canc.', 'POSTP', 'CANCL', 'Abd', 'Abd.'].includes(eps));
+  const isLive = ['1H', 'HT', '2H', 'ET', 'Pen', 'LIVE'].includes(eps) || (!isFinished && !['NS', 'Postp', 'Canc', 'Postp.', 'Canc.', 'POSTP', 'CANCL', 'Abd', 'Abd.'].includes(eps));
   
   let status: 'LIVE' | 'TODAY' | 'UPCOMING' | 'FINISHED' = 'UPCOMING';
   if (isLive) {
@@ -130,11 +153,13 @@ export function parseRawEventToMatch(event: ListEventRaw, stageName: string, cou
         name: homeName,
         code: homeName.slice(0, 3).toUpperCase().replace(/[^A-Z]/g, 'T'),
         logoColor: getTeamColor(homeName),
+        lsBadge: homeLsBadge,
       },
       away: {
         name: awayName,
         code: awayName.slice(0, 3).toUpperCase().replace(/[^A-Z]/g, 'T'),
         logoColor: getTeamColor(awayName),
+        lsBadge: awayLsBadge,
       }
     },
     score: {
@@ -144,7 +169,27 @@ export function parseRawEventToMatch(event: ListEventRaw, stageName: string, cou
     status,
     minute: event.Ela && !isNaN(parseInt(event.Ela, 10)) ? parseInt(event.Ela, 10) : undefined,
     eps: event.Eps,
-    competition: stageName || 'Football League',
+    competition: (() => {
+      const comp = stageName || 'Football League';
+      const cLower = comp.toLowerCase().trim();
+      const country = (countryName || '').trim();
+      const countryLower = country.toLowerCase();
+
+      // If it is a generic Premier League stage name, check the country to give it a descriptive name
+      if (cLower === 'premier league' || cLower === 'england: premier league' || cLower === 'england premier league') {
+        if (!country || countryLower.includes('england')) {
+          return 'English Premier League';
+        }
+        if (countryLower === 'south africa') return 'South African Premier League';
+        if (countryLower.includes('zimbabwe')) return 'Zimbabwe Premier Soccer League';
+        if (countryLower === 'egypt') return 'Egyptian Premier League';
+        if (countryLower === 'russia') return 'Russian Premier League';
+        if (countryLower === 'scotland') return 'Scottish Premier League';
+        if (countryLower === 'ukraine') return 'Ukrainian Premier League';
+        return `${country} Premier League`;
+      }
+      return comp;
+    })(),
     kickoffTime,
     dateString: dateStringOption,
     category,

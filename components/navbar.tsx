@@ -159,7 +159,7 @@ export default function Navbar() {
                 </Link>
 
                 <Link
-                  href="/"
+                  href="/privacy"
                   onClick={() => setIsDrawerOpen(false)}
                   className="flex items-center gap-4 px-4 py-3.5 text-slate-600 hover:bg-neutral-100/80 rounded-xl font-medium text-[15px] transition-colors"
                 >
@@ -168,7 +168,7 @@ export default function Navbar() {
                 </Link>
 
                 <Link
-                  href="/"
+                  href="/terms"
                   onClick={() => setIsDrawerOpen(false)}
                   className="flex items-center gap-4 px-4 py-3.5 text-slate-600 hover:bg-neutral-100/80 rounded-xl font-medium text-[15px] transition-colors"
                 >

@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, use } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import useSWR from 'swr';
 import { 
   Play, 
   Tv, 
@@ -24,8 +26,9 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Match } from '@/lib/matches-data';
-import AdPlaceholder from '@/components/ad-placeholder';
 import { DetailedPageSkeleton } from '@/components/skeleton-loader';
+import { TeamLogo } from '@/components/team-logo';
+import Breadcrumbs from '@/components/breadcrumbs';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -56,15 +59,7 @@ export default function WatchPage({ params }: PageProps) {
 
   const fallbackData = getSlugFallback();
   
-  const [match, setMatch] = useState<Match | undefined>(undefined);
-  const [allMatches, setAllMatches] = useState<Match[]>([]);
-  const [servers, setServers] = useState<{ id: string; name: string; embedUrl: string }[]>([]);
-  const [commentary, setCommentary] = useState<{ time: number; text: string }[]>([]);
-  
   const [activeServer, setActiveServer] = useState<string>('');
-  const [iframeSrc, setIframeSrc] = useState<string>('');
-  const [playerLoading, setPlayerLoading] = useState(true);
-  const [playerError, setPlayerError] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [detailTab, setDetailTab] = useState<'COMMENTARY' | 'DETAILS'>('COMMENTARY');
@@ -77,122 +72,67 @@ export default function WatchPage({ params }: PageProps) {
     return () => clearTimeout(timer);
   }, []);
 
-  // Main loader: fetch details from Livescore API Proxy + Match Buttons Proxy
-  useEffect(() => {
-    let active = true;
-    const parts = slug.split('-');
-    const matchId = parts[parts.length - 1];
+  const fetcher = (url: string) => fetch(url).then(res => {
+    if (!res.ok) throw new Error('Fetch failed');
+    return res.json();
+  });
 
-    async function fetchData() {
-      try {
-        // 1. Fetch Livescore
-        const lRes = await fetch('/api/livescore');
-        if (!lRes.ok) throw new Error('Failed to load livescores');
-        const lData = await lRes.json();
-        
-        if (!active) return;
+  const matchId = slug.split('-').pop() || '0';
 
-        if (lData && lData.matches) {
-          setAllMatches(lData.matches);
-          const found = lData.matches.find((m: Match) => m.id === matchId);
-          if (found) {
-            setMatch(found);
-          }
-        }
+  // 1. Fetch Livescore
+  const { data: lData } = useSWR('/api/livescore', fetcher, {
+    refreshInterval: 20000,
+    revalidateOnFocus: true,
+  });
 
-        // 2. Fetch Match buttons (servers)
-        const bRes = await fetch(`/api/match-buttons/${matchId}`);
-        if (!bRes.ok) throw new Error('Failed to load match streams');
-        const bData = await bRes.json();
-        
-        if (!active) return;
+  let match: Match | undefined = undefined;
+  let allMatches: Match[] = [];
 
-        if (bData && bData.servers && bData.servers.length > 0) {
-          setServers(bData.servers);
-          // Auto select first server if activeServer is empty
-          if (!activeServer) {
-            setActiveServer(bData.servers[0].id);
-            setIframeSrc(bData.servers[0].embedUrl);
-          }
-        }
-      } catch (err) {
-        console.error('Watch page initial load error:', err);
-      }
+  if (lData && lData.matches) {
+    allMatches = lData.matches;
+    match = allMatches.find((m: Match) => m.id === matchId);
+  }
+
+  // 2. Fetch Match buttons (servers)
+  const homeParam = encodeURIComponent(fallbackData.homeName);
+  const awayParam = encodeURIComponent(fallbackData.awayName);
+  const { data: bData } = useSWR(`/api/match-buttons/${matchId}?home=${homeParam}&away=${awayParam}`, fetcher, {
+    revalidateOnFocus: true,
+  });
+
+  let servers: { id: string; name: string; embedUrl: string }[] = [];
+  if (bData && bData.servers && bData.servers.length > 0) {
+    servers = bData.servers;
+    // Auto select first server if activeServer is empty
+    if (!activeServer && isMounted) {
+      setTimeout(() => setActiveServer(servers[0].id), 0);
     }
+  }
 
-    fetchData();
+  // 3. Fetch Commentary
+  const { data: cData } = useSWR(`/api/commentary/${matchId}`, fetcher, {
+    refreshInterval: 15000,
+    revalidateOnFocus: true,
+  });
 
-    // Setup periodic reload for livescore ticks on detail watch screen of 20 seconds
-    const intervalObj = setInterval(fetchData, 20000);
-
-    return () => {
-      active = false;
-      clearInterval(intervalObj);
-    };
-  }, [slug, activeServer]);
-
-  // Commentary loader: fetch timeline from proxy on mount + periodic refresh
-  useEffect(() => {
-    let active = true;
-    const parts = slug.split('-');
-    const matchId = parts[parts.length - 1];
-
-    async function loadCommentary() {
-      try {
-        const res = await fetch(`/api/commentary/${matchId}`);
-        if (!res.ok) throw new Error('Failed to resolve commentary');
-        const data = await res.json();
-        
-        if (!active) return;
-        
-        if (data) {
-          // Merge liveCommentary and manualCommentary if existing
-          let entries: { time: number; text: string }[] = [];
-          if (data.liveCommentary && Array.isArray(data.liveCommentary)) {
-            entries = [...data.liveCommentary];
-          }
-          if (data.manualCommentary && Array.isArray(data.manualCommentary)) {
-            // filter out duplicates
-            data.manualCommentary.forEach((m: any) => {
-              if (!entries.some(e => e.text === m.text)) {
-                entries.push(m);
-              }
-            });
-          }
-          
-          // Sort by minute desc
-          entries.sort((a, b) => b.time - a.time);
-          setCommentary(entries);
-        }
-      } catch (err) {
-        console.error('Commentary loading error:', err);
-      }
+  let commentary: { time: number; text: string }[] = [];
+  if (cData) {
+    let entries: { time: number; text: string }[] = [];
+    if (cData.liveCommentary && Array.isArray(cData.liveCommentary)) {
+      entries = [...cData.liveCommentary];
     }
-
-    loadCommentary();
-    const timer = setInterval(loadCommentary, 15000);
-    return () => {
-      active = false;
-      clearInterval(timer);
-    };
-  }, [slug]);
-
-  // Handle server switching safely
-  const handleServerSwitch = (serverId: string, embedUrl: string) => {
-    setPlayerLoading(true);
-    setPlayerError(false);
-    setActiveServer(serverId);
-    setIframeSrc(embedUrl);
-  };
-
-  // Reload the stream player to fix stuttering
-  const reloadStream = () => {
-    setPlayerLoading(true);
-    setPlayerError(false);
-    const currentSrc = iframeSrc;
-    const separator = currentSrc.includes('?') ? '&' : '?';
-    setIframeSrc(`${currentSrc}${separator}reload=${Date.now()}`);
-  };
+    if (cData.manualCommentary && Array.isArray(cData.manualCommentary)) {
+      // filter out duplicates
+      cData.manualCommentary.forEach((m: any) => {
+        if (!entries.some(e => e.text === m.text)) {
+          entries.push(m);
+        }
+      });
+    }
+    // Sort by minute desc
+    entries.sort((a, b) => b.time - a.time);
+    commentary = entries;
+  }
 
   // Copy link to share stream
   const copyShareLink = () => {
@@ -208,17 +148,19 @@ export default function WatchPage({ params }: PageProps) {
   }
 
   // Related matches selection: same category or live matches (excluding current)
-  const queryMatch = match || {
+  const queryMatch: Match = match || {
     id: fallbackData.id,
     slug: slug,
     teams: {
-      home: { name: fallbackData.homeName, code: fallbackData.homeName.slice(0, 3).toUpperCase(), logoColor: '#009739' },
-      away: { name: fallbackData.awayName, code: fallbackData.awayName.slice(0, 3).toUpperCase(), logoColor: '#D62828' }
+      home: { name: fallbackData.homeName, code: fallbackData.homeName.slice(0, 3).toUpperCase(), logoColor: '#009739', logoUrl: undefined },
+      away: { name: fallbackData.awayName, code: fallbackData.awayName.slice(0, 3).toUpperCase(), logoColor: '#D62828', logoUrl: undefined }
     },
     score: { home: 0, away: 0 },
     status: 'LIVE' as const,
     competition: 'Football Match',
+    leagueLogoUrl: undefined,
     kickoffTime: 'Live Score Now',
+    dateString: 'Today',
     category: 'INTERNATIONAL' as const,
     venue: 'National Sports Stadium, Harare',
     spectators: '18,000',
@@ -236,21 +178,24 @@ export default function WatchPage({ params }: PageProps) {
     {
       id: `fallback-srv-1`,
       name: `Stream Feed HD (Primary)`,
-      embedUrl: `https://king.totalsportss.online/embed?fixture=${fallbackData.id}&stream=1`
+      embedUrl: `https://king.totalsportss.online/embed?fixture=${encodeURIComponent(fallbackData.homeName + ' vs ' + fallbackData.awayName)}&stream=1`
     }
   ];
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-8">
       {/* Back button and breadcrumbs */}
-      <div className="flex items-center justify-between mb-4 md:mb-6">
-        <Link href="/" className="inline-flex items-center gap-2 text-xs font-semibold text-[#009739] hover:opacity-85 font-display transition-opacity">
-          <ArrowLeft className="w-4 h-4" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 border-b border-neutral-200/40 pb-4">
+        <Breadcrumbs 
+          items={[
+            { label: 'Live Broadcasts', href: '/live' },
+            { label: `${queryMatch.teams.home.name} vs ${queryMatch.teams.away.name}` }
+          ]} 
+        />
+        <Link href="/" className="inline-flex items-center gap-2 text-xs font-bold text-[#009739] hover:opacity-85 font-display transition-all py-1.5 px-3 bg-neutral-100/75 hover:bg-neutral-100 rounded-xl border border-neutral-200/40 shrink-0 self-start sm:self-auto shadow-4xs">
+          <ArrowLeft className="w-3.5 h-3.5" />
           Back to Live Feed
         </Link>
-        <span className="text-[10px] md:text-xs font-mono font-bold text-neutral-400 uppercase tracking-widest bg-white border border-neutral-200/50 px-3 py-1 rounded-xl shadow-2xs">
-          Match ID: {queryMatch.id}
-        </span>
       </div>
 
       {/* Main layout grids */}
@@ -260,59 +205,98 @@ export default function WatchPage({ params }: PageProps) {
         <div className="lg:col-span-2 space-y-6">
           
           {/* Main Streaming Player Terminal */}
-          <div className="bg-white border border-neutral-200/70 rounded-3xl overflow-hidden shadow-xs relative">
+          <div className="bg-white border border-neutral-200/70 rounded-none md:rounded-3xl overflow-hidden shadow-xs -mx-4 md:mx-0 border-x-0 md:border relative">
             
-            {/* Top info track */}
-            <div className="bg-neutral-950 px-4 py-3 text-white flex items-center justify-between gap-4 border-b border-neutral-800">
-              <div className="flex items-center gap-2">
-                <Video className="w-4 h-4 text-zim-yellow animate-pulse" />
-                <span className="text-[11px] md:text-xs font-mono font-medium tracking-wide truncate max-w-[200px] sm:max-w-md text-white/90">
-                  Streaming Source: {renderServersList.find(s => s.id === activeServer)?.name || "Direct Sports Feed (FHD)"}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                {isLive ? (
-                  <span className="bg-zim-red/10 border border-zim-red text-zim-red text-[9px] font-bold px-2 py-0.5 rounded-full animate-pulse">
-                    LIVE
-                  </span>
-                ) : (
-                  <span className="bg-neutral-800 text-neutral-400 text-[10px] font-mono px-2 py-0.5 rounded">
-                    WARMUP
-                  </span>
-                )}
-                <span className="text-white/40 text-xs hidden sm:inline font-mono">1080p 60fps</span>
-              </div>
-            </div>
-
             {/* Video Iframe Embed wrapper */}
-            <div className="aspect-video bg-black relative">
-              
-              {/* Spinner loader displayed when player is starting */}
-              {playerLoading && (
-                <div className="absolute inset-0 bg-[#111] flex flex-col items-center justify-center text-center p-6 z-10 transition-opacity duration-300">
-                  <div className="w-12 h-12 rounded-full border-4 border-zim-green/20 border-t-zim-green animate-spin mb-3"></div>
-                  <p className="text-sm font-semibold text-white tracking-wide">
-                    Connecting to Football Feed...
-                  </p>
-                  <p className="text-xs text-neutral-500 mt-1 max-w-xs leading-relaxed">
-                    Connecting to server hosts. Please wait up to 3 seconds for broadcast sync.
-                  </p>
+            <div className={`aspect-video relative overflow-hidden shadow-inner group transition-all duration-300 ${
+              (queryMatch.status === 'TODAY' || queryMatch.status === 'UPCOMING') ? 'bg-white' : 'bg-black'
+            }`}>
+              {(queryMatch.status === 'TODAY' || queryMatch.status === 'UPCOMING') ? (
+                <div id="not-started-empty-state" className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-white">
+                  {/* Decorative faint field elements to elevate visual style */}
+                  <div className="absolute inset-0 z-0 opacity-5 pointer-events-none">
+                    <div className="absolute inset-0 border-[2px] border-neutral-300 rounded-[30%] scale-[0.6] top-[-30%]"></div>
+                    <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-0.5 bg-neutral-300"></div>
+                  </div>
+                  
+                  <div className="relative z-10 flex flex-col items-center max-w-sm">
+                    <div className="w-16 h-16 bg-neutral-50 border border-neutral-100 rounded-full flex items-center justify-center mb-5 shadow-2xs relative">
+                      <div className="absolute inset-0 rounded-full bg-neutral-100 animate-ping opacity-30"></div>
+                      <Clock className="w-7 h-7 text-[#009739] animate-pulse relative z-10" />
+                    </div>
+                    <h3 className="text-neutral-900 font-display font-extrabold text-lg md:text-xl mb-2.5">
+                      Waiting for broadcast
+                    </h3>
+                    <p className="text-neutral-500 text-xs md:text-sm leading-relaxed mb-4">
+                      The stream typically starts 5-10 minutes before kickoff. We&apos;ll connect automatically when it&apos;s live.
+                    </p>
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-neutral-100/80 rounded-full text-[10px] font-mono font-extrabold text-[#009739] border border-neutral-200/50">
+                      <span className="w-1.5 h-1.5 bg-[#009739] rounded-full animate-pulse"></span>
+                      SCHEDULED START: {queryMatch.kickoffTime}
+                    </div>
+                  </div>
+                </div>
+              ) : queryMatch.status === 'FINISHED' ? (
+                <div id="stream-ended-empty-state" className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-black">
+                  {/* Decorative faint field elements to elevate visual style */}
+                  <div className="absolute inset-0 z-0 opacity-10 pointer-events-none">
+                    <div className="absolute inset-0 border-[2px] border-neutral-800 rounded-[30%] scale-[0.6] top-[-30%]"></div>
+                    <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-0.5 bg-neutral-850"></div>
+                  </div>
+                  
+                  <div className="relative z-10 flex flex-col items-center max-w-sm">
+                    <div className="w-16 h-16 bg-neutral-900 border border-neutral-850 rounded-full flex items-center justify-center mb-5 shadow-2xs relative">
+                      <div className="absolute inset-0 rounded-full bg-neutral-800 animate-ping opacity-20"></div>
+                      <Tv className="w-7 h-7 text-neutral-400 relative z-10" />
+                    </div>
+                    <h3 className="text-white font-display font-extrabold text-lg md:text-xl mb-2.5">
+                      Stream has ended
+                    </h3>
+                    <p className="text-neutral-400 text-xs md:text-sm leading-relaxed mb-4">
+                      The broadcast for this match has concluded. Check out the match stats or commentary.
+                    </p>
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-neutral-900 rounded-full text-[10px] font-mono font-extrabold text-neutral-400 border border-neutral-850">
+                      <span className="w-1.5 h-1.5 bg-neutral-500 rounded-full"></span>
+                      CONCLUDED
+                    </div>
+                  </div>
+                </div>
+              ) : activeServer ? (
+                <iframe
+                  id="streamContainer"
+                  className="absolute inset-0 w-full h-full border-none m-0 p-0 z-10 bg-black"
+                  allowFullScreen
+                  allow="fullscreen; autoplay; encrypted-media; picture-in-picture"
+                  src={renderServersList.find(s => s.id === activeServer)?.embedUrl || renderServersList[0]?.embedUrl}
+                  referrerPolicy="no-referrer"
+                ></iframe>
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-radial from-neutral-900 via-neutral-950 to-black p-4">
+                  {/* Decorative pure-CSS field visualization context replacing external stadium image */}
+                  <div className="absolute inset-0 z-0 opacity-10 pointer-events-none">
+                    <div className="absolute inset-0 border-[2px] border-white/25 rounded-[30%] scale-[0.6] top-[-30%]"></div>
+                    <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-0.5 bg-white/20"></div>
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-full border border-white/20"></div>
+                  </div>
+                  
+                  <div className="relative z-10 flex flex-col items-center text-center max-w-sm">
+                    <button 
+                      onClick={() => {
+                        if (renderServersList.length > 0) {
+                          setActiveServer(renderServersList[0].id);
+                        }
+                      }}
+                      className="w-16 h-16 cursor-pointer bg-zim-green text-white hover:scale-105 active:scale-95 transition-all rounded-full flex items-center justify-center mb-4 backdrop-blur-md shadow-lg shadow-zim-green/20"
+                    >
+                      <Play className="w-8 h-8 ml-1" />
+                    </button>
+                    <h3 className="text-white font-display font-bold text-xl mb-2">Live Broadcast Ready</h3>
+                    <p className="text-neutral-300 text-xs mb-4">
+                      Tap play or select an active server below to start streaming directly in our modern player wrapper.
+                    </p>
+                  </div>
                 </div>
               )}
-
-              {/* Real IFrame Embedding */}
-              <iframe
-                id="live-broadcasting-iframe"
-                src={iframeSrc || renderServersList[0].embedUrl}
-                allow="autoplay; encrypted-media; picture-in-picture"
-                allowFullScreen
-                className="w-full h-full z-0 absolute inset-0"
-                onLoad={() => setPlayerLoading(false)}
-                onError={() => {
-                  setPlayerLoading(false);
-                  setPlayerError(true);
-                }}
-              />
             </div>
 
             {/* Action panel underneath the player */}
@@ -321,20 +305,24 @@ export default function WatchPage({ params }: PageProps) {
               {/* Stream Servers Selectors */}
               <div className="w-full sm:w-auto">
                 <p className="text-[10px] font-mono font-bold text-neutral-400 uppercase tracking-widest mb-2 text-center sm:text-left">
-                  SWITCH BROADCAST SERVER
+                  EXTERNAL BROADCAST SERVERS
                 </p>
                 <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
                   {renderServersList.map((srv, idx) => (
                     <button
                       key={srv.id}
-                      onClick={() => handleServerSwitch(srv.id, srv.embedUrl)}
-                      className={`cursor-pointer px-3.5 py-2 rounded-xl text-xs font-display font-bold transition-all border ${
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setActiveServer(srv.id);
+                      }}
+                      className={`cursor-pointer px-3.5 py-2 rounded-xl text-xs font-display font-bold transition-all border flex items-center gap-1.5 ${
                         activeServer === srv.id
                           ? 'bg-zim-green text-white border-zim-green shadow-xs shadow-zim-green/10'
                           : 'bg-white hover:bg-neutral-100 text-neutral-700 border-neutral-200'
                       }`}
                     >
                       {srv.name.replace(' (HD)', '').replace(' (FHD)', '') || `Server ${idx + 1}`}
+                      <ExternalLink className="w-3 h-3 text-current opacity-60" />
                     </button>
                   ))}
                 </div>
@@ -342,14 +330,6 @@ export default function WatchPage({ params }: PageProps) {
 
               {/* Fast interactive tools */}
               <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end shrink-0">
-                <button
-                  onClick={reloadStream}
-                  className="cursor-pointer px-3.5 py-2 bg-white hover:bg-neutral-100 border border-neutral-200 text-neutral-700 rounded-xl text-xs font-display font-medium flex items-center justify-center gap-1.5 transition-colors"
-                  title="Reload source connection"
-                >
-                  <RefreshCcw className="w-3.5 h-3.5" />
-                  Reload Player
-                </button>
                 <button
                   onClick={copyShareLink}
                   className="cursor-pointer px-3.5 py-2 bg-white hover:bg-neutral-100 border border-neutral-200 text-neutral-700 rounded-xl text-xs font-display font-medium flex items-center justify-center gap-1.5 transition-colors"
@@ -380,21 +360,67 @@ export default function WatchPage({ params }: PageProps) {
           <div className="bg-white border border-neutral-200/60 rounded-3xl p-5 md:p-6 shadow-xs space-y-6">
             
             {/* Headers card */}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-neutral-100 pb-5">
-              <div className="space-y-1">
-                <span className="text-[10px] font-mono font-bold text-neutral-400 uppercase tracking-widest flex items-center gap-1">
-                  <Award className="w-3.5 h-3.5 text-zim-green" />
+            <div className="flex flex-col gap-5 border-b border-neutral-100 pb-5">
+              <div className="space-y-3">
+                <span className="text-[10px] font-mono font-bold text-neutral-400 uppercase tracking-widest flex items-center gap-1.5 justify-center md:justify-start">
+                  {queryMatch.leagueLogoUrl ? (
+                    <Image 
+                      src={queryMatch.leagueLogoUrl} 
+                      alt="" 
+                      width={16}
+                      height={16}
+                      className="w-4 h-4 object-contain" 
+                      referrerPolicy="no-referrer"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                  ) : (
+                    <Award className="w-3.5 h-3.5 text-zim-green" />
+                  )}
                   {queryMatch.competition}
                 </span>
-                <h2 className="font-display font-bold text-xl md:text-2xl text-neutral-950 flex items-center gap-3">
-                  <span className="text-neutral-800">{queryMatch.teams.home.name}</span>
-                  <span className="text-neutral-400 text-base font-normal font-mono px-2 py-0.5 bg-neutral-100 rounded-md">
-                    {queryMatch.score?.home ?? 0} - {queryMatch.score?.away ?? 0}
-                  </span>
-                  <span className="text-neutral-800">{queryMatch.teams.away.name}</span>
-                </h2>
+
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4 w-full">
+                  {/* Home Team */}
+                  <div className="flex items-center gap-2.5 md:flex-row flex-col text-center md:text-left md:w-5/12">
+                    <TeamLogo 
+                      name={queryMatch.teams.home.name} 
+                      className="w-8 h-8 md:w-10 md:h-10 border border-neutral-100 shadow-3xs"
+                      bzzBadge={queryMatch.teams.home.bzzBadge}
+                      lsBadge={queryMatch.teams.home.lsBadge}
+                    />
+                    <div>
+                      <span className="text-neutral-900 font-extrabold text-sm md:text-lg block tracking-tight line-clamp-1">{queryMatch.teams.home.name}</span>
+                      <span className="text-[9px] text-[#009739] font-mono font-bold uppercase block md:hidden mt-0.5">HOME TEAM</span>
+                    </div>
+                  </div>
+
+                  {/* Score & VS */}
+                  <div className="flex flex-col items-center justify-center shrink-0 md:w-2/12 my-2 sm:my-0">
+                    <div className="bg-neutral-100/95 border border-neutral-200/50 text-neutral-900 font-mono text-lg md:text-2xl font-black px-4 py-1.5 rounded-2xl tracking-wider min-w-[80px] text-center shadow-4xs">
+                      {queryMatch.score?.home ?? 0} <span className="text-neutral-300 mx-0.5">:</span> {queryMatch.score?.away ?? 0}
+                    </div>
+                    <span className="text-[9px] font-mono font-bold text-neutral-400 uppercase tracking-widest mt-1">
+                      {isLive ? 'LIVE' : 'SCORE'}
+                    </span>
+                  </div>
+
+                  {/* Away Team */}
+                  <div className="flex items-center gap-2.5 md:flex-row-reverse flex-col text-center md:text-right md:w-5/12">
+                    <TeamLogo 
+                      name={queryMatch.teams.away.name} 
+                      className="w-8 h-8 md:w-10 md:h-10 border border-neutral-100 shadow-3xs"
+                      bzzBadge={queryMatch.teams.away.bzzBadge}
+                      lsBadge={queryMatch.teams.away.lsBadge}
+                    />
+                    <div>
+                      <span className="text-neutral-900 font-extrabold text-sm md:text-lg block tracking-tight line-clamp-1">{queryMatch.teams.away.name}</span>
+                      <span className="text-[9px] text-neutral-400 font-mono font-bold uppercase block md:hidden mt-0.5">AWAY TEAM</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
+
+              <div className="flex items-center justify-center md:justify-end gap-2">
                 <div className="flex bg-neutral-100 p-0.5 rounded-lg text-[10px] font-bold">
                   <button
                     onClick={() => setDetailTab('COMMENTARY')}
@@ -527,9 +553,6 @@ export default function WatchPage({ params }: PageProps) {
         {/* Right Sidebar: Sponsor spots and related streams */}
         <div className="space-y-6">
           
-          {/* Ad inline block */}
-          <AdPlaceholder type="sidebar" />
-
           {/* Related matches list section */}
           <div className="bg-white border border-neutral-200/60 rounded-3xl p-5 shadow-xs space-y-4">
             <h3 className="font-display font-bold text-sm text-neutral-950 pb-2 border-b border-neutral-100 flex items-center justify-between">
@@ -577,9 +600,6 @@ export default function WatchPage({ params }: PageProps) {
               </Link>
             </div>
           </div>
-
-          {/* Ad banner inline */}
-          <AdPlaceholder type="inline" />
 
         </div>
 

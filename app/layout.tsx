@@ -2,7 +2,7 @@ import type {Metadata} from 'next';
 import { Inter, Poppins } from 'next/font/google';
 import './globals.css'; // Global styles
 import Navbar from '@/components/navbar';
-import BottomNav from '@/components/bottom-nav';
+import Footer from '@/components/footer';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -27,10 +27,10 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
     <html lang="en" className={`${inter.variable} ${poppins.variable}`}>
       <body className="font-sans bg-[#F9F9FB] text-neutral-900 selection:bg-[#009739] selection:text-white antialiased min-h-screen flex flex-col" suppressHydrationWarning>
         <Navbar />
-        <main className="flex-1 pb-24 md:pb-12">
+        <main className="flex-1 pb-12">
           {children}
         </main>
-        <BottomNav />
+        <Footer />
         {/* Visual Zimbabwe Flag Strip accent */}
         <div className="h-1 w-full bg-linear-to-r from-[#009739] via-[#FFD100] to-[#D62828] flex">
           <div className="w-[30%] h-full bg-[#009739]"></div>

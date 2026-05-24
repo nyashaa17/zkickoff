@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import useSWR from 'swr';
 import { 
   Tv, 
   Play, 
@@ -16,49 +17,33 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { Match } from '@/lib/matches-data';
 import MatchCard from '@/components/match-card';
-import AdPlaceholder from '@/components/ad-placeholder';
 import { MatchGridSkeleton } from '@/components/skeleton-loader';
+import Breadcrumbs from '@/components/breadcrumbs';
 
 export default function LivePage() {
-  const [loading, setLoading] = useState(true);
-  const [liveMatches, setLiveMatches] = useState<Match[]>([]);
+  const fetcher = (url: string) => fetch(url).then(res => {
+    if (!res.ok) throw new Error('Fetch failed');
+    return res.json();
+  });
 
-  // Periodically fetch active live games from the score proxy
-  useEffect(() => {
-    let active = true;
+  const { data, isLoading: loading, error } = useSWR('/api/livescore', fetcher, {
+    refreshInterval: 25000,
+    revalidateOnFocus: true,
+  });
 
-    async function fetchLive(isInitial = false) {
-      try {
-        if (isInitial) {
-          setLoading(true);
-        }
-        const res = await fetch('/api/livescore');
-        if (!res.ok) throw new Error('Failed to fetch active livescores');
-        const data = await res.json();
-        if (active && data && data.matches) {
-          // Filter incoming payload down to only live fixtures
-          const filtered = data.matches.filter((m: Match) => m.status === 'LIVE');
-          setLiveMatches(filtered);
-        }
-      } catch (err) {
-        console.error('Live page fetch error:', err);
-      } finally {
-        if (active && isInitial) setLoading(false);
-      }
-    }
-
-    fetchLive(true);
-
-    const interval = setInterval(() => fetchLive(false), 25000); // load changes every 25s
-
-    return () => {
-      active = false;
-      clearInterval(interval);
-    };
-  }, []);
+  let liveMatches: Match[] = [];
+  if (data && data.matches) {
+    const topLeagues = ['premier league', 'laliga', 'la liga', 'serie a', 'bundesliga', 'ligue 1', 'champions league', 'europa league', 'zpsl', 'zimbabwe premier soccer league', 'j1 league', 'j2 league', 'j3 league', 'j.league', 'j-league', 'japanese league', 'japan'];
+    liveMatches = data.matches.filter((m: Match) => 
+      m.status === 'LIVE' && topLeagues.some(l => m.competition.toLowerCase().includes(l))
+    );
+  }
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-10">
+      
+      {/* Breadcrumbs */}
+      <Breadcrumbs items={[{ label: 'Live Broadcasts' }]} className="mb-6" />
       
       {/* Header section with live transmission pulse */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-neutral-200/50 pb-6 mb-8">
@@ -146,7 +131,6 @@ export default function LivePage() {
           )}
 
           {/* Ad positioning */}
-          <AdPlaceholder type="banner" />
         </div>
 
         {/* Right Column: Information & Sponsorship side channels */}
@@ -175,8 +159,6 @@ export default function LivePage() {
           </div>
 
           {/* Ad sidebar code */}
-          <AdPlaceholder type="sidebar" />
-
           {/* Technology stack attribution guidelines */}
           <div className="p-5 border border-dashed border-neutral-200 bg-neutral-50 rounded-3xl space-y-2 text-neutral-500 text-xs">
             <h4 className="font-display font-bold text-neutral-900 text-[10px] uppercase tracking-widest flex items-center gap-1.5">

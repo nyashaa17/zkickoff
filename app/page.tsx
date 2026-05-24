@@ -2,7 +2,9 @@
 
 import React, { Suspense, useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
+import useSWR from 'swr';
 import { 
   Play, 
   Flame, 
@@ -19,7 +21,6 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { Match } from '@/lib/matches-data';
 import MatchCard from '@/components/match-card';
-import AdPlaceholder from '@/components/ad-placeholder';
 import { MatchGridSkeleton } from '@/components/skeleton-loader';
 
 interface PlayerStat {
@@ -40,120 +41,87 @@ function HomeContent() {
   const initialCategory = searchParams.get('filter');
   const initialTab = searchParams.get('tab') as 'LIVE' | 'TODAY' | 'UPCOMING' | 'FINISHED' | null;
   
-  const [activeTab, setActiveTab] = useState<'LIVE' | 'TODAY' | 'UPCOMING' | 'FINISHED'>(initialTab || 'LIVE');
+  const [activeTab, setActiveTab] = useState<'LIVE' | 'TODAY' | 'UPCOMING' | 'FINISHED'>(initialTab || 'TODAY');
   const [activeCategory, setActiveCategory] = useState<string>('ALL');
-  const [loading, setLoading] = useState(true);
-  const [sidebarTab, setSidebarTab] = useState<'ZPSL' | 'STATS'>('STATS');
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [stats, setStats] = useState<StatCategory[]>([]);
-  const [statsLoading, setStatsLoading] = useState(true);
+  const [sidebarTab, setSidebarTab] = useState<'STANDINGS' | 'STATS'>('STANDINGS');
 
-  // ZPSL Standings mock
-  const standings = [
-    { rank: 1, team: "Dynamos FC", played: 7, points: 15, form: ["W", "W", "D", "W", "L"] },
-    { rank: 2, team: "Highlanders FC", played: 7, points: 14, form: ["D", "W", "W", "L", "W"] },
-    { rank: 3, team: "CAPS United", played: 7, points: 14, form: ["W", "D", "W", "D", "D"] },
-    { rank: 4, team: "FC Platinum", played: 7, points: 12, form: ["L", "W", "L", "W", "W"] },
-    { rank: 5, team: "Manica Diamonds", played: 7, points: 10, form: ["D", "L", "W", "W", "D"] },
-    { rank: 6, team: "Chicken Inn FC", played: 7, points: 9, form: ["L", "D", "D", "W", "L"] },
-  ];
+  const fetcher = (url: string) => fetch(url).then(res => {
+    if (!res.ok) throw new Error('Fetch failed');
+    return res.json();
+  });
 
-  // Load real scores from the Livescore API Proxy
-  useEffect(() => {
-    let active = true;
+  // Load real scores from the Livescore API Proxy using SWR
+  const { data: livescoreData, error: livescoreError, isLoading: loading } = useSWR('/api/livescore', fetcher, {
+    refreshInterval: 25000,
+    revalidateOnFocus: true,
+    keepPreviousData: true,
+  });
 
-    async function loadData() {
-      try {
-        if (matches.length === 0) {
-          setLoading(true);
-        }
-        const res = await fetch('/api/livescore');
-        if (!res.ok) throw new Error('Failed to retrieve live scores');
-        const data = await res.json();
-        if (active && data && data.matches) {
-          setMatches(data.matches);
-        }
-      } catch (err) {
-        console.error('Homepage livescore fetch error:', err);
-        // Fallback to mock data if fetch fails due to network/adblocker
-        if (active && matches.length === 0) {
-          setMatches([
-            {
-              id: 'mock-1',
-              slug: 'dynamos-vs-caps-united-mock-1',
-              teams: {
-                home: { name: 'Dynamos FC', code: 'DYN', logoColor: '#0056B3' },
-                away: { name: 'CAPS United', code: 'CAP', logoColor: '#009739' }
-              },
-              score: { home: 1, away: 0 },
-              status: 'LIVE',
-              minute: 34,
-              competition: 'Zimbabwe Premier Soccer League',
-              kickoffTime: '15:00',
-              dateString: 'Today',
-              category: 'ZPSL',
-              venue: 'Rufaro Stadium',
-              spectators: '15,000',
-              servers: []
-            },
-            {
-              id: 'mock-2',
-              slug: 'highlanders-vs-fc-platinum-mock-2',
-              teams: {
-                home: { name: 'Highlanders FC', code: 'HIG', logoColor: '#111111' },
-                away: { name: 'FC Platinum', code: 'FCP', logoColor: '#007a33' }
-              },
-              score: { home: 0, away: 0 },
-              status: 'TODAY',
-              competition: 'Zimbabwe Premier Soccer League',
-              kickoffTime: '18:00',
-              dateString: 'Today',
-              category: 'ZPSL',
-              venue: 'Barbourfields Stadium',
-              spectators: '12,000',
-              servers: []
-            }
-          ]);
-        }
-      } finally {
-        if (active) setLoading(false);
-      }
+  const matches = React.useMemo(() => {
+    if (livescoreData && livescoreData.matches) {
+      const topLeagues = ['premier league', 'laliga', 'la liga', 'serie a', 'bundesliga', 'ligue 1', 'champions league', 'europa league', 'zpsl', 'zimbabwe premier soccer league', 'j1 league', 'j2 league', 'j3 league', 'j.league', 'j-league', 'japanese league', 'japan'];
+      return livescoreData.matches.filter((m: Match) => 
+        topLeagues.some(l => m.competition.toLowerCase().includes(l))
+      );
     }
-
-    loadData();
-
-    // Setup active poll timer every 30 seconds for livescore ticks
-    const interval = setInterval(loadData, 30000);
-
-    return () => {
-      active = false;
-      clearInterval(interval);
-    };
-  }, [matches.length]);
-
-  // Load player statistics from cap API proxy
-  useEffect(() => {
-    let active = true;
-    async function loadStats() {
-      try {
-        setStatsLoading(true);
-        const res = await fetch('/api/stats?competition=premier-league&dateOrCategory=england');
-        if (!res.ok) throw new Error('Unresolved stats');
-        const data = await res.json();
-        if (active && data && Array.isArray(data)) {
-          setStats(data);
+    // Return mock data if there is an error or no data is fetched yet (while not loading)
+    if (livescoreError) {
+      return [
+        {
+          id: 'mock-1',
+          slug: 'dynamos-vs-caps-united-mock-1',
+          teams: {
+            home: { name: 'Dynamos FC', code: 'DYN', logoColor: '#0056B3' },
+            away: { name: 'CAPS United', code: 'CAP', logoColor: '#009739' }
+          },
+          score: { home: 1, away: 0 },
+          status: 'LIVE',
+          minute: 34,
+          competition: 'Zimbabwe Premier Soccer League',
+          kickoffTime: '15:00',
+          dateString: 'Today',
+          category: 'ZPSL',
+          venue: 'Rufaro Stadium',
+          spectators: '15,000',
+          servers: []
+        },
+        {
+          id: 'mock-2',
+          slug: 'highlanders-vs-fc-platinum-mock-2',
+          teams: {
+            home: { name: 'Highlanders FC', code: 'HIG', logoColor: '#111111' },
+            away: { name: 'FC Platinum', code: 'FCP', logoColor: '#007a33' }
+          },
+          score: { home: 0, away: 0 },
+          status: 'TODAY',
+          competition: 'Zimbabwe Premier Soccer League',
+          kickoffTime: '18:00',
+          dateString: 'Today',
+          category: 'ZPSL',
+          venue: 'Barbourfields Stadium',
+          spectators: '12,000',
+          servers: []
         }
-      } catch (err) {
-        console.error('Stats load error:', err);
-      } finally {
-        if (active) setStatsLoading(false);
-      }
+      ];
     }
-    loadStats();
-    return () => {
-      active = false;
-    };
-  }, []);
+    return [];
+  }, [livescoreData, livescoreError]);
+
+  // Load player statistics from cap API proxy using SWR
+  const { data: statsData, isLoading: statsLoading } = useSWR('/api/stats?competition=premier-league&dateOrCategory=england', fetcher, {
+    revalidateOnFocus: false,
+    keepPreviousData: true,
+  });
+
+  const stats = statsData || [];
+
+  // Load major league standings from API proxy using SWR
+  const { data: standingsData, isLoading: standingsLoading } = useSWR(`/api/standings?competition=${encodeURIComponent(activeCategory)}`, fetcher, {
+    revalidateOnFocus: false,
+    keepPreviousData: true,
+  });
+
+  const standings = standingsData || [];
 
   // Sync category filter and tab from URL search params if present
   useEffect(() => {
@@ -165,7 +133,7 @@ function HomeContent() {
     }
   }, [initialCategory, initialTab]);
 
-  const filteredMatches = matches.filter((match) => {
+  const filteredMatches = matches.filter((match: Match) => {
     // 1. Status Filter
     const matchesStatus = match.status === activeTab;
     
@@ -176,17 +144,17 @@ function HomeContent() {
     return matchesStatus && match.competition === activeCategory;
   });
 
-  const liveCount = matches.filter(m => m.status === 'LIVE').length;
-  const todayCount = matches.filter(m => m.status === 'TODAY').length;
-  const upcomingCount = matches.filter(m => m.status === 'UPCOMING').length;
-  const finishedCount = matches.filter(m => m.status === 'FINISHED').length;
+  const liveCount = matches.filter((m: Match) => m.status === 'LIVE').length;
+  const todayCount = matches.filter((m: Match) => m.status === 'TODAY').length;
+  const upcomingCount = matches.filter((m: Match) => m.status === 'UPCOMING').length;
+  const finishedCount = matches.filter((m: Match) => m.status === 'FINISHED').length;
 
-  const majorLeagues = ['Premier League', 'LaLiga', 'Serie A', 'Bundesliga', 'Ligue 1', 'Champions League', 'Europa League', 'ZPSL', 'Zimbabwe Premier Soccer League'];
+  const majorLeagues = ['English Premier League', 'LaLiga', 'Serie A', 'Bundesliga', 'Ligue 1', 'Champions League', 'Europa League', 'ZPSL', 'Zimbabwe Premier Soccer League'];
   
-  const tabMatches = matches.filter(m => m.status === activeTab);
-  const uniqueLeaguesList = Array.from(new Set(tabMatches.map(m => m.competition)));
+  const tabMatches = matches.filter((m: Match) => m.status === activeTab);
+  const uniqueLeaguesList = Array.from(new Set(tabMatches.map((m: Match) => m.competition as string))) as string[];
   
-  const sortedLeagues = uniqueLeaguesList.sort((a, b) => {
+  const sortedLeagues = uniqueLeaguesList.sort((a: string, b: string) => {
      const aIsMajor = majorLeagues.some(ml => a.toLowerCase().includes(ml.toLowerCase()));
      const bIsMajor = majorLeagues.some(ml => b.toLowerCase().includes(ml.toLowerCase()));
      if (aIsMajor && !bIsMajor) return -1;
@@ -196,11 +164,26 @@ function HomeContent() {
   
   const leagueFilters = ['ALL', ...sortedLeagues];
 
+  const groupedTodayMatches = React.useMemo(() => {
+    const groups: Record<string, { leagueName: string; leagueLogoUrl?: string; matches: Match[] }> = {};
+    filteredMatches.forEach((m: Match) => {
+      if (!groups[m.competition]) {
+        groups[m.competition] = {
+          leagueName: m.competition,
+          leagueLogoUrl: m.leagueLogoUrl,
+          matches: [],
+        };
+      }
+      groups[m.competition].matches.push(m);
+    });
+    return Object.values(groups);
+  }, [filteredMatches]);
+
   return (
     <div className="w-full max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-10">
       
       {/* Hero section */}
-      <section id="hero" className="w-full bg-white rounded-3xl p-6 md:p-10 mb-8 md:mb-12 shadow-xs relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <section id="hero" className="w-full p-6 md:p-10 mb-8 md:mb-12 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
         
         {/* Visual modern grid overlay background */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#f1f5f9_1px,transparent_1px),linear-gradient(to_bottom,#f1f5f9_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-30 pointer-events-none" />
@@ -275,19 +258,33 @@ function HomeContent() {
               </h2>
 
               <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin pb-2 max-w-full">
-                {leagueFilters.map((league) => (
-                  <button
-                    key={league}
-                    onClick={() => setActiveCategory(league)}
-                    className={`shrink-0 cursor-pointer px-3 py-1.5 text-[10px] md:text-xs font-bold rounded-lg font-display tracking-wide transition-all ${
-                      activeCategory === league
-                        ? 'bg-zim-black text-white shadow-xs'
-                        : 'bg-white hover:bg-neutral-100 text-neutral-600 border border-neutral-200'
-                    }`}
-                  >
-                    {league}
-                  </button>
-                ))}
+                {leagueFilters.map((league) => {
+                  const leagueLogo = league !== 'ALL' ? tabMatches.find((m: Match) => m.competition === league)?.leagueLogoUrl : undefined;
+
+                  return (
+                    <button
+                      key={league}
+                      onClick={() => setActiveCategory(league)}
+                      className={`shrink-0 cursor-pointer px-3 py-1.5 text-[10px] md:text-xs font-bold rounded-lg font-display tracking-wide transition-all flex items-center gap-1.5 ${
+                        activeCategory === league
+                          ? 'bg-zim-black text-white shadow-xs'
+                          : 'bg-white hover:bg-neutral-100 text-neutral-600 border border-neutral-200'
+                      }`}
+                    >
+                      {leagueLogo && (
+                        <Image
+                          src={leagueLogo}
+                          alt=""
+                          width={14}
+                          height={14}
+                          className="object-contain"
+                          referrerPolicy="no-referrer"
+                        />
+                      )}
+                      {league}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -323,7 +320,7 @@ function HomeContent() {
 
               <button
                 onClick={() => setActiveTab('FINISHED')}
-                className={`flex-1 overflow-hidden py-3 text-[10px] md:text-xs font-bold rounded-xl flex items-center justify-center gap-1 md:gap-2 transition-all cursor-pointer ${
+                className={`flex-1 min-w-[max-content] px-3 py-3 text-[10px] md:text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                   activeTab === 'FINISHED'
                     ? 'bg-neutral-50 text-neutral-800 shadow-xs border border-neutral-200'
                     : 'text-neutral-500 hover:text-neutral-800'
@@ -340,12 +337,54 @@ function HomeContent() {
           {loading ? (
             <MatchGridSkeleton count={3} />
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <AnimatePresence mode="popLayout">
                 {filteredMatches.length > 0 ? (
-                  filteredMatches.map((match) => (
-                    <MatchCard key={match.id} match={match} />
-                  ))
+                  activeTab === 'TODAY' ? (
+                    // Grouped by league on Today's tab
+                    groupedTodayMatches.map((group) => (
+                      <motion.div
+                        key={group.leagueName}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="space-y-3"
+                      >
+                        <div className="flex items-center gap-2 px-1 py-1">
+                          {group.leagueLogoUrl ? (
+                            <Image
+                              src={group.leagueLogoUrl}
+                              alt={group.leagueName}
+                              width={16}
+                              height={16}
+                              className="object-contain shrink-0"
+                              referrerPolicy="no-referrer"
+                            />
+                          ) : (
+                            <div className="w-4 h-4 rounded-full bg-neutral-150 flex items-center justify-center border border-neutral-300 text-[8px] font-bold text-neutral-500 shrink-0">
+                              {group.leagueName.charAt(0)}
+                            </div>
+                          )}
+                          <h3 className="font-display font-bold text-xs md:text-sm text-neutral-800 tracking-tight uppercase">
+                            {group.leagueName}
+                          </h3>
+                          <span className="text-[10px] font-mono font-bold bg-neutral-100 text-neutral-500 px-2 py-0.5 rounded-full border border-neutral-200/50">
+                            {group.matches.length}
+                          </span>
+                        </div>
+                        <div className="space-y-3">
+                          {group.matches.map((match: Match) => (
+                            <MatchCard key={match.id} match={match} />
+                          ))}
+                        </div>
+                      </motion.div>
+                    ))
+                  ) : (
+                    // Normal flat list for other tabs
+                    filteredMatches.map((match: Match) => (
+                      <MatchCard key={match.id} match={match} />
+                    ))
+                  )
                 ) : (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
@@ -378,14 +417,12 @@ function HomeContent() {
           )}
 
           {/* Ad banner placeholer */}
-          <AdPlaceholder type="banner" />
-
         </div>
 
         {/* Right sidebar column on desktop (ZPSL League Standings and widget spaces) */}
         <div id="sidebar-widgets" className="space-y-6">
           
-          {/* Sidebar Tabs: ZPSL League Table & Player Stats */}
+          {/* Sidebar Tabs: League Table & Player Stats */}
           <div className="bg-white border border-neutral-200/60 rounded-3xl p-5 shadow-xs">
             <div className="flex border-b border-neutral-100 pb-2 mb-4 justify-between items-center">
               <h3 className="font-display font-bold text-sm text-neutral-950 flex items-center gap-1.5">
@@ -403,68 +440,97 @@ function HomeContent() {
                   TOP SCORERS
                 </button>
                 <button
-                  onClick={() => setSidebarTab('ZPSL')}
+                  onClick={() => setSidebarTab('STANDINGS')}
                   className={`px-2 py-1 rounded-md transition-all cursor-pointer ${
-                    sidebarTab === 'ZPSL' ? 'bg-white text-neutral-900 shadow-3xs' : 'text-neutral-500 hover:text-neutral-900'
+                    sidebarTab === 'STANDINGS' ? 'bg-white text-neutral-900 shadow-3xs' : 'text-neutral-500 hover:text-neutral-900'
                   }`}
                 >
-                  ZPSL TABLE
+                  STANDINGS
                 </button>
               </div>
             </div>
 
-            {sidebarTab === 'ZPSL' ? (
+            {sidebarTab === 'STANDINGS' ? (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead>
-                    <tr className="text-neutral-400 font-mono border-b border-neutral-100">
-                      <th className="py-2 font-semibold">Row</th>
-                      <th className="py-2 font-semibold">Team</th>
-                      <th className="py-2 text-center font-semibold">P</th>
-                      <th className="py-2 text-center font-semibold">Pts</th>
-                      <th className="py-2 text-right font-semibold hidden md:table-cell">Form</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-neutral-50">
-                    {standings.map((team) => (
-                      <tr key={team.rank} className="hover:bg-neutral-50 transition-colors">
-                        <td className="py-2.5 font-semibold font-mono text-neutral-500 w-8">
-                          {team.rank}
-                        </td>
-                        <td className="py-2.5 font-bold text-neutral-800">
-                          {team.team}
-                        </td>
-                        <td className="py-2.5 text-center text-neutral-500 font-medium font-mono">
-                          {team.played}
-                        </td>
-                        <td className="py-2.5 text-center text-neutral-900 font-bold font-mono">
-                          {team.points}
-                        </td>
-                        <td className="py-2.5 text-right hidden md:table-cell">
-                          <div className="flex gap-1 justify-end">
-                            {team.form.map((f, idx) => (
-                              <span 
-                                key={idx} 
-                                className={`w-4 h-4 rounded text-[9px] font-bold inline-flex items-center justify-center font-mono text-white ${
-                                  f === 'W' ? 'bg-[#009739]' : f === 'D' ? 'bg-[#FFD100] text-neutral-800' : 'bg-[#D62828]'
-                                }`}
-                              >
-                                {f}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                
-                <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between text-[11px] text-[#009739] font-semibold">
-                  <span>Zim Premier League matches stream here</span>
-                  <Link href="/?filter=ZPSL" className="hover:underline flex items-center gap-0.5">
-                    View Local Matches &rsaquo;
-                  </Link>
-                </div>
+                {standingsLoading ? (
+                  <div className="space-y-2 py-4">
+                    <div className="h-4 bg-neutral-100 rounded-sm animate-pulse w-3/4"></div>
+                    <div className="h-12 bg-neutral-100 rounded-lg animate-pulse"></div>
+                    <div className="h-12 bg-neutral-100 rounded-lg animate-pulse"></div>
+                  </div>
+                ) : standings && standings.length > 0 ? (
+                  <>
+                    <table className="w-full text-left text-xs">
+                      <thead>
+                        <tr className="text-neutral-400 font-mono border-b border-neutral-100">
+                          <th className="py-2 font-semibold">#</th>
+                          <th className="py-2 font-semibold">Team</th>
+                          <th className="py-2 text-center font-semibold">P</th>
+                          <th className="py-2 text-center font-semibold">Pts</th>
+                          <th className="py-2 text-right font-semibold hidden md:table-cell">Form</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-neutral-50">
+                        {standings.map((team: any) => (
+                          <tr key={team.rank} className="hover:bg-neutral-50 transition-colors">
+                            <td className="py-2.5 font-semibold font-mono text-neutral-500 w-8">
+                              {team.rank}
+                            </td>
+                            <td className="py-2.5 font-bold text-neutral-800">
+                              <div className="flex items-center gap-2">
+                                {team.logoUrl && (
+                                  <Image 
+                                    src={team.logoUrl} 
+                                    alt={team.team} 
+                                    width={16}
+                                    height={16}
+                                    className="w-4 h-4 object-contain shrink-0"
+                                    referrerPolicy="no-referrer"
+                                    onError={(e) => {
+                                      (e.target as HTMLElement).style.display = 'none';
+                                    }}
+                                  />
+                                )}
+                                <span className="truncate">{team.team}</span>
+                              </div>
+                            </td>
+                            <td className="py-2.5 text-center text-neutral-500 font-medium font-mono">
+                              {team.played}
+                            </td>
+                            <td className="py-2.5 text-center text-neutral-900 font-bold font-mono">
+                              {team.points}
+                            </td>
+                            <td className="py-2.5 text-right hidden md:table-cell">
+                              <div className="flex gap-1 justify-end">
+                                {team.form.map((f: string, idx: number) => (
+                                  <span 
+                                    key={idx} 
+                                    className={`w-4 h-4 rounded text-[9px] font-bold inline-flex items-center justify-center font-mono text-white ${
+                                      f === 'W' ? 'bg-[#009739]' : f === 'D' ? 'bg-[#FFD100] text-neutral-800' : 'bg-[#D62828]'
+                                    }`}
+                                  >
+                                    {f}
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    
+                    <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between text-[11px] text-[#009739] font-semibold">
+                      <span>Major League Standings</span>
+                      <Link href="/?filter=premier-league" className="hover:underline flex items-center gap-0.5">
+                        View Match Feeds &rsaquo;
+                      </Link>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-6 text-neutral-400 text-xs">
+                    No standings available at the moment.
+                  </div>
+                )}
               </div>
             ) : (
               <div className="space-y-4">
@@ -476,18 +542,14 @@ function HomeContent() {
                     <div className="h-12 bg-neutral-100 rounded-lg animate-pulse"></div>
                   </div>
                 ) : stats && stats.length > 0 ? (
-                  stats.slice(0, 1).map((category, catIdx) => (
+                  stats.slice(0, 1).map((category: StatCategory, catIdx: number) => (
                     <div key={catIdx} className="space-y-3">
                       <p className="text-[10px] font-mono font-bold text-neutral-400 uppercase tracking-widest">
-                        {category.title} — Premier League
+                        {category.title} — English Premier League
                       </p>
                       <div className="divide-y divide-neutral-100">
-                        {category.players.slice(0, 5).map((player, pIdx) => {
-                          const badgeUrl = player.teamBadgeSlug 
-                            ? (player.teamBadgeSlug.startsWith('enet/') || player.teamBadgeSlug.startsWith('teambadge/'))
-                              ? `https://storage.livescore.com/images/team/high/${player.teamBadgeSlug}.png`
-                              : `https://storage.livescore.com/images/team/high/${player.teamBadgeSlug}.png`
-                            : null;
+                        {category.players.slice(0, 5).map((player: PlayerStat, pIdx: number) => {
+                          const badgeUrl = (player as any).logoUrl || null;
 
                           return (
                             <div key={pIdx} className="py-2 flex items-center justify-between text-xs gap-2">
@@ -496,13 +558,14 @@ function HomeContent() {
                                   {player.rank || pIdx + 1}
                                 </span>
                                 {badgeUrl && (
-                                  <img 
+                                  <Image 
                                     src={badgeUrl} 
                                     alt={player.teamName} 
+                                    width={20}
+                                    height={20}
                                     className="w-5 h-5 object-contain shrink-0"
                                     referrerPolicy="no-referrer"
                                     onError={(e) => {
-                                      // hide on load failure
                                       (e.target as HTMLElement).style.display = 'none';
                                     }}
                                   />
@@ -533,22 +596,6 @@ function HomeContent() {
           </div>
 
           {/* Ad spot sidebar */}
-          <AdPlaceholder type="sidebar" />
-
-          {/* High Fidelity Support / FAQ Widget */}
-          <div className="bg-neutral-50 border border-neutral-200 rounded-3xl p-5 text-neutral-600">
-            <h4 className="font-display font-bold text-neutral-900 text-xs flex items-center gap-2 mb-2 uppercase tracking-wide">
-              <Network className="w-4 h-4 text-neutral-500" />
-              Low Internet Streaming Guide
-            </h4>
-            <p className="text-xs leading-relaxed mb-3 text-neutral-500">
-              In Zimbabwe and facing slow bundles? We recommend switching to **Server 3** on our watch pages which compresses data streams for minimal bandwidth use.
-            </p>
-            <div className="flex items-center gap-3 text-[11px]">
-              <span className="font-mono bg-neutral-200 text-neutral-700 px-2 py-0.5 rounded font-bold">ZIM-CON</span>
-              <span className="text-neutral-400">Version 1.0.4 • Light Mode</span>
-            </div>
-          </div>
 
         </div>
 
