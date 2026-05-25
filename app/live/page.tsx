@@ -29,10 +29,7 @@ export default function LivePage() {
 
   let liveMatches: Match[] = [];
   if (data && data.matches) {
-    const topLeagues = ['premier league', 'laliga', 'la liga', 'serie a', 'bundesliga', 'ligue 1', 'champions league', 'europa league', 'zpsl', 'zimbabwe premier soccer league', 'j1 league', 'j2 league', 'j3 league', 'j.league', 'j-league', 'japanese league', 'japan'];
-    liveMatches = data.matches.filter((m: Match) => 
-      m.status === 'LIVE' && topLeagues.some(l => m.competition.toLowerCase().includes(l))
-    );
+    liveMatches = data.matches.filter((m: Match) => m.status === 'LIVE');
   }
 
   return (

@@ -27,13 +27,13 @@ export default function Footer() {
           {/* Navigation Links Column */}
           <div className="md:col-span-3 space-y-4">
             <h4 className="text-neutral-900 font-display font-extrabold text-xs tracking-wider uppercase">
-              Quick Navigation
+              Quick Links
             </h4>
             <ul className="space-y-2.5 text-sm font-semibold">
               <li>
                 <Link href="/" className="text-neutral-500 hover:text-zim-green transition-colors inline-flex items-center gap-1.5">
                   <Play className="w-3.5 h-3.5 text-neutral-400" />
-                  Browse Matches
+                  Home
                 </Link>
               </li>
               <li>
@@ -42,19 +42,19 @@ export default function Footer() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-zim-red opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-zim-red"></span>
                   </span>
-                  Live Streaming
+                  Today&apos;s Matches
                 </Link>
               </li>
               <li>
                 <Link href="/about" className="text-neutral-500 hover:text-zim-green transition-colors inline-flex items-center gap-1.5">
                   <Award className="w-3.5 h-3.5 text-neutral-400" />
-                  About ZimKickOff
+                  About us
                 </Link>
               </li>
               <li>
                 <Link href="/contact" className="text-neutral-500 hover:text-zim-green transition-colors inline-flex items-center gap-1.5">
                   <Mail className="w-3.5 h-3.5 text-neutral-400" />
-                  Contact Support
+                  Contact us
                 </Link>
               </li>
             </ul>

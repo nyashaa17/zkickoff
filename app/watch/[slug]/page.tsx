@@ -132,13 +132,73 @@ export default function WatchPage({ params }: PageProps) {
     const nameLower = teamName.toLowerCase().trim();
     const keys = Object.keys(allLogos);
     
-    // Check direct / fuzzy key mapping
-    const foundKey = keys.find(k => {
-      const kLower = k.toLowerCase().trim();
-      return kLower === nameLower || kLower.includes(nameLower) || nameLower.includes(kLower);
-    });
+    // 1. Check direct / exact match
+    let foundKey = keys.find(k => k.toLowerCase().trim() === nameLower);
+    if (foundKey) return allLogos[foundKey];
+
+    // 2. Expand common abbreviations
+    const abbreviations: Record<string, string> = {
+      'psg': 'paris saint-germain',
+      'paris sg': 'paris saint-germain',
+      'man utd': 'manchester united',
+      'man city': 'manchester city',
+      'spurs': 'tottenham hotspur',
+      'tottenham': 'tottenham hotspur',
+      'bayern': 'bayern munich',
+      'leipzig': 'rb leipzig',
+      'leverkusen': 'bayer leverkusen',
+      'gladbach': 'borussia monchengladbach',
+      'milan': 'ac milan',
+      'inter': 'inter milan',
+      'atletico': 'atletico madrid',
+      'bilbao': 'athletic club',
+      'sociedad': 'real sociedad',
+      'wolves': 'wolverhampton wanderers',
+      'sporting': 'sporting cp',
+      'benfica': 'sl benfica',
+      'porto': 'fc porto',
+    };
+
+    const expandedName = abbreviations[nameLower];
+    if (expandedName) {
+      foundKey = keys.find(k => k.toLowerCase().trim() === expandedName);
+      if (foundKey) return allLogos[foundKey];
+    }
     
-    return foundKey ? allLogos[foundKey] : null;
+    // 3. Substring containment match
+    foundKey = keys.find(k => {
+      const kLower = k.toLowerCase().trim();
+      return kLower.includes(nameLower) || nameLower.includes(kLower);
+    });
+    if (foundKey) return allLogos[foundKey];
+
+    // 4. Token match - match if they share a unique token (excluding stop words)
+    const stopWords = ['fc', 'f.c.', 'united', 'city', 'town', 'athletic', 'rovers', 'sport', 'real', 'cf', 'club', 'de'];
+    const getTokens = (str: string) => 
+      str.toLowerCase()
+         .replace(/[^a-z0-9]/g, ' ')
+         .split(/\s+/)
+         .filter(t => t.length > 2 && !stopWords.includes(t));
+
+    const nameTokens = getTokens(teamName);
+    if (nameTokens.length > 0) {
+      foundKey = keys.find(k => {
+        const kTokens = getTokens(k);
+        return nameTokens.some(nt => kTokens.includes(nt));
+      });
+      if (foundKey) return allLogos[foundKey];
+    }
+
+    // 5. Partial token match
+    if (nameTokens.length > 0) {
+      foundKey = keys.find(k => {
+        const kTokens = getTokens(k);
+        return nameTokens.some(nt => kTokens.some(kt => kt.includes(nt) || nt.includes(kt)));
+      });
+      if (foundKey) return allLogos[foundKey];
+    }
+    
+    return null;
   };
 
   let commentary: { time: number; text: string }[] = [];

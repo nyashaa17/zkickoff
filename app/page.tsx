@@ -61,10 +61,7 @@ function HomeContent() {
 
   const matches = React.useMemo<Match[]>(() => {
     if (livescoreData && livescoreData.matches) {
-      const topLeagues = ['premier league', 'laliga', 'la liga', 'serie a', 'bundesliga', 'ligue 1', 'champions league', 'europa league', 'zpsl', 'zimbabwe premier soccer league', 'j1 league', 'j2 league', 'j3 league', 'j.league', 'j-league', 'japanese league', 'japan'];
-      return livescoreData.matches.filter((m: Match) => 
-        topLeagues.some(l => m.competition.toLowerCase().includes(l))
-      );
+      return livescoreData.matches;
     }
     // Return mock data if there is an error or no data is fetched yet (while not loading)
     if (livescoreError) {

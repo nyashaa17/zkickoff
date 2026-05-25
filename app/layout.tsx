@@ -3,6 +3,7 @@ import { Inter, Poppins } from 'next/font/google';
 import './globals.css'; // Global styles
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
+import { WhatsAppPopup } from '@/components/whatsapp-popup';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -26,7 +27,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
     <html lang="en" className={`${inter.variable} ${poppins.variable}`}>
       <head>
-        <script src="https://pl29495869.effectivecpmnetwork.com/9b/80/d6/9b80d664eeb4b02b5df5aa047fb0f37a.js" defer></script>
+        <meta name="monetag" content="15fd02df8bbf6f0f2db83bb49f023835" />
       </head>
       <body className="font-sans bg-[#F9F9FB] text-neutral-900 selection:bg-[#009739] selection:text-white antialiased min-h-screen flex flex-col" suppressHydrationWarning>
         <Navbar />
@@ -34,6 +35,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
           {children}
         </main>
         <Footer />
+        <WhatsAppPopup />
         {/* Visual Zimbabwe Flag Strip accent */}
         <div className="h-1 w-full bg-linear-to-r from-[#009739] via-[#FFD100] to-[#D62828] flex">
           <div className="w-[30%] h-full bg-[#009739]"></div>
