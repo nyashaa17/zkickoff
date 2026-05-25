@@ -1,5 +1,6 @@
 import type {Metadata} from 'next';
 import { Inter, Poppins } from 'next/font/google';
+import Script from 'next/script';
 import './globals.css'; // Global styles
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
@@ -25,11 +26,20 @@ export const metadata: Metadata = {
 
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
-    <html lang="en" className={`${inter.variable} ${poppins.variable}`}>
+    <html lang="en" className={`${inter.variable} ${poppins.variable}`} suppressHydrationWarning>
       <head>
         <meta name="monetag" content="15fd02df8bbf6f0f2db83bb49f023835" />
       </head>
       <body className="font-sans bg-[#F9F9FB] text-neutral-900 selection:bg-[#009739] selection:text-white antialiased min-h-screen flex flex-col" suppressHydrationWarning>
+        <Script id="monetag-script" strategy="afterInteractive">
+          {`(function(s){s.dataset.zone='11055207',s.src='https://al5sm.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`}
+        </Script>
+        <Script id="monetag-vignette-script" strategy="afterInteractive">
+          {`(function(s){s.dataset.zone='11055245',s.src='https://n6wxm.com/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`}
+        </Script>
+        <Script id="monetag-inpage-push-script" strategy="afterInteractive">
+          {`(function(s){s.dataset.zone='11055247',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`}
+        </Script>
         <Navbar />
         <main className="flex-1 pb-12">
           {children}

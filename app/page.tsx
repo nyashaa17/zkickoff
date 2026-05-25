@@ -21,7 +21,6 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { Match } from '@/lib/matches-data';
 import MatchCard from '@/components/match-card';
-import BannerAd from '@/components/banner-ad';
 import { MatchGridSkeleton } from '@/components/skeleton-loader';
 import { fetchLivescoresDirect, fetchStatsDirect } from '@/lib/totalsports-client';
 
@@ -260,8 +259,6 @@ function HomeContent() {
         </div>
       </section>
 
-      {/* Banner Ad Section */}
-      <BannerAd />
 
       {/* Main Grid: Match Feed vs Standings Column */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
