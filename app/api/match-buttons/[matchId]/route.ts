@@ -124,15 +124,8 @@ export async function GET(
       });
     }
 
-    // Ultimate fallback: if still empty, create default iframe streams from the API or responsive domain
-    if (servers.length === 0) {
-      servers.push({
-        id: `srv-fallback-1`,
-        name: `TotalSports Official Feed (Direct HD)`,
-        embedUrl: `https://king.totalsportss.online/embed?fixture=${encodeURIComponent(fallbackFixture)}&stream=1`
-      });
-    }
-
+    // Remove ultimate fallback so that empty servers can dictate showing "No stream links available" banner.
+    
     return NextResponse.json({
       matchId,
       servers,
@@ -141,26 +134,13 @@ export async function GET(
   } catch (error: any) {
     console.error('Match Buttons Proxy Error:', error);
     
-    const fallbackFixture = teamFallbackFixture || matchId;
-    
-    // Default fallback list in case of network outages so the detail page never crashes!
-    const fallbackServers = [
-      {
-        id: `srv-fallback-1`,
-        name: `Primary Broadcast Feed (1080p)`,
-        embedUrl: `https://king.totalsportss.online/embed?fixture=${encodeURIComponent(fallbackFixture)}&stream=1`
-      },
-      {
-        id: `srv-fallback-2`,
-        name: `Backup Stream Sync (720p)`,
-        embedUrl: `https://king.totalsportss.online/embed?fixture=${encodeURIComponent(fallbackFixture)}&stream=2`
-      }
-    ];
+    // Return empty list so "No stream links" banner is shown
+    const fallbackServers: any[] = [];
 
     return NextResponse.json({
       matchId,
       servers: fallbackServers,
-      rawHtml: `<div class="p-4 text-center text-xs text-neutral-400">Stream links temporarily rendering via primary mirror.</div>`,
+      rawHtml: `<div class="p-4 text-center text-xs text-neutral-400">Stream links temporarily unavailable.</div>`,
       error: error.message
     });
   }

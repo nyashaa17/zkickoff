@@ -217,14 +217,8 @@ export async function fetchMatchButtonsDirect(matchId: string, homeParam?: strin
       });
     }
 
-    if (servers.length === 0) {
-      servers.push({
-        id: `srv-fallback-1`,
-        name: `TotalSports Official Feed (Direct HD)`,
-        embedUrl: `https://king.totalsportss.online/embed?fixture=${encodeURIComponent(fallbackFixture)}&stream=1`
-      });
-    }
-
+    // Return empty list so "No stream links" banner is shown.
+    
     return {
       matchId,
       servers,
@@ -232,21 +226,10 @@ export async function fetchMatchButtonsDirect(matchId: string, homeParam?: strin
     };
   } catch (error: any) {
     console.error('Match buttons direct fetch error:', error);
-    const fallbackFixture = teamFallbackFixture || matchId;
+    
     return {
       matchId,
-      servers: [
-        {
-          id: `srv-fallback-1`,
-          name: `Primary Broadcast Feed (1080p)`,
-          embedUrl: `https://king.totalsportss.online/embed?fixture=${encodeURIComponent(fallbackFixture)}&stream=1`
-        },
-        {
-          id: `srv-fallback-2`,
-          name: `Backup Stream Sync (720p)`,
-          embedUrl: `https://king.totalsportss.online/embed?fixture=${encodeURIComponent(fallbackFixture)}&stream=2`
-        }
-      ],
+      servers: [],
       rawHtml: `<div class="p-4 text-center text-xs text-neutral-400">Stream links rendering via backup sync.</div>`
     };
   }

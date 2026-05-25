@@ -295,13 +295,7 @@ export default function WatchPage({ params }: PageProps) {
   };
 
   // Rendering server helper tags
-  const renderServersList = servers.length > 0 ? servers : [
-    {
-      id: `fallback-srv-1`,
-      name: `Stream Feed HD (Primary)`,
-      embedUrl: `https://king.totalsportss.online/embed?fixture=${encodeURIComponent(fallbackData.homeName + ' vs ' + fallbackData.awayName)}&stream=1`
-    }
-  ];
+  const renderServersList = servers;
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-8">
@@ -379,6 +373,31 @@ export default function WatchPage({ params }: PageProps) {
                     <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-neutral-900 rounded-full text-[10px] font-mono font-extrabold text-neutral-400 border border-neutral-850">
                       <span className="w-1.5 h-1.5 bg-neutral-500 rounded-full"></span>
                       CONCLUDED
+                    </div>
+                  </div>
+                </div>
+              ) : renderServersList.length === 0 ? (
+                <div id="no-stream-empty-state" className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-black">
+                  {/* Decorative faint field elements to elevate visual style */}
+                  <div className="absolute inset-0 z-0 opacity-10 pointer-events-none">
+                    <div className="absolute inset-0 border-[2px] border-neutral-800 rounded-[30%] scale-[0.6] top-[-30%]"></div>
+                    <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-0.5 bg-neutral-850"></div>
+                  </div>
+                  
+                  <div className="relative z-10 flex flex-col items-center max-w-sm">
+                    <div className="w-16 h-16 bg-neutral-900 border border-neutral-850 rounded-full flex items-center justify-center mb-5 shadow-2xs relative">
+                      <div className="absolute inset-0 rounded-full bg-neutral-800 animate-ping opacity-20"></div>
+                      <Tv className="w-7 h-7 text-neutral-400 relative z-10" />
+                    </div>
+                    <h3 className="text-white font-display font-extrabold text-lg md:text-xl mb-2.5">
+                      No stream links available
+                    </h3>
+                    <p className="text-neutral-400 text-xs md:text-sm leading-relaxed mb-4">
+                      There are currently no stream links available for this Match.
+                    </p>
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-neutral-900 rounded-full text-[10px] font-mono font-extrabold text-neutral-400 border border-neutral-850">
+                      <span className="w-1.5 h-1.5 bg-neutral-500 rounded-full"></span>
+                      UNAVAILABLE
                     </div>
                   </div>
                 </div>

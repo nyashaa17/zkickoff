@@ -5,6 +5,7 @@ import './globals.css'; // Global styles
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
 import { WhatsAppPopup } from '@/components/whatsapp-popup';
+import AdblockNotice from '@/components/adblock-notice';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -40,6 +41,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
         <Script id="monetag-inpage-push-script" strategy="afterInteractive">
           {`(function(s){s.dataset.zone='11055247',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`}
         </Script>
+        <AdblockNotice />
         <Navbar />
         <main className="flex-1 pb-12">
           {children}

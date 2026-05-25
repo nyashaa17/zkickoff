@@ -123,14 +123,8 @@ export const handler: Handler = async (event, context) => {
       });
     }
 
-    if (servers.length === 0) {
-      servers.push({
-        id: `srv-fallback-1`,
-        name: `TotalSports Official Feed (Direct HD)`,
-        embedUrl: `https://king.totalsportss.online/embed?fixture=${encodeURIComponent(fallbackFixture)}&stream=1`
-      });
-    }
-
+    // Return empty list so "No stream links" banner is shown.
+    
     return {
       statusCode: 200,
       headers: {
@@ -145,19 +139,7 @@ export const handler: Handler = async (event, context) => {
     };
   } catch (error: any) {
     console.error('Match Buttons Proxy Error:', error);
-    const fallbackFixture = teamFallbackFixture || matchId;
-    const fallbackServers = [
-      {
-        id: `srv-fallback-1`,
-        name: `Primary Broadcast Feed (1080p)`,
-        embedUrl: `https://king.totalsportss.online/embed?fixture=${encodeURIComponent(fallbackFixture)}&stream=1`
-      },
-      {
-        id: `srv-fallback-2`,
-        name: `Backup Stream Sync (720p)`,
-        embedUrl: `https://king.totalsportss.online/embed?fixture=${encodeURIComponent(fallbackFixture)}&stream=2`
-      }
-    ];
+    const fallbackServers: any[] = [];
 
     return {
       statusCode: 200,
