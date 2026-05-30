@@ -75,6 +75,17 @@ export default function StreamGuideContent() {
           <IframePlayer />
         </Suspense>
 
+        <h2 className="text-neutral-900 text-xl md:text-[22px] font-bold mt-8 mb-4 text-center">Live Match Chat</h2>
+
+        <div className="flex justify-center flex-col items-center">
+          <iframe
+            src="https://chat.totalsportslive.co.zw/widget.html"
+            className="border-none h-[520px] w-full max-w-[420px] rounded-xl bg-[#F9F9FB] border border-neutral-200 shadow-sm mb-8"
+            title="Total Sports Live match chat"
+            loading="lazy"
+          ></iframe>
+        </div>
+
         <section className="bg-white border border-neutral-200 shadow-sm rounded-xl p-5 md:p-6 text-left text-neutral-700 leading-[1.7] text-[15px]">
           <h2 className="text-neutral-900 text-[22px] font-bold mt-6 mb-2 first:mt-0">Where to Watch Premier League Matches in the UK</h2>
           <p className="mb-4">
@@ -148,17 +159,6 @@ export default function StreamGuideContent() {
           </p>
         </section>
 
-        <h2 className="text-neutral-900 text-xl md:text-[22px] font-bold mt-8 mb-4 text-center">Live Match Chat</h2>
-
-        <div className="flex justify-center">
-          <iframe
-            src="https://chat.totalsportslive.co.zw/widget.html"
-            className="border-none h-[520px] w-full max-w-[420px] rounded-xl bg-[#F9F9FB] border border-neutral-200 shadow-sm mb-6"
-            title="Total Sports Live match chat"
-            loading="lazy"
-          ></iframe>
-        </div>
-
       </main>
 
       {/* Sticky Action Buttons */}
@@ -173,7 +173,7 @@ export default function StreamGuideContent() {
 
       <div className="fixed bottom-[110px] md:bottom-[350px] left-2 md:left-4 z-50">
         <a
-          href="https://wa.me/263XXXXXXXXX?text=Hello%20Total%20Sports%20Live%2C%20I%20need%20help%20with%20the%20Premier%20League%20stream."
+          href="https://whatsapp.com/channel/0029VbCawa77YSd8W5QIHA41"
           rel="nofollow noopener"
           target="_blank"
           className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 bg-[#25d366] hover:bg-[#20ba59] text-white rounded-lg font-bold text-[13px] md:text-[15px] shadow-[0_3px_10px_rgba(0,0,0,0.35)] transition-colors"
