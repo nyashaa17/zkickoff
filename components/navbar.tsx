@@ -157,6 +157,15 @@ export default function Navbar() {
                   <span>Contact us</span>
                 </Link>
 
+                <Link
+                  href="/stream"
+                  onClick={() => setIsDrawerOpen(false)}
+                  className="flex items-center gap-4 px-4 py-3.5 text-slate-600 hover:bg-neutral-50 rounded-xl font-medium text-[15px] transition-colors"
+                >
+                  <Tv className="w-5 h-5 stroke-[2]" />
+                  <span>PL Streams</span>
+                </Link>
+
                 <div className="py-2 px-1">
                   <div className="h-px bg-neutral-100 w-full" />
                 </div>

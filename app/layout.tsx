@@ -30,6 +30,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
     <html lang="en" className={`${inter.variable} ${poppins.variable}`} suppressHydrationWarning>
       <head>
         <Script async src="https://www.googletagmanager.com/gtag/js?id=G-1T22JFEXXS" />
+        <Script src="https://5gvci.com/act/files/tag.min.js?z=11078190" data-cfasync="false" strategy="lazyOnload" />
         <Script id="google-analytics">
           {`
             window.dataLayer = window.dataLayer || [];
