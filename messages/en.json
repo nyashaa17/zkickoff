@@ -1,0 +1,15 @@
+{
+  "Navbar": {
+    "Home": "ZimKickOff",
+    "LiveStreaming": "Live Streaming",
+    "Menu": "Menu",
+    "Matches": "Matches",
+    "Stats": "Stats",
+    "Articles": "Articles",
+    "ContactUs": "Contact us",
+    "PLStreams": "PL Streams",
+    "PrivacyPolicy": "Privacy Policy",
+    "TermsConditions": "Terms & Conditions",
+    "Language": "Language"
+  }
+}

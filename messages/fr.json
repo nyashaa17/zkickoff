@@ -1,0 +1,15 @@
+{
+  "Navbar": {
+    "Home": "Accueil",
+    "LiveStreaming": "En direct",
+    "Menu": "Menu",
+    "Matches": "Matchs",
+    "Stats": "Statistiques",
+    "Articles": "Articles",
+    "ContactUs": "Nous contacter",
+    "PLStreams": "Streams PL",
+    "PrivacyPolicy": "Politique de confidentialité",
+    "TermsConditions": "Conditions générales",
+    "Language": "Langue"
+  }
+}

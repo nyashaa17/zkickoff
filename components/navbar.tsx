@@ -6,8 +6,11 @@ import { useRouter } from 'next/navigation';
 import { Search, Play, Tv, Calendar, X, Menu, Clock, SlidersHorizontal, ChevronRight, Trophy, Sparkles, Home, Shield, FileText, Info, Mail, Newspaper } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Match } from '@/lib/matches-data';
+import LanguageSwitcher from './language-switcher';
+import { useTranslations } from 'next-intl';
 
 export default function Navbar() {
+  const t = useTranslations('Navbar');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [allMatches, setAllMatches] = useState<Match[]>([]);
@@ -74,16 +77,18 @@ export default function Navbar() {
           <div className="flex items-center gap-6">
             <nav className="hidden md:flex items-center gap-6 text-sm font-display font-bold text-neutral-600">
               <Link href="/" className="hover:text-zim-green transition-colors py-1">
-                Home
+                {t('Home')}
               </Link>
               <Link href="/live" className="hover:text-zim-green transition-colors py-1 flex items-center gap-1.5">
                 <span className="relative flex h-1.5 w-1.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-zim-red opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-zim-red"></span>
                 </span>
-                Live Streaming
+                {t('LiveStreaming')}
               </Link>
             </nav>
+
+            <LanguageSwitcher />
 
             {/* Unified Hamburger Menu Button */}
             <button
@@ -127,7 +132,7 @@ export default function Navbar() {
                   className="flex items-center gap-4 px-4 py-3.5 bg-[#e8f3ec] text-[#1E8F4E] rounded-xl font-medium text-[15px] shadow-[0_1px_2px_rgba(0,0,0,0.01)]"
                 >
                   <Home className="w-[1.1rem] h-[1.1rem] stroke-[2.5]" />
-                  <span>Matches</span>
+                  <span>{t('Matches')}</span>
                 </Link>
 
                 <Link
@@ -136,7 +141,7 @@ export default function Navbar() {
                   className="flex items-center gap-4 px-4 py-3.5 text-slate-600 hover:bg-neutral-50 rounded-xl font-medium text-[15px] transition-colors"
                 >
                   <Trophy className="w-5 h-5 stroke-[2]" />
-                  <span>Stats</span>
+                  <span>{t('Stats')}</span>
                 </Link>
 
                 <Link
@@ -145,7 +150,7 @@ export default function Navbar() {
                   className="flex items-center gap-4 px-4 py-3.5 text-slate-600 hover:bg-neutral-50 rounded-xl font-medium text-[15px] transition-colors"
                 >
                   <Newspaper className="w-5 h-5 stroke-[2]" />
-                  <span>Articles</span>
+                  <span>{t('Articles')}</span>
                 </Link>
 
                 <Link
@@ -154,7 +159,7 @@ export default function Navbar() {
                   className="flex items-center gap-4 px-4 py-3.5 text-slate-600 hover:bg-neutral-50 rounded-xl font-medium text-[15px] transition-colors"
                 >
                   <Mail className="w-5 h-5 stroke-[2]" />
-                  <span>Contact us</span>
+                  <span>{t('ContactUs')}</span>
                 </Link>
 
                 <Link
@@ -163,7 +168,7 @@ export default function Navbar() {
                   className="flex items-center gap-4 px-4 py-3.5 text-slate-600 hover:bg-neutral-50 rounded-xl font-medium text-[15px] transition-colors"
                 >
                   <Tv className="w-5 h-5 stroke-[2]" />
-                  <span>PL Streams</span>
+                  <span>{t('PLStreams')}</span>
                 </Link>
 
                 <div className="py-2 px-1">
@@ -176,7 +181,7 @@ export default function Navbar() {
                   className="flex items-center gap-4 px-4 py-3.5 text-slate-600 hover:bg-neutral-50 rounded-xl font-medium text-[15px] transition-colors"
                 >
                   <Shield className="w-5 h-5 stroke-[2]" />
-                  <span>Privacy Policy</span>
+                  <span>{t('PrivacyPolicy')}</span>
                 </Link>
 
                 <Link
@@ -185,7 +190,7 @@ export default function Navbar() {
                   className="flex items-center gap-4 px-4 py-3.5 text-slate-600 hover:bg-neutral-50 rounded-xl font-medium text-[15px] transition-colors"
                 >
                   <FileText className="w-5 h-5 stroke-[2]" />
-                  <span>Terms & Conditions</span>
+                  <span>{t('TermsConditions')}</span>
                 </Link>
               </div>
             </motion.div>
