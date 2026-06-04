@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://zimkickoff.co.zw/sitemap.xml

@@ -20,15 +20,79 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: 'ZimKickOff - Watch Free Live Football Matches',
-  description: 'Listen and stream free live football matches in Zimbabwe. Fast, reliable, mobile-optimized, and no signup needed. Follow the Zimbabwe Premier Soccer League and global tournaments.',
-  keywords: 'ZimKickOff, Live Football Zimbabwe, ZPSL Streaming, Dynamos FC stream, Highlanders FC stream, CAPS United stream, free soccer stream, football live streams, Zimbabwe soccer',
+  title: 'ZimKickOff - Watch Live Football Matches Free',
+  description: 'Watch Free Live Football Streams In HD No Signup Required Stream Premier League UEFA Champions League La Liga And Top Matches Worldwide Instantly',
+  keywords: 'ZimKickOff, Live Football Zimbabwe, free soccer stream, football live streams, Zimbabwe soccer, Koora live, كورة لايف, Yalla shoot, يلاشوت, Live stream, Football stream',
+  metadataBase: new URL('https://zimkickoff.co.zw'),
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'ZimKickOff - Watch Live Football Matches Free',
+    description: 'Watch Free Live Football Streams In HD No Signup Required Stream Premier League UEFA Champions League La Liga And Top Matches Worldwide Instantly',
+    url: 'https://zimkickoff.co.zw',
+    type: 'website',
+    images: [
+      {
+        url: '/OpenGraph.png',
+        width: 1200,
+        height: 630,
+        alt: 'ZimKickOff Open Graph Image',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'ZimKickOff - Watch Live Football Matches Free',
+    description: 'Watch Free Live Football Streams In HD No Signup Required Stream Premier League UEFA Champions League La Liga And Top Matches Worldwide Instantly',
+    images: ['/OpenGraph.png'],
+  },
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon-96x96.png', type: 'image/png', sizes: '96x96' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180' },
+    ],
+  },
 };
 
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
     <html lang="en" className={`${inter.variable} ${poppins.variable}`} suppressHydrationWarning>
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              "name": "ZimKickOff",
+              "url": "https://zimkickoff.co.zw/",
+              "description": "Watch live football matches for free on ZimKickOff. Stream HD football games worldwide, including Premier League, Champions League, and more",
+              "applicationCategory": "SportsApplication",
+              "operatingSystem": "Web",
+              "publisher": {
+                "@type": "Organization",
+                "name": "ZimKickOff",
+                "logo": {
+                  "@type": "ImageObject",
+                  "url": "https://zimkickoff.co.zw/apple-touch-icon.png"
+                }
+              },
+              "brand": {
+                "@type": "Brand",
+                "name": "ZimKickOff"
+              },
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD"
+              }
+            })
+          }}
+        />
         <Script async src="https://www.googletagmanager.com/gtag/js?id=G-1T22JFEXXS" />
         <Script src="https://5gvci.com/act/files/tag.min.js?z=11078190" data-cfasync="false" strategy="lazyOnload" />
         <Script id="google-analytics">
