@@ -55,11 +55,19 @@ export async function GET(req: NextRequest) {
       const data: LivescoreResponseRaw = await res.json();
       const rawMatches: Match[] = [];
       
+      let dateLabel = 'Today';
+      if (dateParam && dateParam.length === 8) {
+        const yyyy = dateParam.slice(0, 4);
+        const mm = dateParam.slice(4, 6);
+        const dd = dateParam.slice(6, 8);
+        dateLabel = `${dd}/${mm}/${yyyy}`;
+      }
+
       if (data.Stages) {
          data.Stages.forEach((stage) => {
            if (stage.Events) {
              stage.Events.forEach((event) => {
-               rawMatches.push(parseRawEventToMatch(event, stage.Snm, stage.Cnm, 'Today'));
+               rawMatches.push(parseRawEventToMatch(event, stage.Snm, stage.Cnm, dateLabel));
              });
            }
          });

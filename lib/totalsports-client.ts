@@ -12,83 +12,13 @@ import { getClientTeamLogo, getClientLeagueLogo } from './bzzoiro-client';
  */
 export async function fetchLivescoresDirect(dateParam?: string) {
   try {
-    if (dateParam) {
-      const res = await fetch(`https://king.totalsportslive.co.zw/api/livescore?date=${dateParam}&t=${Date.now()}`);
-      if (!res.ok) {
-        throw new Error(`Failed to fetch raw score provider: ${res.status}`);
-      }
-      const data: LivescoreResponseRaw = await res.json();
-      const rawMatches: Match[] = [];
-
-      if (data.Stages) {
-        data.Stages.forEach((stage) => {
-          if (stage.Events) {
-            stage.Events.forEach((eventItem) => {
-              const m = parseRawEventToMatch(eventItem, stage.Snm, stage.Cnm, 'Today');
-              const homeLogo = getClientTeamLogo(m.teams.home.name);
-              const awayLogo = getClientTeamLogo(m.teams.away.name);
-              const leagueLogo = getClientLeagueLogo(m.competition);
-
-              m.teams.home.bzzBadge = homeLogo;
-              m.teams.home.logoUrl = homeLogo || undefined;
-              m.teams.away.bzzBadge = awayLogo;
-              m.teams.away.logoUrl = awayLogo || undefined;
-              m.leagueLogoUrl = leagueLogo || undefined;
-              rawMatches.push(m);
-            });
-          }
-        });
-      }
-      return { matches: rawMatches };
-    } else {
-      const yesterdayStr = getFormattedDateString(-1);
-      const todayStr = getFormattedDateString(0);
-      const tomorrowStr = getFormattedDateString(1);
-
-      const [yesterdayRes, todayRes, tomorrowRes] = await Promise.all([
-        fetch(`https://king.totalsportslive.co.zw/api/livescore?date=${yesterdayStr}`).catch(() => null),
-        fetch(`https://king.totalsportslive.co.zw/api/livescore?date=${todayStr}`).catch(() => null),
-        fetch(`https://king.totalsportslive.co.zw/api/livescore?date=${tomorrowStr}`).catch(() => null)
-      ]);
-
-      const processResponse = async (res: Response | null, dateLabel: string) => {
-        const list: Match[] = [];
-        if (!res || !res.ok) return list;
-        try {
-          const data: LivescoreResponseRaw = await res.json();
-          if (data && data.Stages) {
-            data.Stages.forEach((stage) => {
-              if (stage.Events) {
-                stage.Events.forEach((eventItem) => {
-                  const m = parseRawEventToMatch(eventItem, stage.Snm, stage.Cnm, dateLabel);
-                  const homeLogo = getClientTeamLogo(m.teams.home.name);
-                  const awayLogo = getClientTeamLogo(m.teams.away.name);
-                  const leagueLogo = getClientLeagueLogo(m.competition);
-
-                  m.teams.home.bzzBadge = homeLogo;
-                  m.teams.home.logoUrl = homeLogo || undefined;
-                  m.teams.away.bzzBadge = awayLogo;
-                  m.teams.away.logoUrl = awayLogo || undefined;
-                  m.leagueLogoUrl = leagueLogo || undefined;
-                  list.push(m);
-                });
-              }
-            });
-          }
-        } catch (e) {
-          console.error(`Error parsing direct ${dateLabel} scores:`, e);
-        }
-        return list;
-      };
-
-      const [yesterdayMatches, todayMatches, tomorrowMatches] = await Promise.all([
-        processResponse(yesterdayRes, 'Yesterday'),
-        processResponse(todayRes, 'Today'),
-        processResponse(tomorrowRes, 'Tomorrow')
-      ]);
-
-      return { matches: [...yesterdayMatches, ...todayMatches, ...tomorrowMatches] };
+    const url = dateParam ? `/api/livescore?date=${dateParam}` : '/api/livescore';
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch livescores from proxy: ${res.status}`);
     }
+    const data = await res.json();
+    return data;
   } catch (error: any) {
     console.error('Livescore direct fetch error:', error);
     return { matches: [], error: error.message };
@@ -100,26 +30,15 @@ export async function fetchLivescoresDirect(dateParam?: string) {
  */
 export async function fetchStatsDirect(competition = 'premier-league', dateOrCategory = 'england', sport = 'football') {
   try {
-    const backendUrl = `https://cap.totalsportslive.co.zw/api/stats?competition=${competition}&dateOrCategory=${dateOrCategory}&sport=${sport}`;
-    const res = await fetch(backendUrl);
+    const proxyUrl = `/api/stats?competition=${competition}&dateOrCategory=${dateOrCategory}&sport=${sport}`;
+    const res = await fetch(proxyUrl);
     if (!res.ok) {
-      throw new Error(`Failed to fetch stats from cap server: ${res.status}`);
+      throw new Error(`Failed to fetch stats from proxy server: ${res.status}`);
     }
     const data = await res.json();
-
-    if (Array.isArray(data)) {
-      for (const category of data) {
-        if (category.players && Array.isArray(category.players)) {
-          for (const player of category.players) {
-            const logo = getClientTeamLogo(player.teamName);
-            player.logoUrl = logo || undefined;
-          }
-        }
-      }
-    }
     return data;
   } catch (error: any) {
-    console.error('Stats direct fetch error:', error);
+    console.error('Stats fetch error:', error.message || error);
     // Return graceful mock fallback
     return [
       {
@@ -142,6 +61,14 @@ export async function fetchMatchButtonsDirect(matchId: string, homeParam?: strin
   try {
     const res = await fetch(`https://app.totalsportss.online/match-buttons/${matchId}`);
     if (!res.ok) {
+      if (res.status === 404) {
+        // Return 404 as an empty server list gracefully, not as an error
+        return {
+          matchId,
+          servers: [],
+          rawHtml: `<div class="p-4 text-center text-xs text-neutral-400">Stream links not available yet.</div>`
+        };
+      }
       throw new Error(`Failed to fetch buttons: ${res.status}`);
     }
     const html = await res.text();

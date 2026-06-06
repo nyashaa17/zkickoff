@@ -192,6 +192,7 @@ export function parseRawEventToMatch(event: ListEventRaw, stageName: string, cou
     })(),
     kickoffTime,
     dateString: dateStringOption,
+    esd: event.Esd ? String(event.Esd) : undefined,
     category,
     venue: event.Vnm || 'National Sports Stadium, Harare',
     spectators: '24,500',

@@ -1,8 +1,6 @@
 import type {Metadata} from 'next';
 import { Inter, Poppins } from 'next/font/google';
 import Script from 'next/script';
-import { NextIntlClientProvider } from 'next-intl';
-import { getMessages, getLocale } from 'next-intl/server';
 import './globals.css'; // Global styles
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
@@ -60,12 +58,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({children}: {children: React.ReactNode}) {
-  const messages = await getMessages();
-  const locale = await getLocale();
-
+export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
-    <html lang={locale} className={`${inter.variable} ${poppins.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${poppins.variable}`} suppressHydrationWarning>
       <head>
         <script
           type="application/ld+json"
@@ -111,8 +106,7 @@ export default async function RootLayout({children}: {children: React.ReactNode}
         <meta name="monetag" content="15fd02df8bbf6f0f2db83bb49f023835" />
       </head>
       <body className="font-sans bg-[#F9F9FB] text-neutral-900 selection:bg-[#009739] selection:text-white antialiased min-h-screen flex flex-col" suppressHydrationWarning>
-        <NextIntlClientProvider messages={messages} locale={locale}>
-          <Script id="monetag-script" strategy="afterInteractive">
+        <Script id="monetag-script" strategy="afterInteractive">
           {`(function(s){s.dataset.zone='11055207',s.src='https://al5sm.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`}
         </Script>
         <Script id="monetag-vignette-script" strategy="afterInteractive">
@@ -136,7 +130,6 @@ export default async function RootLayout({children}: {children: React.ReactNode}
           <div className="w-[10%] h-full bg-[#FFD100]"></div>
           <div className="w-[40%] h-full bg-[#D62828]"></div>
         </div>
-        </NextIntlClientProvider>
       </body>
     </html>
   );

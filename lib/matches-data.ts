@@ -25,6 +25,7 @@ export interface Match {
   leagueLogoUrl?: string; // Explicit league logo from Bzzoiro Sports API
   kickoffTime: string; // e.g., "15:00"
   dateString: string;  // e.g., "Today", "Tomorrow"
+  esd?: string;        // Raw start datetime (YYYYMMDDHHMMSS)
   category: 'ZPSL' | 'INTERNATIONAL' | 'AFRICA';
   venue: string;
   spectators: string;

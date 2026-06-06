@@ -1,28 +1,31 @@
-'use client';
+"use client";
 
-import React, { Suspense, useState, useEffect } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { useSearchParams } from 'next/navigation';
-import useSWR from 'swr';
-import { 
-  Play, 
-  Flame, 
-  Calendar, 
-  Tv, 
-  Sparkles, 
-  Search, 
-  Clock, 
-  TrendingUp, 
-  Network, 
+import React, { Suspense, useState, useEffect } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useSearchParams } from "next/navigation";
+import useSWR from "swr";
+import {
+  Play,
+  Flame,
+  Calendar,
+  Tv,
+  Sparkles,
+  Search,
+  Clock,
+  TrendingUp,
+  Network,
   ListOrdered,
-  AlertCircle
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Match } from '@/lib/matches-data';
-import MatchCard from '@/components/match-card';
-import { MatchGridSkeleton } from '@/components/skeleton-loader';
-import { fetchLivescoresDirect, fetchStatsDirect } from '@/lib/totalsports-client';
+  AlertCircle,
+} from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { Match } from "@/lib/matches-data";
+import MatchCard from "@/components/match-card";
+import { MatchGridSkeleton } from "@/components/skeleton-loader";
+import {
+  fetchLivescoresDirect,
+  fetchStatsDirect,
+} from "@/lib/totalsports-client";
 
 interface PlayerStat {
   rank: number;
@@ -39,26 +42,152 @@ interface StatCategory {
 
 function HomeContent() {
   const searchParams = useSearchParams();
-  const initialCategory = searchParams.get('filter');
-  const initialTab = searchParams.get('tab') as 'LIVE' | 'TODAY' | 'UPCOMING' | 'FINISHED' | null;
-  
-  const [activeTab, setActiveTab] = useState<'LIVE' | 'TODAY' | 'UPCOMING' | 'FINISHED'>(initialTab || 'TODAY');
-  const [activeCategory, setActiveCategory] = useState<string>('ALL');
-  const [sidebarTab, setSidebarTab] = useState<'STANDINGS' | 'STATS'>('STANDINGS');
+  const initialCategory = searchParams.get("filter");
+  const initialTab = searchParams.get("tab") as
+    | "LIVE"
+    | "TODAY"
+    | "UPCOMING"
+    | "FINISHED"
+    | null;
 
-  const fetcher = (url: string) => fetch(url).then(res => {
-    if (!res.ok) throw new Error('Fetch failed');
-    return res.json();
-  });
+  const [activeTab, setActiveTab] = useState<
+    "LIVE" | "TODAY" | "UPCOMING" | "FINISHED"
+  >(initialTab || "TODAY");
+  const [activeCategory, setActiveCategory] = useState<string>("ALL");
+  const [sidebarTab, setSidebarTab] = useState<"STANDINGS" | "STATS">(
+    "STANDINGS",
+  );
+  const [selectedDateFilter, setSelectedDateFilter] = useState<string | null>(
+    null,
+  );
 
-  // Load real scores directly on the client to avoid server-side request blocking
-  const { data: livescoreData, error: livescoreError, isLoading: loading } = useSWR('livescores-direct', () => fetchLivescoresDirect(), {
-    refreshInterval: 25000,
-    revalidateOnFocus: true,
-    keepPreviousData: true,
-  });
+  const fetcher = (url: string) =>
+    fetch(url).then((res) => {
+      if (!res.ok) throw new Error("Fetch failed");
+      return res.json();
+    });
+
+  const weekDates = React.useMemo(() => {
+    const dates = [];
+    const now = new Date();
+    const currentDay = now.getDay();
+    // Monday of the current week (if Sunday, currentDay is 0, offset by -6 to get previous Monday)
+    const diff = now.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
+
+    // Generate 14 continuous days starting from current Monday (covers 2 full weeks: Mon-Sun)
+    for (let i = 0; i < 14; i++) {
+      const d = new Date(now);
+      d.setDate(diff + i);
+
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      const dateString = `${yyyy}${mm}${dd}`;
+
+      const isToday =
+        yyyy === new Date().getFullYear() &&
+        d.getMonth() === new Date().getMonth() &&
+        d.getDate() === new Date().getDate();
+
+      const dayName = d.toLocaleDateString("en-US", { weekday: "short" });
+      const dateNumber = d.getDate();
+      const monthName = d.toLocaleDateString("en-US", { month: "short" });
+
+      dates.push({ dateString, dayName, dateNumber, isToday, monthName });
+    }
+    return dates;
+  }, []);
+
+  const dateScrollRef = React.useRef<HTMLDivElement>(null);
+
+  const datePickerLabel = React.useMemo(() => {
+    if (!selectedDateFilter) return "Pick Date";
+    try {
+      const yyyy = selectedDateFilter.slice(0, 4);
+      const mmStr = selectedDateFilter.slice(4, 6);
+      const ddStr = selectedDateFilter.slice(6, 8);
+      const dateObj = new Date(
+        parseInt(yyyy, 10),
+        parseInt(mmStr, 10) - 1,
+        parseInt(ddStr, 10)
+      );
+      return dateObj.toLocaleDateString("en-US", { day: "numeric", month: "short" });
+    } catch {
+      return "Calendar Date";
+    }
+  }, [selectedDateFilter]);
+
+  const displayedWeekDates = React.useMemo(() => {
+    if (!selectedDateFilter) return weekDates;
+    const exists = weekDates.some((d) => d.dateString === selectedDateFilter);
+    if (exists) return weekDates;
+
+    const yyyy = selectedDateFilter.slice(0, 4);
+    const mmStr = selectedDateFilter.slice(4, 6);
+    const ddStr = selectedDateFilter.slice(6, 8);
+    const dateObj = new Date(
+      parseInt(yyyy, 10),
+      parseInt(mmStr, 10) - 1,
+      parseInt(ddStr, 10)
+    );
+
+    const dayName = dateObj.toLocaleDateString("en-US", { weekday: "short" });
+    const dateNumber = dateObj.getDate();
+    const monthName = dateObj.toLocaleDateString("en-US", { month: "short" });
+
+    return [
+      {
+        dateString: selectedDateFilter,
+        dayName,
+        dateNumber,
+        isToday: false,
+        monthName,
+        isCustom: true,
+      },
+      ...weekDates,
+    ];
+  }, [weekDates, selectedDateFilter]);
+
+  useEffect(() => {
+    if (dateScrollRef.current) {
+      const timer = setTimeout(() => {
+        const targetElement =
+          dateScrollRef.current?.querySelector('[data-is-selected="true"]') ||
+          dateScrollRef.current?.querySelector('[data-is-today="true"]');
+        if (targetElement) {
+          targetElement.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest",
+            inline: "center",
+          });
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedDateFilter, displayedWeekDates]);
+
+  // Load real scores directly on the client with explicit SWR key tuple mapping to prevent stale closure data updates
+  const swrKey = selectedDateFilter
+    ? ["livescores-direct", selectedDateFilter]
+    : ["livescores-direct", "today"];
+  const {
+    data: livescoreData,
+    error: livescoreError,
+    isLoading: loading,
+  } = useSWR(
+    swrKey,
+    ([, dateStr]) => fetchLivescoresDirect(dateStr === "today" ? undefined : dateStr),
+    {
+      refreshInterval: 25000,
+      revalidateOnFocus: true,
+      keepPreviousData: false,
+    },
+  );
 
   const matches = React.useMemo<Match[]>(() => {
+    if (loading) {
+      return [];
+    }
     if (livescoreData && livescoreData.matches) {
       return livescoreData.matches;
     }
@@ -66,58 +195,66 @@ function HomeContent() {
     if (livescoreError) {
       return [
         {
-          id: 'mock-1',
-          slug: 'dynamos-vs-caps-united-mock-1',
+          id: "mock-1",
+          slug: "dynamos-vs-caps-united-mock-1",
           teams: {
-            home: { name: 'Dynamos FC', code: 'DYN', logoColor: '#0056B3' },
-            away: { name: 'CAPS United', code: 'CAP', logoColor: '#009739' }
+            home: { name: "Dynamos FC", code: "DYN", logoColor: "#0056B3" },
+            away: { name: "CAPS United", code: "CAP", logoColor: "#009739" },
           },
           score: { home: 1, away: 0 },
-          status: 'LIVE',
+          status: "LIVE",
           minute: 34,
-          competition: 'Zimbabwe Premier Soccer League',
-          kickoffTime: '15:00',
-          dateString: 'Today',
-          category: 'ZPSL',
-          venue: 'Rufaro Stadium',
-          spectators: '15,000',
-          servers: []
+          competition: "Zimbabwe Premier Soccer League",
+          kickoffTime: "15:00",
+          dateString: "Today",
+          category: "ZPSL",
+          venue: "Rufaro Stadium",
+          spectators: "15,000",
+          servers: [],
         } as Match,
         {
-          id: 'mock-2',
-          slug: 'highlanders-vs-fc-platinum-mock-2',
+          id: "mock-2",
+          slug: "highlanders-vs-fc-platinum-mock-2",
           teams: {
-            home: { name: 'Highlanders FC', code: 'HIG', logoColor: '#111111' },
-            away: { name: 'FC Platinum', code: 'FCP', logoColor: '#007a33' }
+            home: { name: "Highlanders FC", code: "HIG", logoColor: "#111111" },
+            away: { name: "FC Platinum", code: "FCP", logoColor: "#007a33" },
           },
           score: { home: 0, away: 0 },
-          status: 'TODAY',
-          competition: 'Zimbabwe Premier Soccer League',
-          kickoffTime: '18:00',
-          dateString: 'Today',
-          category: 'ZPSL',
-          venue: 'Barbourfields Stadium',
-          spectators: '12,000',
-          servers: []
-        } as Match
+          status: "TODAY",
+          competition: "Zimbabwe Premier Soccer League",
+          kickoffTime: "18:00",
+          dateString: "Today",
+          category: "ZPSL",
+          venue: "Barbourfields Stadium",
+          spectators: "12,000",
+          servers: [],
+        } as Match,
       ];
     }
     return [];
-  }, [livescoreData, livescoreError]);
+  }, [livescoreData, livescoreError, loading]);
 
   // Load player statistics directly on the client to avoid server-side request blocking
-  const { data: statsData, isLoading: statsLoading } = useSWR('stats-direct', () => fetchStatsDirect(), {
-    revalidateOnFocus: false,
-    keepPreviousData: true,
-  });
+  const { data: statsData, isLoading: statsLoading } = useSWR(
+    "stats-direct",
+    () => fetchStatsDirect(),
+    {
+      revalidateOnFocus: false,
+      keepPreviousData: true,
+    },
+  );
 
   const stats = statsData || [];
 
   // Load major league standings from API proxy using SWR
-  const { data: standingsData, isLoading: standingsLoading } = useSWR(`/api/standings?competition=${encodeURIComponent(activeCategory)}`, fetcher, {
-    revalidateOnFocus: false,
-    keepPreviousData: true,
-  });
+  const { data: standingsData, isLoading: standingsLoading } = useSWR(
+    `/api/standings?competition=${encodeURIComponent(activeCategory)}`,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      keepPreviousData: true,
+    },
+  );
 
   const standings = standingsData || [];
 
@@ -134,29 +271,56 @@ function HomeContent() {
   const filteredMatches = React.useMemo(() => {
     return matches.filter((match: Match) => {
       // 1. Status Filter
-      const matchesStatus = match.status === activeTab;
-      
+      // If a specific date is selected, show all matches for that date ignoring the tab
+      const matchesStatus = selectedDateFilter
+        ? true
+        : match.status === activeTab;
+
       // 2. League Filter
-      if (activeCategory === 'ALL') {
+      if (activeCategory === "ALL") {
         return matchesStatus;
       }
       return matchesStatus && match.competition === activeCategory;
     });
-  }, [matches, activeTab, activeCategory]);
+  }, [matches, activeTab, activeCategory, selectedDateFilter]);
 
-  const liveCount = React.useMemo(() => matches.filter((m: Match) => m.status === 'LIVE').length, [matches]);
-  const todayCount = React.useMemo(() => matches.filter((m: Match) => m.status === 'TODAY').length, [matches]);
-  const upcomingCount = React.useMemo(() => matches.filter((m: Match) => m.status === 'UPCOMING').length, [matches]);
-  const finishedCount = React.useMemo(() => matches.filter((m: Match) => m.status === 'FINISHED').length, [matches]);
+  const liveCount = React.useMemo(
+    () => matches.filter((m: Match) => m.status === "LIVE").length,
+    [matches],
+  );
+  const todayCount = React.useMemo(
+    () => matches.filter((m: Match) => m.status === "TODAY").length,
+    [matches],
+  );
+  const upcomingCount = React.useMemo(
+    () => matches.filter((m: Match) => m.status === "UPCOMING").length,
+    [matches],
+  );
+  const finishedCount = React.useMemo(
+    () => matches.filter((m: Match) => m.status === "FINISHED").length,
+    [matches],
+  );
 
-  const majorLeagues = React.useMemo(() => [
-    'English Premier League', 'LaLiga', 'Serie A', 'Bundesliga', 'Ligue 1', 
-    'Champions League', 'Europa League', 'ZPSL', 'Zimbabwe Premier Soccer League'
-  ], []);
-  
+  const majorLeagues = React.useMemo(
+    () => [
+      "English Premier League",
+      "LaLiga",
+      "Serie A",
+      "Bundesliga",
+      "Ligue 1",
+      "Champions League",
+      "Europa League",
+      "ZPSL",
+      "Zimbabwe Premier Soccer League",
+    ],
+    [],
+  );
+
   const tabMatches = React.useMemo(() => {
-    return matches.filter((m: Match) => m.status === activeTab);
-  }, [matches, activeTab]);
+    return matches.filter((m: Match) =>
+      selectedDateFilter ? true : m.status === activeTab,
+    );
+  }, [matches, activeTab, selectedDateFilter]);
 
   // Pre-compute a map of competition -> leagueLogoUrl to optimize filter map rendering
   const leagueLogoMap = React.useMemo(() => {
@@ -170,19 +334,28 @@ function HomeContent() {
   }, [matches]);
 
   const leagueFilters = React.useMemo(() => {
-    const uniqueLeaguesList = Array.from(new Set(tabMatches.map((m: Match) => m.competition as string))) as string[];
+    const uniqueLeaguesList = Array.from(
+      new Set(tabMatches.map((m: Match) => m.competition as string)),
+    ) as string[];
     const sorted = uniqueLeaguesList.sort((a: string, b: string) => {
-      const aIsMajor = majorLeagues.some(ml => a.toLowerCase().includes(ml.toLowerCase()));
-      const bIsMajor = majorLeagues.some(ml => b.toLowerCase().includes(ml.toLowerCase()));
+      const aIsMajor = majorLeagues.some((ml) =>
+        a.toLowerCase().includes(ml.toLowerCase()),
+      );
+      const bIsMajor = majorLeagues.some((ml) =>
+        b.toLowerCase().includes(ml.toLowerCase()),
+      );
       if (aIsMajor && !bIsMajor) return -1;
       if (!aIsMajor && bIsMajor) return 1;
       return a.localeCompare(b);
     });
-    return ['ALL', ...sorted];
+    return ["ALL", ...sorted];
   }, [tabMatches, majorLeagues]);
 
   const groupedTodayMatches = React.useMemo(() => {
-    const groups: Record<string, { leagueName: string; leagueLogoUrl?: string; matches: Match[] }> = {};
+    const groups: Record<
+      string,
+      { leagueName: string; leagueLogoUrl?: string; matches: Match[] }
+    > = {};
     filteredMatches.forEach((m: Match) => {
       if (!groups[m.competition]) {
         groups[m.competition] = {
@@ -198,10 +371,11 @@ function HomeContent() {
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-10">
-      
       {/* Hero section */}
-      <section id="hero" className="w-full p-6 md:p-10 mb-8 md:mb-12 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
-        
+      <section
+        id="hero"
+        className="w-full p-6 md:p-10 mb-8 md:mb-12 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6"
+      >
         {/* Visual modern grid overlay background */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#f1f5f9_1px,transparent_1px),linear-gradient(to_bottom,#f1f5f9_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-30 pointer-events-none" />
 
@@ -211,26 +385,35 @@ function HomeContent() {
 
         <div className="space-y-4 max-w-2xl relative z-10 text-center md:text-left">
           <h1 className="font-display font-extrabold text-3xl md:text-5xl tracking-tight text-neutral-950 leading-tight">
-            Watch Live Football <br className="hidden md:inline" /> Matches <span className="text-zim-green underline decoration-zim-yellow decoration-3">Free</span>
+            Watch Live Football <br className="hidden md:inline" /> Matches{" "}
+            <span className="text-zim-green underline decoration-zim-yellow decoration-3">
+              Free
+            </span>
           </h1>
           <p className="text-neutral-500 font-medium text-sm md:text-base max-w-lg">
-            Watch Free Live Football Streams In HD No Signup Required Stream Premier League UEFA Champions League La Liga And Top Matches Worldwide Instantly
+            Watch Free Live Football Streams In HD No Signup Required Stream
+            Premier League UEFA Champions League La Liga And Top Matches
+            Worldwide Instantly
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-3 pt-2">
-            <button 
+            <button
               onClick={() => {
-                setActiveTab('LIVE');
-                document.getElementById('matches-feed')?.scrollIntoView({ behavior: 'smooth' });
+                setActiveTab("LIVE");
+                document
+                  .getElementById("matches-feed")
+                  ?.scrollIntoView({ behavior: "smooth" });
               }}
               className="w-full sm:w-auto cursor-pointer px-5 py-3 bg-zim-green hover:bg-opacity-95 text-white font-display text-xs font-semibold rounded-xl shadow-xs hover:shadow-lg hover:shadow-zim-green/10 flex items-center justify-center gap-2 transition-all"
             >
               <Play className="w-3.5 h-3.5 fill-white" />
               Watch Live Streams ({liveCount})
             </button>
-            <button 
+            <button
               onClick={() => {
-                setActiveTab('TODAY');
-                document.getElementById('matches-feed')?.scrollIntoView({ behavior: 'smooth' });
+                setActiveTab("TODAY");
+                document
+                  .getElementById("matches-feed")
+                  ?.scrollIntoView({ behavior: "smooth" });
               }}
               className="w-full sm:w-auto cursor-pointer px-5 py-3 bg-white border border-neutral-200 text-neutral-700 hover:text-neutral-900 hover:border-neutral-300 font-display text-xs font-semibold rounded-xl flex items-center justify-center gap-2 transition-all"
             >
@@ -254,21 +437,18 @@ function HomeContent() {
           </div>
           <div className="w-full h-[1px] bg-neutral-200 my-4" />
           <p className="text-neutral-500 text-xs leading-relaxed">
-            Data compression protocol active to reduce bandwidth usage on mobile bundles.
+            Data compression protocol active to reduce bandwidth usage on mobile
+            bundles.
           </p>
         </div>
       </section>
 
-
       {/* Main Grid: Match Feed vs Standings Column */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
         {/* Left main content feeding area */}
         <div id="matches-feed" className="lg:col-span-2 space-y-6 scroll-mt-20">
-          
           {/* Filtering and headings header */}
           <div className="flex flex-col gap-4">
-            
             <div className="flex flex-col gap-3">
               <h2 className="font-display font-bold text-xl md:text-2xl text-neutral-950 flex items-center gap-2">
                 <Tv className="w-5 h-5 text-zim-green" />
@@ -277,7 +457,8 @@ function HomeContent() {
 
               <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin pb-2 max-w-full">
                 {leagueFilters.map((league) => {
-                  const leagueLogo = league !== 'ALL' ? leagueLogoMap[league] : undefined;
+                  const leagueLogo =
+                    league !== "ALL" ? leagueLogoMap[league] : undefined;
 
                   return (
                     <button
@@ -285,8 +466,8 @@ function HomeContent() {
                       onClick={() => setActiveCategory(league)}
                       className={`shrink-0 cursor-pointer px-3 py-1.5 text-[10px] md:text-xs font-bold rounded-lg font-display tracking-wide transition-all flex items-center gap-1.5 ${
                         activeCategory === league
-                          ? 'bg-zim-black text-white shadow-xs'
-                          : 'bg-white hover:bg-neutral-100 text-neutral-600 border border-neutral-200'
+                          ? "bg-zim-black text-white shadow-xs"
+                          : "bg-white hover:bg-neutral-100 text-neutral-600 border border-neutral-200"
                       }`}
                     >
                       {leagueLogo && (
@@ -306,49 +487,138 @@ function HomeContent() {
               </div>
             </div>
 
-            {/* Filter tabs: Live | Today | Upcoming | Finished */}
-            <div className="flex border-b border-neutral-200/70 p-1 bg-white border border-neutral-200/50 rounded-2xl relative select-none overflow-x-auto scrollbar-thin">
-              
-              <button
-                onClick={() => setActiveTab('LIVE')}
-                className={`flex-1 min-w-[max-content] px-3 py-3 text-[10px] md:text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                  activeTab === 'LIVE'
-                    ? 'bg-neutral-50 text-zim-red shadow-xs border border-neutral-200'
-                    : 'text-neutral-500 hover:text-neutral-800'
-                }`}
-              >
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-zim-red opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-zim-red"></span>
-                </span>
-                LIVE NOW ({liveCount})
-              </button>
+            {/* Date Selector Strip with Horizontal Scroll */}
+            <div className="flex flex-col gap-2 mt-1">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 text-neutral-800">
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4 text-zim-green" />
+                    <span className="font-display font-bold text-xs uppercase tracking-wider text-neutral-700">
+                      Browse Match Calendar
+                    </span>
+                  </div>
 
-              <button
-                onClick={() => setActiveTab('TODAY')}
-                className={`flex-1 min-w-[max-content] px-3 py-3 text-[10px] md:text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                  activeTab === 'TODAY'
-                    ? 'bg-neutral-50 text-zim-green shadow-xs border border-neutral-200'
-                    : 'text-neutral-500 hover:text-neutral-800'
-                }`}
-              >
-                <Flame className="w-3.5 h-3.5 text-zim-yellow" />
-                TODAY ({todayCount})
-              </button>
+                  {/* Modern Custom-Styled Calendar Date Picker */}
+                  <div className="relative flex items-center">
+                    <label id="date-picker-label" className="cursor-pointer flex items-center gap-1 px-3 py-1 text-[11px] font-bold text-zim-green bg-zim-green/5 border border-zim-green/20 rounded-xl hover:bg-zim-green/10 transition-all select-none">
+                      <Calendar className="w-3 h-3 text-zim-green" />
+                      <span>{datePickerLabel}</span>
+                      <input
+                        id="date-picker-input"
+                        type="date"
+                        value={selectedDateFilter ? `${selectedDateFilter.slice(0, 4)}-${selectedDateFilter.slice(4, 6)}-${selectedDateFilter.slice(6, 8)}` : ""}
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            const cleanDate = e.target.value.replace(/-/g, "");
+                            setSelectedDateFilter(cleanDate);
+                          } else {
+                            setSelectedDateFilter(null);
+                          }
+                        }}
+                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                        style={{ colorScheme: "light" }}
+                      />
+                    </label>
+                  </div>
+                </div>
+                {selectedDateFilter && (
+                  <button
+                    id="clear-filter-btn"
+                    onClick={() => setSelectedDateFilter(null)}
+                    className="cursor-pointer text-[10px] font-bold text-zim-red hover:text-red-700 transition-colors bg-red-50 hover:bg-red-100 px-2 py-1 rounded-lg border border-red-100"
+                  >
+                    Clear Filter
+                  </button>
+                )}
+              </div>
 
-              <button
-                onClick={() => setActiveTab('FINISHED')}
-                className={`flex-1 min-w-[max-content] px-3 py-3 text-[10px] md:text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                  activeTab === 'FINISHED'
-                    ? 'bg-neutral-50 text-neutral-800 shadow-xs border border-neutral-200'
-                    : 'text-neutral-500 hover:text-neutral-800'
-                }`}
-              >
-                <Clock className="w-3.5 h-3.5 text-neutral-400" />
-                FINISHED ({finishedCount})
-              </button>
+              <div className="relative w-full">
+                {/* Horizontal scroll container with scroll-snap and customized padding */}
+                <div
+                  ref={dateScrollRef}
+                  className="flex gap-2.5 overflow-x-auto scrollbar-thin pb-2.5 max-w-full snap-x snap-mandatory scroll-smooth flex-nowrap min-w-full"
+                >
+                  {displayedWeekDates.map((d) => {
+                    const isSelected = selectedDateFilter === d.dateString;
+                    return (
+                      <button
+                        key={d.dateString}
+                        onClick={() => {
+                          if (isSelected) {
+                            setSelectedDateFilter(null);
+                          } else {
+                            setSelectedDateFilter(d.dateString);
+                          }
+                        }}
+                        data-is-selected={isSelected ? "true" : "false"}
+                        data-is-today={d.isToday ? "true" : "false"}
+                        className={`snap-center shrink-0 flex flex-col items-center justify-center min-w-[70px] h-[78px] rounded-2xl transition-all border duration-200 cursor-pointer ${
+                          isSelected
+                            ? "bg-zim-green text-white border-zim-green shadow-md shadow-zim-green/20 scale-[1.02] font-semibold"
+                            : d.isToday
+                              ? "bg-zim-green/5 text-zim-green border-zim-green/30 hover:bg-zim-green/10"
+                              : "bg-white hover:bg-neutral-50 text-neutral-600 border-neutral-200/80 hover:border-neutral-300"
+                        }`}
+                      >
+                        <span className="text-[10px] font-bold uppercase tracking-wider opacity-85">
+                          {d.isToday ? "Today" : d.dayName}
+                        </span>
+                        <span className="text-base font-display font-black leading-none my-1">
+                          {d.dateNumber}
+                        </span>
+                        <span className="text-[9px] font-semibold uppercase tracking-wider opacity-60">
+                          {d.monthName}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
+            {/* Filter tabs: Live | Today | Upcoming | Finished */}
+            {!selectedDateFilter && (
+              <div className="flex border-b border-neutral-200/70 p-1 bg-white border border-neutral-200/50 rounded-2xl relative select-none overflow-x-auto scrollbar-thin">
+                <button
+                  onClick={() => setActiveTab("LIVE")}
+                  className={`flex-1 min-w-[max-content] px-3 py-3 text-[10px] md:text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    activeTab === "LIVE"
+                      ? "bg-neutral-50 text-zim-red shadow-xs border border-neutral-200"
+                      : "text-neutral-500 hover:text-neutral-800"
+                  }`}
+                >
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-zim-red opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-zim-red"></span>
+                  </span>
+                  LIVE NOW ({liveCount})
+                </button>
+
+                <button
+                  onClick={() => setActiveTab("TODAY")}
+                  className={`flex-1 min-w-[max-content] px-3 py-3 text-[10px] md:text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    activeTab === "TODAY"
+                      ? "bg-neutral-50 text-zim-green shadow-xs border border-neutral-200"
+                      : "text-neutral-500 hover:text-neutral-800"
+                  }`}
+                >
+                  <Flame className="w-3.5 h-3.5 text-zim-yellow" />
+                  TODAY ({todayCount})
+                </button>
+
+                <button
+                  onClick={() => setActiveTab("FINISHED")}
+                  className={`flex-1 min-w-[max-content] px-3 py-3 text-[10px] md:text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    activeTab === "FINISHED"
+                      ? "bg-neutral-50 text-neutral-800 shadow-xs border border-neutral-200"
+                      : "text-neutral-500 hover:text-neutral-800"
+                  }`}
+                >
+                  <Clock className="w-3.5 h-3.5 text-neutral-400" />
+                  FINISHED ({finishedCount})
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Matches lists stack */}
@@ -362,11 +632,11 @@ function HomeContent() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                  transition={{ duration: 0.15, ease: "easeOut" }}
                   className="space-y-6"
                 >
                   {filteredMatches.length > 0 ? (
-                    activeTab === 'TODAY' ? (
+                    activeTab === "TODAY" || selectedDateFilter !== null ? (
                       // Grouped by league on Today's tab
                       groupedTodayMatches.map((group) => (
                         <div key={group.leagueName} className="space-y-3">
@@ -413,15 +683,20 @@ function HomeContent() {
                         <AlertCircle className="w-6 h-6" />
                       </div>
                       <div className="space-y-1">
-                        <h4 className="font-display font-bold text-neutral-900 text-sm">No matches in this league</h4>
+                        <h4 className="font-display font-bold text-neutral-900 text-sm">
+                          No matches in this league
+                        </h4>
                         <p className="text-neutral-400 text-xs">
-                          There are currently no {activeTab.toLowerCase()} matches listed under {activeCategory === 'ALL' ? 'any' : activeCategory} league. Check back later or view our full schedules.
+                          There are currently no {activeTab.toLowerCase()}{" "}
+                          matches listed under{" "}
+                          {activeCategory === "ALL" ? "any" : activeCategory}{" "}
+                          league. Check back later or view our full schedules.
                         </p>
                       </div>
                       {/* Fallback actions */}
-                      {activeCategory !== 'ALL' && (
+                      {activeCategory !== "ALL" && (
                         <button
-                          onClick={() => setActiveCategory('ALL')}
+                          onClick={() => setActiveCategory("ALL")}
                           className="mt-2 text-xs font-display font-semibold text-zim-green hover:underline cursor-pointer"
                         >
                           Reset filters to view all matches
@@ -439,7 +714,6 @@ function HomeContent() {
 
         {/* Right sidebar column on desktop (ZPSL League Standings and widget spaces) */}
         <div id="sidebar-widgets" className="space-y-6">
-          
           {/* Sidebar Tabs: League Table & Player Stats */}
           <div className="bg-white border border-neutral-200/60 rounded-3xl p-5 shadow-xs">
             <div className="flex border-b border-neutral-100 pb-2 mb-4 justify-between items-center">
@@ -447,20 +721,24 @@ function HomeContent() {
                 <ListOrdered className="w-4 h-4 text-zim-green" />
                 Schedules & Stats
               </h3>
-              
+
               <div className="flex bg-neutral-100 p-0.5 rounded-lg text-[10px] font-bold">
                 <button
-                  onClick={() => setSidebarTab('STATS')}
+                  onClick={() => setSidebarTab("STATS")}
                   className={`px-2 py-1 rounded-md transition-all cursor-pointer ${
-                    sidebarTab === 'STATS' ? 'bg-white text-neutral-900 shadow-3xs' : 'text-neutral-500 hover:text-neutral-900'
+                    sidebarTab === "STATS"
+                      ? "bg-white text-neutral-900 shadow-3xs"
+                      : "text-neutral-500 hover:text-neutral-900"
                   }`}
                 >
                   TOP SCORERS
                 </button>
                 <button
-                  onClick={() => setSidebarTab('STANDINGS')}
+                  onClick={() => setSidebarTab("STANDINGS")}
                   className={`px-2 py-1 rounded-md transition-all cursor-pointer ${
-                    sidebarTab === 'STANDINGS' ? 'bg-white text-neutral-900 shadow-3xs' : 'text-neutral-500 hover:text-neutral-900'
+                    sidebarTab === "STANDINGS"
+                      ? "bg-white text-neutral-900 shadow-3xs"
+                      : "text-neutral-500 hover:text-neutral-900"
                   }`}
                 >
                   STANDINGS
@@ -468,7 +746,7 @@ function HomeContent() {
               </div>
             </div>
 
-            {sidebarTab === 'STANDINGS' ? (
+            {sidebarTab === "STANDINGS" ? (
               <div className="overflow-x-auto">
                 {standingsLoading ? (
                   <div className="space-y-2 py-4">
@@ -484,28 +762,36 @@ function HomeContent() {
                           <th className="py-2 font-semibold">#</th>
                           <th className="py-2 font-semibold">Team</th>
                           <th className="py-2 text-center font-semibold">P</th>
-                          <th className="py-2 text-center font-semibold">Pts</th>
-                          <th className="py-2 text-right font-semibold hidden md:table-cell">Form</th>
+                          <th className="py-2 text-center font-semibold">
+                            Pts
+                          </th>
+                          <th className="py-2 text-right font-semibold hidden md:table-cell">
+                            Form
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-neutral-50">
                         {standings.map((team: any) => (
-                          <tr key={team.rank} className="hover:bg-neutral-50 transition-colors">
+                          <tr
+                            key={team.rank}
+                            className="hover:bg-neutral-50 transition-colors"
+                          >
                             <td className="py-2.5 font-semibold font-mono text-neutral-500 w-8">
                               {team.rank}
                             </td>
                             <td className="py-2.5 font-bold text-neutral-800">
                               <div className="flex items-center gap-2">
                                 {team.logoUrl && (
-                                  <Image 
-                                    src={team.logoUrl} 
-                                    alt={team.team} 
+                                  <Image
+                                    src={team.logoUrl}
+                                    alt={team.team}
                                     width={16}
                                     height={16}
                                     className="w-4 h-4 object-contain shrink-0"
                                     referrerPolicy="no-referrer"
                                     onError={(e) => {
-                                      (e.target as HTMLElement).style.display = 'none';
+                                      (e.target as HTMLElement).style.display =
+                                        "none";
                                     }}
                                   />
                                 )}
@@ -521,10 +807,14 @@ function HomeContent() {
                             <td className="py-2.5 text-right hidden md:table-cell">
                               <div className="flex gap-1 justify-end">
                                 {team.form.map((f: string, idx: number) => (
-                                  <span 
-                                    key={idx} 
+                                  <span
+                                    key={idx}
                                     className={`w-4 h-4 rounded text-[9px] font-bold inline-flex items-center justify-center font-mono text-white ${
-                                      f === 'W' ? 'bg-[#009739]' : f === 'D' ? 'bg-[#FFD100] text-neutral-800' : 'bg-[#D62828]'
+                                      f === "W"
+                                        ? "bg-[#009739]"
+                                        : f === "D"
+                                          ? "bg-[#FFD100] text-neutral-800"
+                                          : "bg-[#D62828]"
                                     }`}
                                   >
                                     {f}
@@ -536,10 +826,13 @@ function HomeContent() {
                         ))}
                       </tbody>
                     </table>
-                    
+
                     <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between text-[11px] text-[#009739] font-semibold">
                       <span>Major League Standings</span>
-                      <Link href="/?filter=premier-league" className="hover:underline flex items-center gap-0.5">
+                      <Link
+                        href="/?filter=premier-league"
+                        className="hover:underline flex items-center gap-0.5"
+                      >
                         View Match Feeds &rsaquo;
                       </Link>
                     </div>
@@ -560,50 +853,64 @@ function HomeContent() {
                     <div className="h-12 bg-neutral-100 rounded-lg animate-pulse"></div>
                   </div>
                 ) : stats && stats.length > 0 ? (
-                  stats.slice(0, 1).map((category: StatCategory, catIdx: number) => (
-                    <div key={catIdx} className="space-y-3">
-                      <p className="text-[10px] font-mono font-bold text-neutral-400 uppercase tracking-widest">
-                        {category.title} — English Premier League
-                      </p>
-                      <div className="divide-y divide-neutral-100">
-                        {category.players.slice(0, 5).map((player: PlayerStat, pIdx: number) => {
-                          const badgeUrl = (player as any).logoUrl || null;
+                  stats
+                    .slice(0, 1)
+                    .map((category: StatCategory, catIdx: number) => (
+                      <div key={catIdx} className="space-y-3">
+                        <p className="text-[10px] font-mono font-bold text-neutral-400 uppercase tracking-widest">
+                          {category.title} — English Premier League
+                        </p>
+                        <div className="divide-y divide-neutral-100">
+                          {category.players
+                            .slice(0, 5)
+                            .map((player: PlayerStat, pIdx: number) => {
+                              const badgeUrl = (player as any).logoUrl || null;
 
-                          return (
-                            <div key={pIdx} className="py-2 flex items-center justify-between text-xs gap-2">
-                              <div className="flex items-center gap-2.5 min-w-0">
-                                <span className="font-mono text-neutral-400 font-bold w-4 text-center shrink-0">
-                                  {player.rank || pIdx + 1}
-                                </span>
-                                {badgeUrl && (
-                                  <Image 
-                                    src={badgeUrl} 
-                                    alt={player.teamName} 
-                                    width={20}
-                                    height={20}
-                                    className="w-5 h-5 object-contain shrink-0"
-                                    referrerPolicy="no-referrer"
-                                    onError={(e) => {
-                                      (e.target as HTMLElement).style.display = 'none';
-                                    }}
-                                  />
-                                )}
-                                <div className="min-w-0">
-                                  <p className="font-bold text-neutral-800 truncate">{player.name}</p>
-                                  <p className="text-[10px] text-neutral-400 font-medium truncate">{player.teamName}</p>
+                              return (
+                                <div
+                                  key={pIdx}
+                                  className="py-2 flex items-center justify-between text-xs gap-2"
+                                >
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <span className="font-mono text-neutral-400 font-bold w-4 text-center shrink-0">
+                                      {player.rank || pIdx + 1}
+                                    </span>
+                                    {badgeUrl && (
+                                      <Image
+                                        src={badgeUrl}
+                                        alt={player.teamName}
+                                        width={20}
+                                        height={20}
+                                        className="w-5 h-5 object-contain shrink-0"
+                                        referrerPolicy="no-referrer"
+                                        onError={(e) => {
+                                          (
+                                            e.target as HTMLElement
+                                          ).style.display = "none";
+                                        }}
+                                      />
+                                    )}
+                                    <div className="min-w-0">
+                                      <p className="font-bold text-neutral-800 truncate">
+                                        {player.name}
+                                      </p>
+                                      <p className="text-[10px] text-neutral-400 font-medium truncate">
+                                        {player.teamName}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="shrink-0 text-right">
+                                    <span className="font-mono font-extrabold text-neutral-900 bg-neutral-100 px-2.5 py-1 rounded-lg">
+                                      {Object.values(player.stats)[0]}{" "}
+                                      {Object.keys(player.stats)[0] || "Goals"}
+                                    </span>
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="shrink-0 text-right">
-                                <span className="font-mono font-extrabold text-neutral-900 bg-neutral-100 px-2.5 py-1 rounded-lg">
-                                  {Object.values(player.stats)[0]} {Object.keys(player.stats)[0] || 'Goals'}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
+                              );
+                            })}
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    ))
                 ) : (
                   <div className="text-center py-6 text-neutral-400 text-xs">
                     No stats available today. Check back during kickoffs!
@@ -614,26 +921,25 @@ function HomeContent() {
           </div>
 
           {/* Ad spot sidebar */}
-
         </div>
-
       </div>
-
     </div>
   );
 }
 
 export default function HomePage() {
   return (
-    <Suspense fallback={
-      <div className="w-full max-w-7xl mx-auto px-4 md:px-6 py-10">
-        <div className="h-10 bg-neutral-200/50 rounded-2xl w-1/4 mb-6 animate-pulse"></div>
-        <div className="space-y-4">
-          <div className="h-32 bg-neutral-200/50 rounded-3xl animate-pulse"></div>
-          <div className="h-32 bg-neutral-200/50 rounded-3xl animate-pulse"></div>
+    <Suspense
+      fallback={
+        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 py-10">
+          <div className="h-10 bg-neutral-200/50 rounded-2xl w-1/4 mb-6 animate-pulse"></div>
+          <div className="space-y-4">
+            <div className="h-32 bg-neutral-200/50 rounded-3xl animate-pulse"></div>
+            <div className="h-32 bg-neutral-200/50 rounded-3xl animate-pulse"></div>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <HomeContent />
     </Suspense>
   );

@@ -12,24 +12,63 @@ interface MatchCardProps {
 }
 
 // Helper to parse kickoff time relative to the current local date
-function getKickoffDate(dateString: string, kickoffTime: string): Date {
+function getKickoffDate(match: Match): Date {
   const now = new Date();
+  const dateString = match.dateString || 'Today';
+  const kickoffTime = match.kickoffTime || '15:00';
   
   // Parse kickoffTime "HH:MM"
   const [hoursStr, minutesStr] = kickoffTime.split(':');
   const hours = parseInt(hoursStr, 10) || 0;
   const minutes = parseInt(minutesStr, 10) || 0;
-  
+
+  // 1. If match.esd exists, parse YYYYMMDDHHMMSS format (most reliable)
+  if (match.esd && match.esd.length >= 12) {
+    const yyyy = parseInt(match.esd.slice(0, 4), 10);
+    const mm = parseInt(match.esd.slice(4, 6), 10) - 1; // 0-indexed month
+    const dd = parseInt(match.esd.slice(6, 8), 10);
+    const hh = parseInt(match.esd.slice(8, 10), 10);
+    const min = parseInt(match.esd.slice(10, 12), 10);
+    const ss = parseInt(match.esd.slice(12, 14), 10) || 0;
+    
+    const parsedEsd = new Date(yyyy, mm, dd, hh, min, ss);
+    if (!isNaN(parsedEsd.getTime())) {
+      return parsedEsd;
+    }
+  }
+
+  // Fallbacks for mock data or missing esd
   const target = new Date(now);
   target.setHours(hours, minutes, 0, 0);
   
-  if (dateString.toLowerCase() === 'tomorrow') {
+  const dsLower = dateString.toLowerCase();
+  if (dsLower === 'tomorrow') {
     target.setDate(target.getDate() + 1);
-  } else if (dateString.toLowerCase() !== 'today' && dateString.includes('-')) {
-    const parsed = new Date(dateString);
-    if (!isNaN(parsed.getTime())) {
-      parsed.setHours(hours, minutes, 0, 0);
-      return parsed;
+  } else if (dsLower === 'yesterday') {
+    target.setDate(target.getDate() - 1);
+  } else if (dsLower !== 'today') {
+    // Check for DD/MM/YYYY
+    if (dateString.includes('/')) {
+      const parts = dateString.split('/');
+      if (parts.length === 3) {
+        const dd = parseInt(parts[0], 10);
+        const mm = parseInt(parts[1], 10) - 1;
+        const yyyy = parseInt(parts[2], 10);
+        
+        const parsedSl = new Date(yyyy, mm, dd, hours, minutes, 0, 0);
+        if (!isNaN(parsedSl.getTime())) {
+          return parsedSl;
+        }
+      }
+    }
+    
+    // Check for YYYY-MM-DD
+    if (dateString.includes('-')) {
+      const parsedDash = new Date(dateString);
+      if (!isNaN(parsedDash.getTime())) {
+        parsedDash.setHours(hours, minutes, 0, 0);
+        return parsedDash;
+      }
     }
   }
   
@@ -47,7 +86,7 @@ const MatchCountdown = ({ match }: { match: Match }) => {
       return;
     }
 
-    const targetDate = getKickoffDate(match.dateString || 'Today', match.kickoffTime);
+    const targetDate = getKickoffDate(match);
     
     function updateTimer() {
       const now = new Date();
