@@ -46,6 +46,12 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/worldcup" className="text-neutral-500 hover:text-zim-green transition-colors inline-flex items-center gap-1.5">
+                  <Award className="w-3.5 h-3.5 text-neutral-400" />
+                  World Cup
+                </Link>
+              </li>
+              <li>
                 <Link href="/about" className="text-neutral-500 hover:text-zim-green transition-colors inline-flex items-center gap-1.5">
                   <Award className="w-3.5 h-3.5 text-neutral-400" />
                   About us

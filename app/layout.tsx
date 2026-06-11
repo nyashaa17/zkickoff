@@ -5,7 +5,9 @@ import './globals.css'; // Global styles
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
 import { WhatsAppPopup } from '@/components/whatsapp-popup';
+import { GlobalAdBanner } from '@/components/global-ad-banner';
 import AdblockNotice from '@/components/adblock-notice';
+import WorldCupTicker from '@/components/worldcup-ticker';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -116,12 +118,14 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
           {`(function(s){s.dataset.zone='11055247',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`}
         </Script>
         <AdblockNotice />
+        <WorldCupTicker />
         <Navbar />
         <main className="flex-1 pb-12">
           {children}
         </main>
         <Footer />
         <WhatsAppPopup />
+        <GlobalAdBanner />
         {/* Visual Zimbabwe Flag Strip accent */}
         <div className="h-1 w-full bg-linear-to-r from-[#009739] via-[#FFD100] to-[#D62828] flex">
           <div className="w-[30%] h-full bg-[#009739]"></div>

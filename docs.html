@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Football API Docs — BSD</title>
+  <meta name="description" content="BSD Football API reference — endpoints, parameters, examples.">
+  <link rel="icon" href="/static/img/favicon.ico">
+  <style>
+    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+    .bsd-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 52px;
+      background: #0a0a0a;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .bsd-topbar__brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: #fff;
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: -0.01em;
+    }
+    .bsd-topbar__brand span { color: rgba(255,255,255,0.45); font-weight: 400; }
+    .bsd-topbar__nav {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .bsd-topbar__nav a {
+      color: rgba(255,255,255,0.55);
+      text-decoration: none;
+      font-size: 13px;
+      transition: color 0.15s;
+    }
+    .bsd-topbar__nav a:hover { color: #fff; }
+    .bsd-topbar__nav a.cta {
+      background: #fff;
+      color: #000;
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 12px;
+    }
+    .bsd-topbar__nav a.cta:hover { background: #e5e5e5; color: #000; }
+
+    .bsd-sport-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 20px;
+      padding: 3px 10px 3px 6px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.7);
+    }
+    .bsd-sport-badge .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #16a34a;
+      flex-shrink: 0;
+    }
+
+    #redoc-container { min-height: calc(100vh - 52px); }
+
+    @media (max-width: 767px) {
+      .bsd-topbar { padding: 0 16px; }
+      .bsd-topbar__nav .hide-mobile { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="bsd-topbar">
+  <a href="/docs/" class="bsd-topbar__brand">
+    BSD <span>/</span> API Docs
+  </a>
+  <nav class="bsd-topbar__nav">
+    <span class="bsd-sport-badge">
+      <span class="dot"></span>
+      Football
+    </span>
+    <a href="/docs/" class="hide-mobile">All Sports</a>
+    <a href="https://sports.bzzoiro.com/register/" class="cta">Get API Key</a>
+  </nav>
+</header>
+
+<div id="redoc-container"></div>
+
+<script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+<script>
+  Redoc.init(
+    '/static/docs/football-schema.json',
+    {
+      scrollYOffset: 52,
+      hideDownloadButton: false,
+      disableSearch: false,
+      expandDefaultServerVariables: true,
+      theme: {
+        colors: {
+          primary: { main: '#16a34a' },
+          success: { main: '#22c55e' },
+          warning: { main: '#f59e0b' },
+          error: { main: '#ef4444' },
+          text: { primary: '#111827', secondary: '#6b7280' },
+          border: { dark: '#d1d5db', light: '#f3f4f6' },
+          responses: {
+            success: { color: '#16a34a', backgroundColor: '#f0fdf4' },
+            error: { color: '#dc2626', backgroundColor: '#fef2f2' },
+          }
+        },
+        spacing: {
+          unit: 5,
+          sectionHorizontal: 40,
+          sectionVertical: 20,
+        },
+        breakpoints: { small: '50rem', medium: '85rem', large: '105rem' },
+        typography: {
+          fontSize: '15px',
+          lineHeight: '1.65',
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
+          headings: {
+            fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
+            fontWeight: '700',
+          },
+          code: {
+            fontSize: '13px',
+            fontFamily: "'JetBrains Mono', 'Fira Code', 'Fira Mono', 'Courier New', Courier, monospace",
+            color: '#111827',
+            backgroundColor: '#f3f4f6',
+            wrap: true,
+          }
+        },
+        sidebar: {
+          width: '280px',
+          backgroundColor: '#f9fafb',
+          textColor: '#374151',
+        },
+        rightPanel: {
+          backgroundColor: '#1e293b',
+          textColor: '#e2e8f0',
+        },
+        logo: {
+          maxHeight: '32px',
+          maxWidth: '200px',
+          gutter: '24px',
+        },
+        schema: {
+          linesColor: '#d1d5db',
+          defaultDetailsWidth: '75%',
+          typeNameColor: '#7c3aed',
+          typeTitleColor: '#374151',
+          requireLabelColor: '#ef4444',
+          labelsTextSize: '0.85em',
+          nestingSpacing: '1em',
+          nestedBackground: '#f9fafb',
+        }
+      },
+      nativeScrollbars: false,
+      pathInMiddlePanel: false,
+      requiredPropsFirst: true,
+      sortPropsAlphabetically: false,
+      showExtensions: false,
+      hideSingleRequestSampleTab: true,
+      menuToggle: true,
+      jsonSampleExpandLevel: 2,
+    },
+    document.getElementById('redoc-container')
+  );
+</script>
+
+</body>
+</html>
+

@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["nodejs", "npm"]
+
+[phases.install]
+cmds = ["npm install", "npm install -g pm2"]
+
+[start]
+cmd = "if [ -f dist/index.js ]; then pm2-runtime start dist/index.js -i max; else pm2-runtime start server.js -i max; fi"

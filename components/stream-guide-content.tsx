@@ -3,6 +3,7 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { RefreshCw, MessageCircle } from 'lucide-react';
+import { PredictionsBanner } from '@/components/predictions-banner';
 
 function IframePlayer() {
   const searchParams = useSearchParams();
@@ -182,6 +183,7 @@ export default function StreamGuideContent() {
         </a>
       </div>
 
+      <PredictionsBanner />
     </div>
   );
 }
