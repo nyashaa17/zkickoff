@@ -118,8 +118,10 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
           {`(function(s){s.dataset.zone='11055247',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`}
         </Script>
         <AdblockNotice />
-        <WorldCupTicker />
-        <Navbar />
+        <div className="sticky top-0 z-50 w-full flex flex-col">
+          <WorldCupTicker />
+          <Navbar />
+        </div>
         <main className="flex-1 pb-12">
           {children}
         </main>

@@ -58,8 +58,8 @@ export default function Navbar() {
   };
 
   return (
-    <>
-      <header className="sticky top-0 z-50 w-full bg-white border-b border-neutral-100 shadow-xs backdrop-blur-md bg-opacity-95">
+    <div className="relative">
+      <header className="w-full bg-white border-b border-neutral-100 shadow-xs backdrop-blur-md bg-opacity-95">
         <div className="w-full max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between gap-4">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-1.5 shrink-0 select-none">
@@ -201,6 +201,6 @@ export default function Navbar() {
           </>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 }
