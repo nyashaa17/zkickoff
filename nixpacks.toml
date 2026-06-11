@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["nodejs", "pm2"]
+nixPkgs = ["nodejs"]
 
 [phases.install]
 cmds = ["npm install"]
@@ -8,4 +8,4 @@ cmds = ["npm install"]
 cmds = ["npm run build"]
 
 [start]
-cmd = "pm2-runtime -i max .next/standalone/server.js"
+cmd = "npm run start"
