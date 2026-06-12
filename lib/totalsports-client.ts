@@ -54,12 +54,21 @@ export async function fetchStatsDirect(competition = 'premier-league', dateOrCat
 }
 
 /**
- * Direct unproxied user-side matches stream links configuration parser
+ * Proxied matches stream links configuration parser
  */
 export async function fetchMatchButtonsDirect(matchId: string, homeParam?: string | null, awayParam?: string | null) {
   const teamFallbackFixture = homeParam && awayParam ? `${homeParam} vs ${awayParam}` : null;
   try {
-    const res = await fetch(`https://app.totalsportss.online/match-buttons/${matchId}`);
+    const query = new URLSearchParams();
+    if (homeParam) {
+      query.set('home', homeParam);
+    }
+    if (awayParam) {
+      query.set('away', awayParam);
+    }
+
+    const queryString = query.toString();
+    const res = await fetch(`/api/match-buttons/${matchId}${queryString ? `?${queryString}` : ''}`);
     if (!res.ok) {
       if (res.status === 404) {
         // Return 404 as an empty server list gracefully, not as an error
@@ -183,7 +192,7 @@ export async function fetchCommentaryDirect(matchId: string) {
         { time: 46, text: "Second half starts! Intense battles ahead." }
       ],
       manualCommentary: [
-        { time: 6, text: "Heavy local support is roaring in the grandstands today. The atmosphere is absolute electric." }
+        { time: 6, text: "Heavy local support is roaring in the grandstands today. The atmosphere is absolutely electric." }
       ]
     };
   }
