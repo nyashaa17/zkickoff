@@ -15,7 +15,7 @@ async function getWCTables() {
         'Authorization': `Token ${apiKey}`,
         'Accept': 'application/json'
       },
-      next: { revalidate: 3600 } 
+      next: { revalidate: 60 } 
     });
     
     if (!res.ok) {

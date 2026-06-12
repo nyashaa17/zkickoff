@@ -1,7 +1,5 @@
 import { ImageResponse } from 'next/og';
 
-export const runtime = 'edge';
-
 export const alt = 'ZimKickOff Live Football Stream Preview';
 export const size = {
   width: 1200,

@@ -15,7 +15,7 @@ async function getTeamSquad(teamId: string) {
         'Authorization': `Token ${apiKey}`,
         'Content-Type': 'application/json'
       },
-      next: { revalidate: 3600 } // Cache for 1 hour
+      next: { revalidate: 60 } // Cache for 1 minute
     });
     
     if (!res.ok) {

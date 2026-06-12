@@ -10,7 +10,7 @@ export async function getWorldCupLeagueId(): Promise<string | null> {
         'Authorization': `Token ${apiKey}`,
         'Accept': 'application/json'
       },
-      next: { revalidate: 86400 } // Cache for 24 hours
+      cache: 'force-cache'
     });
     
     if (res.ok) {
@@ -49,7 +49,7 @@ export async function getWorldCupTeamsMap(): Promise<Record<number, string>> {
         'Authorization': `Token ${apiKey}`,
         'Accept': 'application/json'
       },
-      next: { revalidate: 86400 } // Cache for 24 hours
+      cache: 'force-cache'
     });
     
     if (res.ok) {
@@ -84,7 +84,7 @@ export async function getWorldCupTeams(): Promise<any[]> {
         'Authorization': `Token ${apiKey}`,
         'Accept': 'application/json'
       },
-      next: { revalidate: 86400 } // Cache for 24 hours
+      cache: 'force-cache'
     });
     
     if (res.ok) {

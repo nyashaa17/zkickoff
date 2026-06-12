@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
         'Authorization': `Token ${apiKey}`,
         'Accept': 'application/json'
       },
-      next: { revalidate: 600 } // cache for 10 minutes
+      next: { revalidate: 60 } // cache for 1 minute
     });
 
     if (!res.ok) {

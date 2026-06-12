@@ -152,7 +152,7 @@ export async function getTeamLogoUrl(teamName: string): Promise<string | undefin
         'Authorization': `Token ${apiKey}`,
         'Accept': 'application/json'
       },
-      next: { revalidate: 3600 * 24 } // cache for 24 hours
+      cache: 'force-cache'
     });
 
     if (response.ok) {
@@ -215,7 +215,7 @@ export async function getLeagueLogoUrl(leagueName: string): Promise<string | und
         'Authorization': `Token ${apiKey}`,
         'Accept': 'application/json'
       },
-      next: { revalidate: 3600 * 24 } // cache for 24 hours
+      cache: 'force-cache'
     });
 
     if (response.ok) {
