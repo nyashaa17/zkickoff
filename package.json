@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start -p 3000 -H 0.0.0.0",
     "lint": "eslint .",
-    "clean": "next clean"
+    "clean": "next clean",
+    "test": "rm -rf .test-dist && tsc -p tsconfig.test.json && node --test .test-dist/tests/*.test.js"
   },
   "dependencies": {
     "@google/genai": "^1.17.0",
