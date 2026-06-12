@@ -93,7 +93,7 @@ export default function WatchPage({ params }: PageProps) {
     match = allMatches.find((m: Match) => m.id === matchId);
   }
 
-  // 2. Fetch Match buttons (servers) through the local proxy
+  // 2. Fetch Match buttons (servers) directly on browser
   const homeParam = fallbackData.homeName;
   const awayParam = fallbackData.awayName;
   const { data: bData } = useSWR(`match-buttons-${matchId}`, () => fetchMatchButtonsDirect(matchId, homeParam, awayParam), {
