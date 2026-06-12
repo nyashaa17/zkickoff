@@ -2,8 +2,7 @@ module.exports = {
   apps: [
     {
       name: "next-app",
-      script: "node_modules/next/dist/bin/next",
-      args: "start -p 3000",
+      script: ".next/standalone/server.js",
       exec_mode: "cluster",
       instances: "max",
       env: {
