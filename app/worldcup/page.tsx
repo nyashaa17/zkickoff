@@ -10,6 +10,9 @@ export const dynamic = 'force-dynamic';
 export const metadata = {
   title: 'World Cup 2026 | ZimKickOff',
   description: 'View the latest World Cup 2026 squads, fixtures, and groups tables.',
+  alternates: {
+    canonical: '/worldcup',
+  },
 };
 
 export default async function WorldCupPage({ searchParams }: { searchParams: Promise<{ page?: string; tab?: string; team_id?: string }> }) {

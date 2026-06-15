@@ -26,9 +26,6 @@ export const metadata: Metadata = {
   description: 'Watch Free Live Football Streams In HD No Signup Required Stream Premier League UEFA Champions League La Liga And Top Matches Worldwide Instantly',
   keywords: 'ZimKickOff, Live Football Zimbabwe, free soccer stream, football live streams, Zimbabwe soccer, Koora live, كورة لايف, Yalla shoot, يلاشوت, Live stream, Football stream',
   metadataBase: new URL('https://zimkickoff.co.zw'),
-  alternates: {
-    canonical: '/',
-  },
   openGraph: {
     title: 'ZimKickOff - Watch Live Football Matches Free',
     description: 'Watch Free Live Football Streams In HD No Signup Required Stream Premier League UEFA Champions League La Liga And Top Matches Worldwide Instantly',
@@ -113,9 +110,6 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
         </Script>
         <Script id="monetag-vignette-script" strategy="afterInteractive">
           {`(function(s){s.dataset.zone='11055245',s.src='https://n6wxm.com/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`}
-        </Script>
-        <Script id="monetag-inpage-push-script" strategy="afterInteractive">
-          {`(function(s){s.dataset.zone='11055247',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`}
         </Script>
         <AdblockNotice />
         <div className="sticky top-0 z-50 w-full flex flex-col">

@@ -112,7 +112,7 @@ export default function LivePage() {
                         <Home className="w-4 h-4" />
                         View Live Schedules
                       </Link>
-                      <Link href="/?filter=ZPSL" className="px-5 py-2.5 bg-white border border-neutral-200 text-neutral-700 hover:text-neutral-900 rounded-xl text-xs font-display font-semibold flex items-center justify-center gap-1.5 transition-all">
+                      <Link href="/" className="px-5 py-2.5 bg-white border border-neutral-200 text-neutral-700 hover:text-neutral-900 rounded-xl text-xs font-display font-semibold flex items-center justify-center gap-1.5 transition-all">
                         <Calendar className="w-4 h-4 text-neutral-400" />
                         Local Matches Today
                       </Link>
