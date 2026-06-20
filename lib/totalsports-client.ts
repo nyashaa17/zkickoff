@@ -12,7 +12,8 @@ import { getClientTeamLogo, getClientLeagueLogo } from './bzzoiro-client';
  */
 export async function fetchLivescoresDirect(dateParam?: string) {
   try {
-    const url = dateParam ? `/api/livescore?date=${dateParam}` : '/api/livescore';
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    const url = dateParam ? `${baseUrl}/api/livescore?date=${dateParam}` : `${baseUrl}/api/livescore`;
     const res = await fetch(url);
     if (!res.ok) {
       throw new Error(`Failed to fetch livescores from proxy: ${res.status}`);
@@ -30,7 +31,8 @@ export async function fetchLivescoresDirect(dateParam?: string) {
  */
 export async function fetchStatsDirect(competition = 'premier-league', dateOrCategory = 'england', sport = 'football') {
   try {
-    const proxyUrl = `/api/stats?competition=${competition}&dateOrCategory=${dateOrCategory}&sport=${sport}`;
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    const proxyUrl = `${baseUrl}/api/stats?competition=${competition}&dateOrCategory=${dateOrCategory}&sport=${sport}`;
     const res = await fetch(proxyUrl);
     if (!res.ok) {
       throw new Error(`Failed to fetch stats from proxy server: ${res.status}`);
