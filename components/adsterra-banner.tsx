@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 export function AdsterraBanner() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
     // Only run on the client side
@@ -44,16 +45,23 @@ export function AdsterraBanner() {
     };
   }, []);
 
+  if (!isVisible) return null;
+
   return (
-    <div className="flex flex-col items-center justify-center my-6 overflow-hidden rounded-2xl border border-neutral-200/50 bg-white p-3 shadow-xs">
-      <div className="flex items-center justify-between w-full max-w-[300px] mb-2 px-1 text-neutral-400">
-        <span className="text-[9px] font-mono uppercase tracking-widest">Sponsored Advertisement</span>
-        <span className="text-[9px] font-mono">Adsterra Ad</span>
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] border-none shadow-2xl bg-transparent">
+      <div className="relative inline-block">
+        <button 
+          onClick={() => setIsVisible(false)}
+          className="absolute -top-3 -right-3 z-10 w-6 h-6 flex justify-center items-center bg-black hover:bg-neutral-800 text-white rounded-full text-[10px] font-bold cursor-pointer transition-colors shadow-lg border-2 border-white"
+          aria-label="Close Ad"
+        >
+          ✕
+        </button>
+        <div
+          ref={containerRef}
+          className="w-[300px] h-[250px] bg-transparent overflow-hidden rounded-none border-none pointer-events-auto"
+        />
       </div>
-      <div
-        ref={containerRef}
-        className="w-[300px] h-[250px] flex items-center justify-center bg-neutral-50 rounded-xl overflow-hidden border border-neutral-100"
-      />
     </div>
   );
 }

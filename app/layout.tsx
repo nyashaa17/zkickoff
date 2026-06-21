@@ -5,9 +5,9 @@ import './globals.css'; // Global styles
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
 import { WhatsAppPopup } from '@/components/whatsapp-popup';
-import { GlobalAdBanner } from '@/components/global-ad-banner';
 import AdblockNotice from '@/components/adblock-notice';
 import WorldCupTicker from '@/components/worldcup-ticker';
+import { AdsterraBanner } from '@/components/adsterra-banner';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -104,11 +104,6 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
         </Script>
       </head>
       <body className="font-sans bg-[#F9F9FB] text-neutral-900 selection:bg-[#009739] selection:text-white antialiased min-h-screen flex flex-col" suppressHydrationWarning>
-        <Script
-          id="adsterra-script"
-          src="https://pl29495869.effectivecpmnetwork.com/9b/80/d6/9b80d664eeb4b02b5df5aa047fb0f37a.js"
-          strategy="afterInteractive"
-        />
         <AdblockNotice />
         <div className="sticky top-0 z-50 w-full flex flex-col">
           <WorldCupTicker />
@@ -119,7 +114,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
         </main>
         <Footer />
         <WhatsAppPopup />
-        <GlobalAdBanner />
+        <AdsterraBanner />
         {/* Visual Zimbabwe Flag Strip accent */}
         <div className="h-1 w-full bg-linear-to-r from-[#009739] via-[#FFD100] to-[#D62828] flex">
           <div className="w-[30%] h-full bg-[#009739]"></div>
@@ -128,6 +123,11 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
           <div className="w-[10%] h-full bg-[#FFD100]"></div>
           <div className="w-[40%] h-full bg-[#D62828]"></div>
         </div>
+        <Script
+          id="adsterra-popunder-script"
+          src="https://pl29495869.effectivecpmnetwork.com/9b/80/d6/9b80d664eeb4b02b5df5aa047fb0f37a.js"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );

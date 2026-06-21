@@ -20,12 +20,6 @@ import MatchCard from '@/components/match-card';
 import { MatchGridSkeleton } from '@/components/skeleton-loader';
 import Breadcrumbs from '@/components/breadcrumbs';
 import { fetchLivescoresDirect } from '@/lib/totalsports-client';
-import dynamic from 'next/dynamic';
-
-const AdsterraBanner = dynamic(
-  () => import('@/components/adsterra-banner').then(mod => mod.AdsterraBanner),
-  { ssr: false }
-);
 
 export default function LivePage() {
   const { data, isLoading: loading, error } = useSWR('livescores-direct', () => fetchLivescoresDirect(), {
@@ -129,7 +123,7 @@ export default function LivePage() {
             </div>
           )}
 
-          <AdsterraBanner />
+          {/* Ad positioning */}
         </div>
 
         {/* Right Column: Information & Sponsorship side channels */}
@@ -157,7 +151,7 @@ export default function LivePage() {
             </div>
           </div>
 
-          <AdsterraBanner />
+          {/* Ad sidebar code */}
           {/* Technology stack attribution guidelines */}
           <div className="p-5 border border-dashed border-neutral-200 bg-neutral-50 rounded-3xl space-y-2 text-neutral-500 text-xs">
             <h4 className="font-display font-bold text-neutral-900 text-[10px] uppercase tracking-widest flex items-center gap-1.5">
