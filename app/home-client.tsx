@@ -22,6 +22,12 @@ import { motion, AnimatePresence } from "motion/react";
 import { Match } from "@/lib/matches-data";
 import MatchCard from "@/components/match-card";
 import { MatchGridSkeleton } from "@/components/skeleton-loader";
+import dynamic from "next/dynamic";
+
+const AdsterraBanner = dynamic(
+  () => import("@/components/adsterra-banner").then((mod) => mod.AdsterraBanner),
+  { ssr: false }
+);
 import {
   fetchLivescoresDirect,
   fetchStatsDirect,
@@ -709,7 +715,7 @@ function HomeContent() {
             </div>
           )}
 
-          {/* Ad banner placeholer */}
+          <AdsterraBanner />
         </div>
 
         {/* Right sidebar column on desktop (ZPSL League Standings and widget spaces) */}
@@ -920,7 +926,7 @@ function HomeContent() {
             )}
           </div>
 
-          {/* Ad spot sidebar */}
+          <AdsterraBanner />
         </div>
       </div>
     </div>
