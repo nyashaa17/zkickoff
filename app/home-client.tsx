@@ -709,7 +709,7 @@ function HomeContent() {
             </div>
           )}
 
-          {/* Ad banner placeholder */}
+          {/* Ad banner placeholer */}
         </div>
 
         {/* Right sidebar column on desktop (ZPSL League Standings and widget spaces) */}
