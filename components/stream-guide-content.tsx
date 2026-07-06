@@ -76,17 +76,6 @@ export default function StreamGuideContent() {
           <IframePlayer />
         </Suspense>
 
-        <h2 className="text-neutral-900 text-xl md:text-[22px] font-bold mt-8 mb-4 text-center">Live Match Chat</h2>
-
-        <div className="flex justify-center flex-col items-center">
-          <iframe
-            src="https://chat.totalsportslive.co.zw/widget.html"
-            className="border-none h-[520px] w-full max-w-[420px] rounded-xl bg-[#F9F9FB] border border-neutral-200 shadow-sm mb-8"
-            title="Total Sports Live match chat"
-            loading="lazy"
-          ></iframe>
-        </div>
-
         <section className="bg-white border border-neutral-200 shadow-sm rounded-xl p-5 md:p-6 text-left text-neutral-700 leading-[1.7] text-[15px]">
           <h2 className="text-neutral-900 text-[22px] font-bold mt-6 mb-2 first:mt-0">Where to Watch Premier League Matches in the UK</h2>
           <p className="mb-4">
@@ -126,7 +115,6 @@ export default function StreamGuideContent() {
             <li>Wait a few seconds for the player to connect.</li>
             <li>Use the refresh button if the stream freezes.</li>
             <li>Try another available stream option when provided.</li>
-            <li>Use the live chat below to follow match discussion with other fans.</li>
           </ul>
 
           <h2 className="text-neutral-900 text-[22px] font-bold mt-6 mb-2">Best Way to Follow Premier League Matchdays</h2>
@@ -139,7 +127,7 @@ export default function StreamGuideContent() {
             <li><strong>Live TV:</strong> Usually shown on Sky Sports and TNT Sports in the UK.</li>
             <li><strong>Online streaming:</strong> Available through official broadcaster streaming apps.</li>
             <li><strong>Highlights:</strong> BBC Match of the Day and BBC Sport coverage.</li>
-            <li><strong>Match updates:</strong> Follow live scores, team news and fan chat during the game.</li>
+            <li><strong>Match updates:</strong> Follow live scores and team news during the game.</li>
           </ul>
 
           <h2 className="text-neutral-900 text-[22px] font-bold mt-6 mb-2">Frequently Asked Questions</h2>
