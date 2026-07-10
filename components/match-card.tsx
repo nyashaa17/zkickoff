@@ -164,7 +164,7 @@ export default function MatchCard({ match }: MatchCardProps) {
       id={`match-card-${match.id}`}
       className="group"
     >
-      <Link href={`/watch/${match.slug}`} className="block">
+      <Link href={`/preview/${match.slug}`} className="block">
         <div className="bg-white border border-neutral-200 rounded-2xl p-4 flex flex-col gap-3 transition-colors hover:border-neutral-300 shadow-sm">
           
           {/* Top Line: League Name & Countdown Timer */}

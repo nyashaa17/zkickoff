@@ -112,7 +112,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
           {`(function(s){s.dataset.zone='11055245',s.src='https://n6wxm.com/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`}
         </Script>
         <AdblockNotice />
-        <div className="sticky top-0 z-50 w-full flex flex-col">
+        <div className="sticky top-0 z-50 w-full flex flex-col [transform:translate3d(0,0,0)] [will-change:transform]">
           <WorldCupTicker />
           <Navbar />
         </div>

@@ -93,6 +93,17 @@ export default function WatchPage({ params }: PageProps) {
     match = allMatches.find((m: Match) => m.id === matchId);
   }
 
+  // Fetch Bzzoiro dynamic match metadata/venue info
+  const { data: bzzoiroData } = useSWR(
+    `/api/bzzoiro/match-preview?home=${encodeURIComponent(fallbackData.homeName)}&away=${encodeURIComponent(fallbackData.awayName)}`,
+    async (url) => {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Failed to fetch bzzoiro preview data');
+      return res.json();
+    },
+    { revalidateOnFocus: false, revalidateIfStale: false }
+  );
+
   // 2. Fetch Match buttons (servers) directly on browser
   const homeParam = fallbackData.homeName;
   const awayParam = fallbackData.awayName;
@@ -242,7 +253,7 @@ export default function WatchPage({ params }: PageProps) {
     kickoffTime: 'Live Score Now',
     dateString: 'Today',
     category: 'INTERNATIONAL' as const,
-    venue: 'National Sports Stadium, Harare',
+    venue: 'Stadium',
     spectators: '18,000',
     servers: []
   };
@@ -615,7 +626,9 @@ export default function WatchPage({ params }: PageProps) {
                     <MapPin className="w-5 h-5 text-neutral-400 shrink-0" />
                     <div className="space-y-0.5">
                       <p className="text-[10px] font-mono text-neutral-400 uppercase tracking-wide">Stadium Venue</p>
-                      <p className="text-xs font-semibold text-neutral-800 line-clamp-1">{queryMatch.venue}</p>
+                      <p className="text-xs font-semibold text-neutral-800 line-clamp-1">
+                        {bzzoiroData?.event?.venue?.name || queryMatch.venue}
+                      </p>
                     </div>
                   </div>
 
@@ -623,7 +636,13 @@ export default function WatchPage({ params }: PageProps) {
                     <Users className="w-5 h-5 text-neutral-400 shrink-0" />
                     <div className="space-y-0.5">
                       <p className="text-[10px] font-mono text-neutral-400 uppercase tracking-wide">Expected Crowd</p>
-                      <p className="text-xs font-semibold text-neutral-800">{queryMatch.spectators} cap</p>
+                      <p className="text-xs font-semibold text-neutral-800">
+                        {bzzoiroData?.event?.venue?.capacity 
+                          ? `${bzzoiroData.event.venue.capacity.toLocaleString()} cap` 
+                          : bzzoiroData?.event?.attendance 
+                            ? `${bzzoiroData.event.attendance.toLocaleString()} cap`
+                            : `${queryMatch.spectators} cap`}
+                      </p>
                     </div>
                   </div>
 
@@ -667,7 +686,7 @@ export default function WatchPage({ params }: PageProps) {
             <div className="flex flex-col gap-3">
               {relatedMatches.length > 0 ? (
                 relatedMatches.map((m) => (
-                  <Link href={`/watch/${m.slug}`} key={m.id} className="block group">
+                  <Link href={`/preview/${m.slug}`} key={m.id} className="block group">
                     <div className="p-3 bg-neutral-50 hover:bg-neutral-100/50 border border-neutral-200/50 hover:border-neutral-200 rounded-xl transition-all flex items-center justify-between gap-3 text-left">
                       <div className="space-y-1 overflow-hidden">
                         <span className="text-[9px] font-mono text-neutral-400 uppercase tracking-wider block font-bold truncate">

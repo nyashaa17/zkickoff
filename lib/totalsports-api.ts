@@ -194,7 +194,7 @@ export function parseRawEventToMatch(event: ListEventRaw, stageName: string, cou
     dateString: dateStringOption,
     esd: event.Esd ? String(event.Esd) : undefined,
     category,
-    venue: event.Vnm || 'National Sports Stadium, Harare',
+    venue: event.Vnm || 'Stadium',
     spectators: '24,500',
     servers: [] // Powered dynamically by match buttons API!
   };

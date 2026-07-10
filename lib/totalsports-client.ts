@@ -11,6 +11,9 @@ import { getClientTeamLogo, getClientLeagueLogo } from './bzzoiro-client';
  * This completely bypasses Next/Netlify server-side ip restrictions.
  */
 export async function fetchLivescoresDirect(dateParam?: string) {
+  if (typeof window === 'undefined') {
+    return { matches: [] };
+  }
   try {
     const url = dateParam ? `/api/livescore?date=${dateParam}` : '/api/livescore';
     const res = await fetch(url);
@@ -29,6 +32,9 @@ export async function fetchLivescoresDirect(dateParam?: string) {
  * Direct unproxied user-side lookup for player stats
  */
 export async function fetchStatsDirect(competition = 'premier-league', dateOrCategory = 'england', sport = 'football') {
+  if (typeof window === 'undefined') {
+    return [];
+  }
   try {
     const proxyUrl = `/api/stats?competition=${competition}&dateOrCategory=${dateOrCategory}&sport=${sport}`;
     const res = await fetch(proxyUrl);

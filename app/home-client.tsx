@@ -60,15 +60,10 @@ function HomeContent() {
   const [selectedDateFilter, setSelectedDateFilter] = useState<string | null>(
     null,
   );
+  const [clientDates, setClientDates] = useState<any[]>([]);
 
-  const fetcher = (url: string) =>
-    fetch(url).then((res) => {
-      if (!res.ok) throw new Error("Fetch failed");
-      return res.json();
-    });
-
-  const weekDates = React.useMemo(() => {
-    const dates = [];
+  useEffect(() => {
+    const dates: any[] = [];
     const now = new Date();
     const currentDay = now.getDay();
     // Monday of the current week (if Sunday, currentDay is 0, offset by -6 to get previous Monday)
@@ -95,8 +90,19 @@ function HomeContent() {
 
       dates.push({ dateString, dayName, dateNumber, isToday, monthName });
     }
-    return dates;
+    
+    const timer = setTimeout(() => {
+      setClientDates(dates);
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, []);
+
+  const fetcher = (url: string) =>
+    fetch(url).then((res) => {
+      if (!res.ok) throw new Error("Fetch failed");
+      return res.json();
+    });
 
   const dateScrollRef = React.useRef<HTMLDivElement>(null);
 
@@ -118,9 +124,9 @@ function HomeContent() {
   }, [selectedDateFilter]);
 
   const displayedWeekDates = React.useMemo(() => {
-    if (!selectedDateFilter) return weekDates;
-    const exists = weekDates.some((d) => d.dateString === selectedDateFilter);
-    if (exists) return weekDates;
+    if (!selectedDateFilter) return clientDates;
+    const exists = clientDates.some((d) => d.dateString === selectedDateFilter);
+    if (exists) return clientDates;
 
     const yyyy = selectedDateFilter.slice(0, 4);
     const mmStr = selectedDateFilter.slice(4, 6);
@@ -144,9 +150,9 @@ function HomeContent() {
         monthName,
         isCustom: true,
       },
-      ...weekDates,
+      ...clientDates,
     ];
-  }, [weekDates, selectedDateFilter]);
+  }, [clientDates, selectedDateFilter]);
 
   useEffect(() => {
     if (dateScrollRef.current) {

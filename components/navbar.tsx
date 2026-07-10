@@ -52,14 +52,14 @@ export default function Navbar() {
     : [];
 
   const handleResultClick = (slug: string) => {
-    router.push(`/watch/${slug}`);
+    router.push(`/preview/${slug}`);
     setSearchQuery('');
     setIsDrawerOpen(false);
   };
 
   return (
     <div className="relative">
-      <header className="w-full bg-white border-b border-neutral-100 shadow-xs backdrop-blur-md bg-opacity-95">
+      <header className="w-full bg-white md:bg-white/95 border-b border-neutral-100 shadow-xs md:backdrop-blur-md [transform:translate3d(0,0,0)] [will-change:transform]">
         <div className="w-full max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between gap-4">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-1.5 shrink-0 select-none">
