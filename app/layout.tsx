@@ -62,6 +62,42 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
     <html lang="en" className={`${inter.variable} ${poppins.variable}`} suppressHydrationWarning>
       <head>
         <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.onerror = function (message, url, line, col, error) {
+                if (message === 'Script error.' || !url) {
+                  return true;
+                }
+                if (
+                  url.includes('al5sm.com') ||
+                  url.includes('n6wxm.com') ||
+                  url.includes('5gvci.com') ||
+                  url.includes('googletagmanager') ||
+                  message.toString().includes('Script error')
+                ) {
+                  return true;
+                }
+                return false;
+              };
+              window.addEventListener('unhandledrejection', function (event) {
+                if (event.reason) {
+                  const msg = event.reason.message || '';
+                  const stack = event.reason.stack || '';
+                  if (
+                    msg === 'Script error.' ||
+                    msg.includes('Script error') ||
+                    stack.includes('al5sm.com') ||
+                    stack.includes('n6wxm.com') ||
+                    stack.includes('5gvci.com')
+                  ) {
+                    event.preventDefault();
+                  }
+                }
+              });
+            `
+          }}
+        />
+        <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({

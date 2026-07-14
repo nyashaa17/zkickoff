@@ -20,8 +20,46 @@ export default async function WorldCupPage({ searchParams }: { searchParams: Pro
   const currentPage = parseInt(resolvedParams.page || '1', 10);
   const currentTab = resolvedParams.tab || 'squads';
 
+  const sportsLeagueSchema = {
+    "@context": "https://schema.org",
+    "@type": "SportsLeague",
+    "@id": "https://zimkickoff.co.zw/worldcup#league",
+    "name": "FIFA World Cup 2026",
+    "url": "https://zimkickoff.co.zw/worldcup",
+    "sport": "https://en.wikipedia.org/wiki/Association_football",
+    "description": "The FIFA World Cup 2026, featuring 48 international teams competing across North America."
+  };
+
+  const webpageSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": "https://zimkickoff.co.zw/worldcup#webpage",
+    "url": "https://zimkickoff.co.zw/worldcup",
+    "name": "World Cup 2026 squads, fixtures, and tables | ZimKickOff",
+    "description": "View the latest World Cup 2026 squads, fixtures, and groups tables.",
+    "isPartOf": {
+      "@id": "https://zimkickoff.co.zw/#website"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "ZimKickOff",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://zimkickoff.co.zw/apple-touch-icon.png"
+      }
+    }
+  };
+
   return (
     <div className="w-full max-w-7xl mx-auto px-4 md:px-6 py-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(sportsLeagueSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webpageSchema) }}
+      />
       <div className="mb-8 p-6 md:p-8 bg-neutral-900 rounded-3xl text-white relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-bl from-[#009739]/20 to-transparent rounded-full blur-3xl" />
         <div className="relative z-10 w-full">

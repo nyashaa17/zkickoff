@@ -3,7 +3,7 @@ import {
   parseRawEventToMatch, 
   LivescoreResponseRaw 
 } from './totalsports-api';
-import { Match } from './matches-data';
+import { Match, mockMatches } from './matches-data';
 import { getClientTeamLogo, getClientLeagueLogo } from './bzzoiro-client';
 
 /**
@@ -23,8 +23,8 @@ export async function fetchLivescoresDirect(dateParam?: string) {
     const data = await res.json();
     return data;
   } catch (error: any) {
-    console.error('Livescore direct fetch error:', error);
-    return { matches: [], error: error.message };
+    console.error('Livescore direct fetch error (graceful client fallback applied):', error);
+    return { matches: mockMatches, error: error.message };
   }
 }
 

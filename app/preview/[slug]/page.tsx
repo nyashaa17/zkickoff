@@ -193,6 +193,9 @@ export default function MatchPreviewPage({ params }: PageProps) {
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-8 bg-[#F8FAFC] min-h-screen">
+      <h1 className="sr-only">
+        Match Preview & Live Stats: {queryMatch.teams.home.name} vs {queryMatch.teams.away.name} | ZimKickOff
+      </h1>
       
       {/* Top Header Navigation Panel */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 border-b border-neutral-200/40 pb-4">

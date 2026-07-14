@@ -272,6 +272,9 @@ export default function WatchPage({ params }: PageProps) {
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-8">
+      <h1 className="sr-only">
+        Watch {queryMatch.teams.home.name} vs {queryMatch.teams.away.name} Live Stream | ZimKickOff
+      </h1>
       {/* Back button and breadcrumbs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 border-b border-neutral-200/40 pb-4">
         <Breadcrumbs 

@@ -1,21 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Breadcrumbs from '@/components/breadcrumbs';
-import { Mail, Clock, Send, AlertCircle } from 'lucide-react';
+import { Clock, Send, AlertCircle } from 'lucide-react';
 
 export default function ContactPage() {
-  const [submitted, setSubmitted] = useState(false);
-  const [ticketReference, setTicketReference] = useState('');
-  const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.name || !formData.email || !formData.message) return;
-    const refNum = Math.floor(Math.random() * 90000) + 10000;
-    setTicketReference(String(refNum));
-    setSubmitted(true);
-  };
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-10">
