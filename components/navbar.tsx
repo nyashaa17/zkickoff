@@ -124,7 +124,7 @@ export default function Navbar() {
                 <Link
                   href="/"
                   onClick={() => setIsDrawerOpen(false)}
-                  className="flex items-center gap-4 px-4 py-3.5 bg-[#e8f3ec] text-[#1E8F4E] rounded-xl font-medium text-[15px] shadow-[0_1px_2px_rgba(0,0,0,0.01)]"
+                  className="flex items-center gap-4 px-4 py-3.5 bg-neutral-900 text-white rounded-xl font-medium text-[15px] shadow-[0_1px_2px_rgba(0,0,0,0.01)]"
                 >
                   <Home className="w-[1.1rem] h-[1.1rem] stroke-[2.5]" />
                   <span>Matches</span>

@@ -32,27 +32,27 @@ export function GlobalAdBanner() {
         <span>Advertisement</span>
       </div>
 
-      {/* Decorative Green Glow Spots */}
-      <div className="absolute top-0 right-0 -mr-12 -mt-12 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl pointer-events-none" />
-      <div className="absolute bottom-0 left-0 -ml-12 -mb-12 w-24 h-24 bg-emerald-600/5 rounded-full blur-xl pointer-events-none" />
+      {/* Decorative Glow Spots */}
+      <div className="absolute top-0 right-0 -mr-12 -mt-12 w-24 h-24 bg-neutral-500/5 rounded-full blur-xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 -ml-12 -mb-12 w-24 h-24 bg-neutral-600/5 rounded-full blur-xl pointer-events-none" />
 
       <div className="relative py-2.5 px-4 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-6 z-10">
         
         {/* Left Side: Brand & Description */}
         <div className="flex items-center gap-3 w-full sm:w-auto">
           {/* Sparkle badge */}
-          <div className="hidden md:flex shrink-0 w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-500/15 items-center justify-center text-[#009739]">
+          <div className="hidden md:flex shrink-0 w-8 h-8 rounded-lg bg-neutral-100 border border-neutral-300 items-center justify-center text-black">
             <Sparkles className="w-4 h-4 animate-pulse" />
           </div>
 
           <div className="space-y-0.5 flex-1 sm:flex-none">
             <div className="flex items-center gap-1.5">
-              <span className="text-[8px] font-black tracking-widest text-[#009739] uppercase bg-emerald-50 px-1 py-0.2 rounded border border-emerald-500/20">
+              <span className="text-[8px] font-black tracking-widest text-black uppercase bg-neutral-100 px-1 py-0.2 rounded border border-neutral-300">
                 AI POWERED
               </span>
             </div>
             <h3 className="text-xs md:text-sm font-black tracking-tight leading-none text-neutral-900 uppercase font-display">
-              FREE DAILY AI <span className="text-[#009739]">FOOTBALL PREDICTIONS</span>
+              FREE DAILY AI <span className="text-black">FOOTBALL PREDICTIONS</span>
             </h3>
           </div>
         </div>

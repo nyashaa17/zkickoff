@@ -5,7 +5,7 @@
   --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-poppins), system-ui, sans-serif;
   
-  --color-zim-green: #009739;
+  --color-zim-green: #000000;
   --color-zim-yellow: #FFD100;
   --color-zim-red: #D62828;
   --color-zim-black: #111111;
@@ -48,5 +48,5 @@
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #009739;
+  background: #000000;
 }

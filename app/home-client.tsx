@@ -205,7 +205,7 @@ function HomeContent() {
           slug: "dynamos-vs-caps-united-mock-1",
           teams: {
             home: { name: "Dynamos FC", code: "DYN", logoColor: "#0056B3" },
-            away: { name: "CAPS United", code: "CAP", logoColor: "#009739" },
+            away: { name: "CAPS United", code: "CAP", logoColor: "#000000" },
           },
           score: { home: 1, away: 0 },
           status: "LIVE",
@@ -386,7 +386,7 @@ function HomeContent() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#f1f5f9_1px,transparent_1px),linear-gradient(to_bottom,#f1f5f9_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-30 pointer-events-none" />
 
         {/* Decorative dynamic shape representing Zimbabwe warriors shield flare */}
-        <div className="absolute -right-12 -top-12 w-64 h-64 bg-[#009739]/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -right-12 -top-12 w-64 h-64 bg-black/5 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -left-12 -bottom-12 w-64 h-64 bg-[#D62828]/5 rounded-full blur-3xl pointer-events-none" />
 
         <div className="space-y-4 max-w-2xl relative z-10 text-center md:text-left">
@@ -817,7 +817,7 @@ function HomeContent() {
                                     key={idx}
                                     className={`w-4 h-4 rounded text-[9px] font-bold inline-flex items-center justify-center font-mono text-white ${
                                       f === "W"
-                                        ? "bg-[#009739]"
+                                        ? "bg-black"
                                         : f === "D"
                                           ? "bg-[#FFD100] text-neutral-800"
                                           : "bg-[#D62828]"
@@ -833,7 +833,7 @@ function HomeContent() {
                       </tbody>
                     </table>
 
-                    <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between text-[11px] text-[#009739] font-semibold">
+                    <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between text-[11px] text-black font-semibold">
                       <span>Major League Standings</span>
                       <Link
                         href="/"
