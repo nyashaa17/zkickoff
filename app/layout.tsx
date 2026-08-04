@@ -69,9 +69,6 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
                   return true;
                 }
                 if (
-                  url.includes('al5sm.com') ||
-                  url.includes('n6wxm.com') ||
-                  url.includes('5gvci.com') ||
                   url.includes('googletagmanager') ||
                   message.toString().includes('Script error')
                 ) {
@@ -82,13 +79,9 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
               window.addEventListener('unhandledrejection', function (event) {
                 if (event.reason) {
                   const msg = event.reason.message || '';
-                  const stack = event.reason.stack || '';
                   if (
                     msg === 'Script error.' ||
-                    msg.includes('Script error') ||
-                    stack.includes('al5sm.com') ||
-                    stack.includes('n6wxm.com') ||
-                    stack.includes('5gvci.com')
+                    msg.includes('Script error')
                   ) {
                     event.preventDefault();
                   }
@@ -129,7 +122,8 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
           }}
         />
         <Script async src="https://www.googletagmanager.com/gtag/js?id=G-1T22JFEXXS" />
-        <Script src="https://5gvci.com/act/files/tag.min.js?z=11078190" data-cfasync="false" strategy="lazyOnload" />
+        <Script async src="https://js.wpadmngr.com/static/adManager.js" data-admpid="450615" strategy="afterInteractive" />
+        <Script async src="https://js.wpadmngr.com/static/adManager.js" data-admpid="450616" strategy="afterInteractive" />
         <Script id="google-analytics">
           {`
             window.dataLayer = window.dataLayer || [];
@@ -138,15 +132,8 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
             gtag('config', 'G-1T22JFEXXS');
           `}
         </Script>
-        <meta name="monetag" content="15fd02df8bbf6f0f2db83bb49f023835" />
       </head>
       <body className="font-sans bg-[#F9F9FB] text-neutral-900 selection:bg-[#009739] selection:text-white antialiased min-h-screen flex flex-col" suppressHydrationWarning>
-        <Script id="monetag-script" strategy="afterInteractive">
-          {`(function(s){s.dataset.zone='11055207',s.src='https://al5sm.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`}
-        </Script>
-        <Script id="monetag-vignette-script" strategy="afterInteractive">
-          {`(function(s){s.dataset.zone='11055245',s.src='https://n6wxm.com/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`}
-        </Script>
         <AdblockNotice />
         <div className="sticky top-0 z-50 w-full flex flex-col [transform:translate3d(0,0,0)] [will-change:transform]">
           <WorldCupTicker />
