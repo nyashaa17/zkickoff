@@ -29,7 +29,12 @@ export default function LivePage() {
 
   let liveMatches: Match[] = [];
   if (data && data.matches) {
-    liveMatches = data.matches.filter((m: Match) => m.status === 'LIVE');
+    const seen = new Set<string>();
+    liveMatches = data.matches.filter((m: Match) => {
+      if (m.status !== 'LIVE' || !m.id || seen.has(m.id)) return false;
+      seen.add(m.id);
+      return true;
+    });
   }
 
   return (
@@ -79,9 +84,9 @@ export default function LivePage() {
             <div className="space-y-4">
               <AnimatePresence mode="popLayout">
                 {liveMatches.length > 0 ? (
-                  liveMatches.map((match) => (
+                  liveMatches.map((match, idx) => (
                     <motion.div
-                      key={match.id}
+                      key={`${match.id}-${idx}`}
                       initial={{ scale: 0.98, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       exit={{ scale: 0.95, opacity: 0 }}

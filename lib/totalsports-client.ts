@@ -169,17 +169,17 @@ export async function fetchMatchButtonsDirect(matchId: string, homeParam?: strin
 }
 
 /**
- * Direct unproxied user-side lookup for live match commentary
+ * Direct lookup for live match commentary via API route proxy
  */
 export async function fetchCommentaryDirect(matchId: string) {
   try {
-    const res = await fetch(`https://api.totalsportss.online/matches/${matchId}`);
+    const res = await fetch(`/api/commentary/${matchId}`);
     if (!res.ok) {
-      throw new Error(`Failed to fetch commentary raw: ${res.status}`);
+      throw new Error(`Failed to fetch commentary: ${res.status}`);
     }
     return await res.json();
   } catch (error) {
-    console.error('Commentary direct fetch error:', error);
+    console.warn('Commentary fetch fallback activated:', error);
     return {
       liveCommentary: [
         { time: 1, text: "KICK-OFF! The referee blows the whistle and we are underway." },

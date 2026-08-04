@@ -30,6 +30,7 @@ import { Match } from '@/lib/matches-data';
 import { TeamLogo } from '@/components/team-logo';
 import { fetchLivescoresDirect, fetchCommentaryDirect } from '@/lib/totalsports-client';
 import Breadcrumbs from '@/components/breadcrumbs';
+import BannerAd from '@/components/banner-ad';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface PageProps {
@@ -170,8 +171,14 @@ export default function MatchPreviewPage({ params }: PageProps) {
   const isUpcoming = queryMatch.status === 'UPCOMING' || queryMatch.status === 'TODAY';
 
   // Filter other recommended/related streams
+  const seenStreams = new Set<string>();
   const relatedStreams = allMatches
-    .filter((m) => m.id !== queryMatch.id && m.status !== 'FINISHED' && m.dateString !== 'Yesterday')
+    .filter((m) => {
+      if (!m || !m.id || m.id === queryMatch.id || seenStreams.has(m.id)) return false;
+      if (m.status === 'FINISHED' || m.dateString === 'Yesterday') return false;
+      seenStreams.add(m.id);
+      return true;
+    })
     .slice(0, 4);
 
   if (!isMounted) {
@@ -382,6 +389,9 @@ export default function MatchPreviewPage({ params }: PageProps) {
 
       </div>
 
+      {/* Clickadilla Banner Ad */}
+      <BannerAd />
+
       {/* CORE CONTENT LAYOUT GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
@@ -480,8 +490,8 @@ export default function MatchPreviewPage({ params }: PageProps) {
                               <div className="space-y-2">
                                 <p className="text-[10px] font-mono font-bold text-neutral-400 uppercase">Starting Eleven</p>
                                 <div className="space-y-1">
-                                  {lineup.players?.map((p: any) => (
-                                    <div key={p.id} className="flex items-center justify-between text-xs p-2 bg-neutral-50 rounded-md border border-neutral-200/30">
+                                  {lineup.players?.map((p: any, pIdx: number) => (
+                                    <div key={p.id ? `${p.id}-${pIdx}` : `player-${pIdx}`} className="flex items-center justify-between text-xs p-2 bg-neutral-50 rounded-md border border-neutral-200/30">
                                       <div className="flex items-center gap-2">
                                         <span className={`w-5 h-5 ${side === 'home' ? 'bg-[#009739]' : 'bg-red-600'} text-white text-[9px] font-bold rounded flex items-center justify-center font-mono`}>
                                           {p.jersey_number || '-'}
@@ -789,8 +799,8 @@ export default function MatchPreviewPage({ params }: PageProps) {
 
             <div className="flex flex-col gap-2.5">
               {relatedStreams.length > 0 ? (
-                relatedStreams.map((m) => (
-                  <Link href={`/preview/${m.slug}`} key={m.id} className="block group">
+                relatedStreams.map((m, idx) => (
+                  <Link href={`/preview/${m.slug}`} key={`${m.id}-${idx}`} className="block group">
                     <div className="p-2.5 bg-neutral-50 hover:bg-neutral-100/50 border border-neutral-200/50 hover:border-neutral-200 rounded-xl transition-all flex items-center justify-between gap-3 text-left">
                       <div className="flex items-center gap-2.5 overflow-hidden">
                         {/* Team Logos */}

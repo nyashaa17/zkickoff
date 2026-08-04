@@ -87,7 +87,7 @@ export async function WorldCupFixtures() {
         const isFinished = status === 'finished' || status === 'FT';
 
         return (
-          <div key={match.id || i} className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+          <div key={`${match.id || 'fixture'}-${i}`} className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
              <div className="bg-neutral-50 px-5 py-3 border-b border-neutral-100 flex justify-between items-center text-xs font-bold text-neutral-500 uppercase tracking-wider">
                 <div className="flex items-center gap-2">
                   <CalendarIcon className="w-3.5 h-3.5" />

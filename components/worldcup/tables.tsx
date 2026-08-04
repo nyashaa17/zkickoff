@@ -91,11 +91,11 @@ export async function WorldCupTables() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {groupKeys.map(groupName => {
+      {groupKeys.map((groupName, gIdx) => {
         const rows = groups[groupName];
         
         return (
-          <div key={groupName} className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-sm">
+          <div key={`${groupName}-${gIdx}`} className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-sm">
              <div className="bg-neutral-900 px-5 py-3 border-b border-neutral-800 flex justify-between items-center text-sm font-bold text-white uppercase tracking-wider">
                 <div className="flex items-center gap-2">
                   <Target className="w-4 h-4 text-[#009739]" />
@@ -131,7 +131,7 @@ export async function WorldCupTables() {
                       const flagUrl = getTeamFlagUrl(teamName);
                       
                       return (
-                        <tr key={row.team?.id || row.team_id || i} className="hover:bg-neutral-50 transition-colors">
+                        <tr key={row.team?.id ? `${row.team.id}-${i}` : `row-${row.team_id || i}`} className="hover:bg-neutral-50 transition-colors">
                           <td className="px-4 py-3 font-medium text-neutral-500">{pos}</td>
                           <td className="px-4 py-3 font-bold text-neutral-900">
                             <div className="flex items-center gap-2">

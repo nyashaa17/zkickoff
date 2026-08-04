@@ -195,7 +195,15 @@ function HomeContent() {
       return [];
     }
     if (livescoreData && livescoreData.matches) {
-      return livescoreData.matches;
+      const seen = new Set<string>();
+      const uniqueMatches: Match[] = [];
+      for (const m of livescoreData.matches) {
+        if (m && m.id && !seen.has(m.id)) {
+          seen.add(m.id);
+          uniqueMatches.push(m);
+        }
+      }
+      return uniqueMatches;
     }
     // Return mock data if there is an error or no data is fetched yet (while not loading)
     if (livescoreError) {
@@ -462,13 +470,13 @@ function HomeContent() {
               </h2>
 
               <div className="flex items-center gap-2 overflow-x-auto scrollbar-thin pb-2 max-w-full">
-                {leagueFilters.map((league) => {
+                {leagueFilters.map((league, idx) => {
                   const leagueLogo =
                     league !== "ALL" ? leagueLogoMap[league] : undefined;
 
                   return (
                     <button
-                      key={league}
+                      key={`${league}-${idx}`}
                       onClick={() => setActiveCategory(league)}
                       className={`shrink-0 cursor-pointer px-3 py-1.5 text-[10px] md:text-xs font-bold rounded-lg font-display tracking-wide transition-all flex items-center gap-1.5 ${
                         activeCategory === league
@@ -544,11 +552,11 @@ function HomeContent() {
                   ref={dateScrollRef}
                   className="flex gap-2.5 overflow-x-auto scrollbar-thin pb-2.5 max-w-full snap-x snap-mandatory scroll-smooth flex-nowrap min-w-full"
                 >
-                  {displayedWeekDates.map((d) => {
+                  {displayedWeekDates.map((d, idx) => {
                     const isSelected = selectedDateFilter === d.dateString;
                     return (
                       <button
-                        key={d.dateString}
+                        key={`${d.dateString}-${idx}`}
                         onClick={() => {
                           if (isSelected) {
                             setSelectedDateFilter(null);
@@ -644,8 +652,8 @@ function HomeContent() {
                   {filteredMatches.length > 0 ? (
                     activeTab === "TODAY" || selectedDateFilter !== null ? (
                       // Grouped by league on Today's tab
-                      groupedTodayMatches.map((group) => (
-                        <div key={group.leagueName} className="space-y-3">
+                      groupedTodayMatches.map((group, groupIdx) => (
+                        <div key={`${group.leagueName}-${groupIdx}`} className="space-y-3">
                           <div className="flex items-center gap-2 px-1 py-1">
                             {group.leagueLogoUrl ? (
                               <Image
@@ -669,8 +677,8 @@ function HomeContent() {
                             </span>
                           </div>
                           <div className="space-y-3">
-                            {group.matches.map((match: Match) => (
-                              <MatchCard key={match.id} match={match} />
+                            {group.matches.map((match: Match, idx: number) => (
+                              <MatchCard key={`${match.id}-${idx}`} match={match} />
                             ))}
                           </div>
                         </div>
@@ -678,8 +686,8 @@ function HomeContent() {
                     ) : (
                       // Normal flat list for other tabs
                       <div className="space-y-3">
-                        {filteredMatches.map((match: Match) => (
-                          <MatchCard key={match.id} match={match} />
+                        {filteredMatches.map((match: Match, idx: number) => (
+                          <MatchCard key={`${match.id}-${idx}`} match={match} />
                         ))}
                       </div>
                     )
@@ -777,9 +785,9 @@ function HomeContent() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-neutral-50">
-                        {standings.map((team: any) => (
+                        {standings.map((team: any, idx: number) => (
                           <tr
-                            key={team.rank}
+                            key={team.id ? `${team.id}-${idx}` : `team-${team.rank || idx}-${team.team || ''}`}
                             className="hover:bg-neutral-50 transition-colors"
                           >
                             <td className="py-2.5 font-semibold font-mono text-neutral-500 w-8">
