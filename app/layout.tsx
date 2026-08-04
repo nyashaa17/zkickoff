@@ -123,7 +123,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
         />
         <Script async src="https://www.googletagmanager.com/gtag/js?id=G-1T22JFEXXS" />
         <Script async src="https://js.wpadmngr.com/static/adManager.js" data-admpid="450615" strategy="afterInteractive" />
-        <Script async src="https://js.wpadmngr.com/static/adManager.js" data-admpid="450616" strategy="afterInteractive" />
+        <Script async src="https://js.wpadmngr.com/static/adManager.js" data-admpid="450656" strategy="afterInteractive" />
         <Script id="google-analytics">
           {`
             window.dataLayer = window.dataLayer || [];

@@ -33,7 +33,6 @@ import { DetailedPageSkeleton } from '@/components/skeleton-loader';
 import { PredictionsBanner } from '@/components/predictions-banner';
 import { TeamLogo } from '@/components/team-logo';
 import Breadcrumbs from '@/components/breadcrumbs';
-import BannerAd from '@/components/banner-ad';
 import { fetchLivescoresDirect, fetchMatchButtonsDirect, fetchCommentaryDirect } from '@/lib/totalsports-client';
 
 interface PageProps {
@@ -472,8 +471,6 @@ export default function WatchPage({ params }: PageProps) {
               </p>
             </div>
           </div>
-
-          <BannerAd format="responsive" />
 
           {/* Tabbed Interactive Section: Commentary Feed & Scorecard details */}
           <div className="bg-white border border-neutral-200/60 rounded-3xl p-5 md:p-6 shadow-xs space-y-6">

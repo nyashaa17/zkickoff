@@ -21,7 +21,6 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { Match } from "@/lib/matches-data";
 import MatchCard from "@/components/match-card";
-import BannerAd from "@/components/banner-ad";
 import { MatchGridSkeleton } from "@/components/skeleton-loader";
 import {
   fetchLivescoresDirect,
@@ -716,13 +715,11 @@ function HomeContent() {
             </div>
           )}
 
-          {/* Ad banner container */}
-          <BannerAd format="responsive" />
+          {/* Ad banner placeholer */}
         </div>
 
         {/* Right sidebar column on desktop (ZPSL League Standings and widget spaces) */}
         <div id="sidebar-widgets" className="space-y-6">
-          <BannerAd format="300x250" className="hidden lg:flex" />
           {/* Sidebar Tabs: League Table & Player Stats */}
           <div className="bg-white border border-neutral-200/60 rounded-3xl p-5 shadow-xs">
             <div className="flex border-b border-neutral-100 pb-2 mb-4 justify-between items-center">

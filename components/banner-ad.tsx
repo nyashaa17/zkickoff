@@ -27,7 +27,10 @@ export default function BannerAd({ format = '300x250', className = '', adSlotId 
       <div 
         className={`${getDimensions()} bg-white border border-neutral-200/60 shadow-xs flex items-center justify-center overflow-hidden relative`}
       >
-        <div data-banner-id="1498047"></div>
+        <div className="text-center p-4">
+          <span className="text-neutral-400 text-xs font-medium block">Advertisement Space</span>
+          <span className="text-neutral-300 text-[10px] font-mono mt-1 block">Ready for New Ad Network</span>
+        </div>
       </div>
     </div>
   );
