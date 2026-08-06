@@ -114,10 +114,10 @@ export async function WorldCupSquads({ page = 1, teamId }: { page?: number; team
 
         {hasAnyPlayers ? (
           <div className="space-y-8">
-            {Object.entries(positionGroups).map(([groupName, groupPlayers], gIdx) => {
+            {Object.entries(positionGroups).map(([groupName, groupPlayers]) => {
               if (groupPlayers.length === 0) return null;
               return (
-                <div key={`${groupName}-${gIdx}`} className="space-y-4">
+                <div key={groupName} className="space-y-4">
                   <h3 className="text-lg font-bold font-display text-neutral-800 border-b border-neutral-150 pb-2 flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#009739]"></span>
                     {groupName} <span className="text-xs text-neutral-500 font-mono font-medium">({groupPlayers.length})</span>
@@ -129,7 +129,7 @@ export async function WorldCupSquads({ page = 1, teamId }: { page?: number; team
                       const clubDisplay = clubCountry ? `${clubName} (${clubCountry})` : clubName;
 
                       return (
-                        <div key={player.id ? `${player.id}-${i}` : `player-${i}`} className="bg-white border border-neutral-200 p-5 rounded-2xl shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
+                        <div key={player.id || i} className="bg-white border border-neutral-200 p-5 rounded-2xl shadow-xs hover:shadow-md transition-shadow relative overflow-hidden">
                           <div className="flex justify-between items-start mb-4">
                             <h4 className="font-bold font-display text-base text-neutral-900 flex-1 flex items-center gap-2">
                               {player.jersey_number && (
@@ -196,11 +196,11 @@ export async function WorldCupSquads({ page = 1, teamId }: { page?: number; team
 
       {teams && teams.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {teams.map((team: any, i: number) => {
+          {teams.map((team: any) => {
             const flagUrl = getTeamFlagUrl(team.name);
             return (
               <Link 
-                key={`${team.id || team.name}-${i}`}
+                key={team.id}
                 href={`/worldcup?tab=squads&team_id=${team.id}`}
                 className="group flex flex-col items-center justify-center p-5 bg-white border border-neutral-200 rounded-3xl shadow-xs hover:shadow-md hover:border-[#009739] transition-all text-center gap-3 cursor-pointer"
               >

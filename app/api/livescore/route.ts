@@ -73,14 +73,7 @@ export async function GET(req: NextRequest) {
          });
       }
 
-      const seenIds = new Set<string>();
-      const uniqueRawMatches = rawMatches.filter((m) => {
-        if (!m || !m.id || seenIds.has(m.id)) return false;
-        seenIds.add(m.id);
-        return true;
-      });
-
-      const matches = await enrichMatchesWithLogos(uniqueRawMatches);
+      const matches = await enrichMatchesWithLogos(rawMatches);
       return NextResponse.json({ matches });
     } else {
       // Parallel fetch for Yesterday, Today, and Tomorrow to fully populate all tabs
@@ -122,14 +115,7 @@ export async function GET(req: NextRequest) {
       ]);
 
       const rawMatches = [...yesterdayMatches, ...todayMatches, ...tomorrowMatches];
-      const seenIds = new Set<string>();
-      const uniqueRawMatches = rawMatches.filter((m) => {
-        if (!m || !m.id || seenIds.has(m.id)) return false;
-        seenIds.add(m.id);
-        return true;
-      });
-
-      const matches = await enrichMatchesWithLogos(uniqueRawMatches);
+      const matches = await enrichMatchesWithLogos(rawMatches);
 
       return NextResponse.json({ matches });
     }

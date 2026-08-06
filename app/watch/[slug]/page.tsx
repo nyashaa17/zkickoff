@@ -34,7 +34,6 @@ import { PredictionsBanner } from '@/components/predictions-banner';
 import { TeamLogo } from '@/components/team-logo';
 import Breadcrumbs from '@/components/breadcrumbs';
 import { fetchLivescoresDirect, fetchMatchButtonsDirect, fetchCommentaryDirect } from '@/lib/totalsports-client';
-import BannerAd from '@/components/banner-ad';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -262,17 +261,8 @@ export default function WatchPage({ params }: PageProps) {
   const homeLogoUrl = getLogoForTeam(queryMatch.teams.home.name);
   const awayLogoUrl = getLogoForTeam(queryMatch.teams.away.name);
 
-  const seenMatches = new Set<string>();
   const relatedMatches = allMatches
-    .filter((m) => {
-      if (!m || !m.id || m.id === queryMatch.id || seenMatches.has(m.id)) return false;
-      if (m.status === 'FINISHED' || m.dateString === 'Yesterday') return false;
-      if (m.category === queryMatch.category || m.status === 'LIVE') {
-        seenMatches.add(m.id);
-        return true;
-      }
-      return false;
-    })
+    .filter((m) => m.id !== queryMatch.id && m.status !== 'FINISHED' && m.dateString !== 'Yesterday' && (m.category === queryMatch.category || m.status === 'LIVE'))
     .slice(0, 4);
 
   const isLive = queryMatch.status === 'LIVE';
@@ -481,9 +471,6 @@ export default function WatchPage({ params }: PageProps) {
               </p>
             </div>
           </div>
-
-          {/* Clickadilla Sponsored Banner Ad */}
-          <BannerAd />
 
           {/* Tabbed Interactive Section: Commentary Feed & Scorecard details */}
           <div className="bg-white border border-neutral-200/60 rounded-3xl p-5 md:p-6 shadow-xs space-y-6">
@@ -701,8 +688,8 @@ export default function WatchPage({ params }: PageProps) {
 
             <div className="flex flex-col gap-3">
               {relatedMatches.length > 0 ? (
-                relatedMatches.map((m, idx) => (
-                  <Link href={`/preview/${m.slug}`} key={`${m.id}-${idx}`} className="block group">
+                relatedMatches.map((m) => (
+                  <Link href={`/preview/${m.slug}`} key={m.id} className="block group">
                     <div className="p-3 bg-neutral-50 hover:bg-neutral-100/50 border border-neutral-200/50 hover:border-neutral-200 rounded-xl transition-all flex items-center justify-between gap-3 text-left">
                       <div className="space-y-1 overflow-hidden">
                         <span className="text-[9px] font-mono text-neutral-400 uppercase tracking-wider block font-bold truncate">

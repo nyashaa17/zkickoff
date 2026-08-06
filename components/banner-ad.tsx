@@ -2,21 +2,18 @@
 
 import React from 'react';
 
-interface BannerAdProps {
-  className?: string;
-  bannerId?: string;
-}
-
-export default function BannerAd({ className = '', bannerId = '1498047' }: BannerAdProps) {
+export default function BannerAd() {
   return (
-    <div className={`w-full flex flex-col items-center justify-center py-3 px-4 border border-neutral-200/60 bg-neutral-50/60 rounded-2xl my-4 ${className}`}>
+    <div id="ad-banner-container" className="w-full flex flex-col items-center justify-center py-6 border-y border-neutral-100 bg-neutral-50/45 rounded-none my-6">
       <span className="text-[9px] font-mono font-bold text-neutral-400 uppercase tracking-widest mb-2">SPONSORED ADVERTISEMENT</span>
       <div 
-        className="w-full flex items-center justify-center min-h-[90px] overflow-hidden"
-        data-banner-id={bannerId}
-      />
+        style={{ width: '300px', height: '250px' }} 
+        className="w-[300px] h-[250px] bg-white border border-neutral-200/50 shadow-3xs rounded-none flex items-center justify-center overflow-hidden"
+      >
+        <span className="text-neutral-400 text-sm font-medium">Ad Placeholder</span>
+        {/* TODO: Integrate new ad network script here */}
+      </div>
     </div>
   );
 }
-
 
