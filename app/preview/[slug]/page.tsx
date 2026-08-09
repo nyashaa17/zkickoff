@@ -3,6 +3,7 @@
 import React, { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import { 
   ArrowLeft, 
@@ -28,7 +29,7 @@ import {
 } from 'lucide-react';
 import { Match } from '@/lib/matches-data';
 import { TeamLogo } from '@/components/team-logo';
-import { fetchLivescoresDirect, fetchCommentaryDirect } from '@/lib/totalsports-client';
+import { fetchLivescoresDirect, fetchCommentaryDirect, fetchMatchButtonsDirect } from '@/lib/totalsports-client';
 import Breadcrumbs from '@/components/breadcrumbs';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -46,17 +47,19 @@ export default function MatchPreviewPage({ params }: PageProps) {
   const [adClicked, setAdClicked] = useState(false);
   const [showHint, setShowHint] = useState(false);
 
-  const handlePlayClick = (e: React.MouseEvent) => {
+  const router = useRouter();
+
+  const handlePlayClick = (e: React.MouseEvent, serverId?: string) => {
+    e.preventDefault();
     if (!adClicked) {
-      e.preventDefault();
       window.open('https://omg10.com/4/11519037', '_blank');
       setAdClicked(true);
-      setShowHint(true);
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('smartlink_last_shown', 'true');
       }
-      setTimeout(() => setShowHint(false), 5000);
     }
+    const dest = serverId ? `/watch/${slug}?server=${serverId}` : `/watch/${slug}`;
+    router.push(dest);
   };
 
   const handleShare = async () => {
@@ -150,6 +153,15 @@ export default function MatchPreviewPage({ params }: PageProps) {
     refreshInterval: 15000,
     revalidateOnFocus: true,
   });
+
+  const { data: bData } = useSWR(`match-buttons-${matchId}`, () => fetchMatchButtonsDirect(matchId, fallbackData.homeName, fallbackData.awayName), {
+    revalidateOnFocus: true,
+  });
+
+  let servers: { id: string; name: string; embedUrl: string }[] = [];
+  if (bData && bData.servers && bData.servers.length > 0) {
+    servers = bData.servers;
+  }
 
   const { data: bzzoiroData, isValidating: isLoadingBzzoiro } = useSWR(
     `/api/bzzoiro/match-preview?home=${encodeURIComponent(fallbackData.homeName)}&away=${encodeURIComponent(fallbackData.awayName)}`,
@@ -433,19 +445,27 @@ export default function MatchPreviewPage({ params }: PageProps) {
             </h3>
 
             <div className="space-y-2">
-              <Link 
-                href={`/watch/${slug}`}
-                onClick={handlePlayClick}
-                className="w-full group cursor-pointer py-3.5 px-4 bg-[#009739] text-white hover:bg-opacity-95 rounded-xl font-display text-xs font-extrabold flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-500/10 hover:shadow-lg hover:shadow-emerald-500/20"
-              >
-                <Tv className="w-4 h-4 fill-white/10" />
-                <span>▶️ PlayMatch Live</span>
-                <ChevronRight className="w-3.5 h-3.5 text-white group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-              {showHint && (
-                <p className="text-center text-xs font-bold text-red-500 font-display animate-pulse pt-1">
-                  Tap again to watch ▶️
-                </p>
+              {servers.length > 0 ? (
+                servers.map((srv, idx) => (
+                  <button
+                    key={srv.id}
+                    onClick={(e) => handlePlayClick(e, srv.id)}
+                    className="w-full group cursor-pointer py-3.5 px-4 bg-[#009739] text-white hover:bg-opacity-95 rounded-xl font-display text-xs font-extrabold flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-500/10 hover:shadow-lg hover:shadow-emerald-500/20 mb-2"
+                  >
+                    <Tv className="w-4 h-4 fill-white/10" />
+                    <span>▶️ Play {srv.name.replace(' (HD)', '').replace(' (FHD)', '') || `Server ${idx + 1}`}</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-white group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+                ))
+              ) : (
+                <button 
+                  onClick={(e) => handlePlayClick(e)}
+                  className="w-full group cursor-pointer py-3.5 px-4 bg-[#009739] text-white hover:bg-opacity-95 rounded-xl font-display text-xs font-extrabold flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-500/10 hover:shadow-lg hover:shadow-emerald-500/20"
+                >
+                  <Tv className="w-4 h-4 fill-white/10" />
+                  <span>▶️ PlayMatch Live</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-white group-hover:translate-x-0.5 transition-transform" />
+                </button>
               )}
             </div>
           </div>
@@ -884,6 +904,18 @@ export default function MatchPreviewPage({ params }: PageProps) {
 
       </div>
 
+      {/* SEO Section */}
+      <section className="mt-12 bg-white rounded-2xl border border-neutral-200/60 p-6 shadow-sm text-center">
+        <h2 className="text-xl font-extrabold text-neutral-900 mb-3">Watch {queryMatch.teams.home.name} vs {queryMatch.teams.away.name} Live Stream</h2>
+        <div className="space-y-4 text-sm text-neutral-600 leading-relaxed max-w-3xl mx-auto">
+          <p>
+            Read the full match preview, check lineups, betting odds, and stats for the upcoming {queryMatch.teams.home.name} vs {queryMatch.teams.away.name} fixture. 
+          </p>
+          <p>
+            Stream top matches from the Premier League, UEFA Champions League, and more live for free on ZimKickoff.
+          </p>
+        </div>
+      </section>
     </div>
   );
 }

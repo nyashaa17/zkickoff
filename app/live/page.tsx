@@ -165,7 +165,19 @@ export default function LivePage() {
         </div>
 
       </div>
-
+      
+      {/* SEO Section */}
+      <section className="mt-12 bg-white rounded-2xl border border-neutral-200/60 p-6 shadow-sm text-center">
+        <h2 className="text-xl font-extrabold text-neutral-900 mb-3">Live Streaming & Match Coverage</h2>
+        <div className="space-y-4 text-sm text-neutral-600 leading-relaxed max-w-3xl mx-auto">
+          <p>
+            Catch all the live action as it unfolds. Our live page aggregates the most anticipated matches happening right now. Watch the Premier League, UEFA Champions League, LaLiga, and the upcoming FIFA World Cup 2026 without any interruptions.
+          </p>
+          <p>
+            We offer deep integrations with real-time stats, schedules, and live play-by-play commentary so you can follow along with the world&apos;s biggest fixtures for free.
+          </p>
+        </div>
+      </section>
     </div>
   );
 }

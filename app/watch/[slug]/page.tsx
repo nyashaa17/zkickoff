@@ -37,10 +37,12 @@ import { fetchLivescoresDirect, fetchMatchButtonsDirect, fetchCommentaryDirect }
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ server?: string }>;
 }
 
-export default function WatchPage({ params }: PageProps) {
+export default function WatchPage({ params, searchParams }: PageProps) {
   const { slug } = use(params);
+  const { server: initialServer } = use(searchParams);
   
   // Parse slug fallback values in case livescore isn't available
   const getSlugFallback = () => {
@@ -64,7 +66,7 @@ export default function WatchPage({ params }: PageProps) {
 
   const fallbackData = getSlugFallback();
   
-  const [activeServer, setActiveServer] = useState<string>('');
+  const [activeServer, setActiveServer] = useState<string>(initialServer || '');
   const [copiedLink, setCopiedLink] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [detailTab, setDetailTab] = useState<'COMMENTARY' | 'DETAILS'>('COMMENTARY');
@@ -416,45 +418,20 @@ export default function WatchPage({ params }: PageProps) {
             </div>
 
             {/* Action panel underneath the player */}
-            <div className="p-4 md:p-5 bg-neutral-50 border-t border-neutral-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-              
-              {/* Stream Servers Selectors */}
-              <div className="w-full sm:w-auto">
-                <p className="text-[10px] font-mono font-bold text-neutral-400 uppercase tracking-widest mb-2 text-center sm:text-left">
-                  EXTERNAL BROADCAST SERVERS
-                </p>
-                <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
-                  {renderServersList.map((srv, idx) => (
-                    <button
-                      key={srv.id}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setActiveServer(srv.id);
-                      }}
-                      className={`cursor-pointer px-3.5 py-2 rounded-xl text-xs font-display font-bold transition-all border flex items-center gap-1.5 ${
-                        activeServer === srv.id
-                          ? 'bg-zim-green text-white border-zim-green shadow-xs shadow-zim-green/10'
-                          : 'bg-white hover:bg-neutral-100 text-neutral-700 border-neutral-200'
-                      }`}
-                    >
-                      {srv.name.replace(' (HD)', '').replace(' (FHD)', '') || `Server ${idx + 1}`}
-                      <ExternalLink className="w-3 h-3 text-current opacity-60" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
+            <div className="p-3 bg-neutral-50 border-t border-neutral-100 flex items-center justify-between gap-4">
+              <p className="text-[10px] font-mono font-bold text-neutral-500 uppercase tracking-widest hidden sm:block pl-2">
+                ZimKickOff Player
+              </p>
               {/* Fast interactive tools */}
-              <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-end shrink-0">
+              <div className="flex items-center justify-end w-full sm:w-auto">
                 <button
                   onClick={copyShareLink}
-                  className="cursor-pointer px-3.5 py-2 bg-white hover:bg-neutral-100 border border-neutral-200 text-neutral-750 rounded-xl text-xs font-display font-bold flex items-center justify-center gap-1.5 transition-colors shadow-4xs w-48"
+                  className="cursor-pointer px-3 py-1.5 bg-white hover:bg-neutral-100 border border-neutral-200 text-neutral-750 rounded-lg text-xs font-display font-bold flex items-center gap-1.5 transition-colors shadow-4xs"
                 >
                   {copiedLink ? <Check className="w-4 h-4 text-[#009739]" /> : <Share2 className="w-3.5 h-3.5 text-[#009739]" />}
-                  {copiedLink ? 'Link Copied!' : 'Copy Share Link'}
+                  {copiedLink ? 'Copied!' : 'Share Stream'}
                 </button>
               </div>
-
             </div>
 
           </div>
@@ -682,6 +659,41 @@ export default function WatchPage({ params }: PageProps) {
         {/* Right Sidebar: Sponsor spots and related streams */}
         <div className="space-y-6">
           
+          {/* External Broadcast Servers */}
+          <div className="bg-white border border-neutral-200/60 rounded-3xl p-5 shadow-xs space-y-4">
+            <h3 className="font-display font-bold text-sm text-neutral-950 pb-2 border-b border-neutral-100 flex items-center justify-between">
+              <span>Broadcast Servers</span>
+              <span className="bg-neutral-100 text-neutral-600 font-mono text-[9px] font-bold px-1.5 py-0.5 rounded">
+                LINKS
+              </span>
+            </h3>
+            <div className="flex flex-col gap-2">
+              {renderServersList.map((srv, idx) => (
+                <button
+                  key={srv.id}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setActiveServer(srv.id);
+                  }}
+                  className={`w-full cursor-pointer px-4 py-3 rounded-xl text-xs font-display font-bold transition-all border flex items-center justify-between gap-1.5 ${
+                    activeServer === srv.id
+                      ? 'bg-zim-green text-white border-zim-green shadow-xs shadow-zim-green/10'
+                      : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-700 border-neutral-200/60'
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <Tv className="w-4 h-4 opacity-80" />
+                    {srv.name.replace(' (HD)', '').replace(' (FHD)', '') || `Server ${idx + 1}`}
+                  </span>
+                  {activeServer === srv.id && <Check className="w-4 h-4 text-white" />}
+                </button>
+              ))}
+              {renderServersList.length === 0 && (
+                <p className="text-neutral-400 text-xs text-center py-2">No servers available.</p>
+              )}
+            </div>
+          </div>
+
           {/* Related matches list section */}
           <div className="bg-white border border-neutral-200/60 rounded-3xl p-5 shadow-xs space-y-4">
             <h3 className="font-display font-bold text-sm text-neutral-950 pb-2 border-b border-neutral-100 flex items-center justify-between">
@@ -737,6 +749,18 @@ export default function WatchPage({ params }: PageProps) {
       {/* Floating Closable Affiliate Banner */}
       <PredictionsBanner />
 
+      {/* SEO Section */}
+      <section className="mt-12 bg-white rounded-2xl border border-neutral-200/60 p-6 shadow-sm text-center">
+        <h2 className="text-xl font-extrabold text-neutral-900 mb-3">Watch {queryMatch.teams.home.name} vs {queryMatch.teams.away.name} Live Stream Free</h2>
+        <div className="space-y-4 text-sm text-neutral-600 leading-relaxed max-w-3xl mx-auto">
+          <p>
+            Watch the {queryMatch.teams.home.name} vs {queryMatch.teams.away.name} live stream free in HD. 
+          </p>
+          <p>
+            ZimKickoff brings you live coverage of the biggest football events globally including the FIFA World Cup 2026, LaLiga, and Saudi Pro League. Enjoy buffer-free streaming today!
+          </p>
+        </div>
+      </section>
   </div>
 );
 }

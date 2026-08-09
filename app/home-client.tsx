@@ -902,6 +902,19 @@ function HomeContent() {
           {/* Ad spot sidebar */}
         </div>
       </div>
+      
+      {/* SEO Section */}
+      <section className="mt-12 bg-white rounded-2xl border border-neutral-200/60 p-6 shadow-sm text-center">
+        <h2 className="text-xl font-extrabold text-neutral-900 mb-4">Watch Free Football Live Streaming, Score & Fixtures - ZimKickoff</h2>
+        <div className="space-y-4 text-sm text-neutral-600 leading-relaxed max-w-3xl mx-auto">
+          <p>
+            Watch FIFA World Cup 2026, Premier League, LaLiga, UEFA Champions League, Saudi Pro League and more live for free on ZimKickoff. 
+          </p>
+          <p>
+            Get real-time soccer scores, comprehensive stats, schedules, fixtures, and buffer-free live streaming all in one place. No signups required, just instant access to top-tier football matches globally.
+          </p>
+        </div>
+      </section>
     </div>
   );
 }
