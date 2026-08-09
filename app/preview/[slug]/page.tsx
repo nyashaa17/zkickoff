@@ -43,6 +43,15 @@ export default function MatchPreviewPage({ params }: PageProps) {
   const [isStarred, setIsStarred] = useState(false);
   const [shareText, setShareText] = useState('Share');
   const [showShareTooltip, setShowShareTooltip] = useState(false);
+  const [adClicked, setAdClicked] = useState(false);
+
+  const handlePlayClick = (e: React.MouseEvent) => {
+    if (!adClicked) {
+      e.preventDefault();
+      window.open('https://omg10.com/4/11519037', '_blank');
+      setAdClicked(true);
+    }
+  };
 
   const handleShare = async () => {
     const shareData = {
@@ -402,6 +411,24 @@ export default function MatchPreviewPage({ params }: PageProps) {
               {activeTab === 'SUMMARY' && (
                 <div className="p-5 md:p-6 space-y-6">
                   
+          {/* STREAM PLAYER LAUNCHER CALLOUT */}
+          <div className="bg-neutral-50/50 border border-neutral-100 rounded-2xl p-4 md:p-5 shadow-xs space-y-4">
+            <h3 className="font-display font-extrabold text-sm text-neutral-950 pb-2 border-b border-neutral-100 flex items-center gap-1.5">
+              <Tv className="w-4 h-4 text-[#009739]" />
+              Live Stream Links
+            </h3>
+
+            <Link 
+              href={`/watch/${slug}`}
+              onClick={handlePlayClick}
+              className="w-full group cursor-pointer py-3.5 px-4 bg-[#009739] text-white hover:bg-opacity-95 rounded-xl font-display text-xs font-extrabold flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-500/10 hover:shadow-lg hover:shadow-emerald-500/20"
+            >
+              <Tv className="w-4 h-4 fill-white/10" />
+              <span>▶️ PlayMatch Live</span>
+              <ChevronRight className="w-3.5 h-3.5 text-white group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </div>
+
                   {/* Facts / Pre-match */}
                   {isLoadingBzzoiro ? (
                     <div className="space-y-4">
@@ -707,27 +734,6 @@ export default function MatchPreviewPage({ params }: PageProps) {
         {/* Right Sidebar Column */}
         <div className="space-y-6">
           
-          {/* STREAM PLAYER LAUNCHER CALLOUT */}
-          <div className="bg-white border border-neutral-200/70 rounded-2xl p-5 md:p-6 shadow-xs space-y-4">
-            <h3 className="font-display font-extrabold text-sm text-neutral-950 pb-2 border-b border-neutral-100 flex items-center gap-1.5">
-              <Tv className="w-4 h-4 text-[#009739]" />
-              Live Stream Links
-            </h3>
-
-            <Link 
-              href={`/watch/${slug}`}
-              className="w-full group cursor-pointer py-3.5 px-4 bg-[#009739] text-white hover:bg-opacity-95 rounded-xl font-display text-xs font-extrabold flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-500/10 hover:shadow-lg hover:shadow-emerald-500/20"
-            >
-              <Tv className="w-4 h-4 fill-white/10" />
-              <span>{isFinished ? 'VIEW MATCH BROADCAST' : isLive ? 'WATCH LIVE STREAM' : 'CLICK HERE'}</span>
-              <ChevronRight className="w-3.5 h-3.5 text-white group-hover:translate-x-0.5 transition-transform" />
-            </Link>
-
-            <p className="text-[10px] font-medium text-neutral-400 text-center">
-              Multi-Server Pipeline • Dynamic Resolution Adaptive
-            </p>
-          </div>
-
           {/* VENUE / EVENT DETAILS */}
           <div className="bg-white border border-neutral-200/60 rounded-2xl p-5 shadow-xs space-y-4">
             <h3 className="font-display font-extrabold text-xs text-neutral-950 pb-2 border-b border-neutral-100 flex items-center gap-1.5 uppercase tracking-wider">
