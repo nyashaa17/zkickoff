@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
+import { apiRateLimiter } from '@/lib/rate-limit';
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ matchId: string }> }
 ) {
   const { matchId } = await params;
+
+  const ip = req.headers.get('x-forwarded-for') || 'unknown';
+  if (!apiRateLimiter(ip)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
 
   try {
     const res = await fetch(`https://api.totalsportss.online/matches/${matchId}`, {
@@ -21,21 +27,6 @@ export async function GET(
   } catch (error: any) {
     console.error('Commentary Proxy Error:', error);
     
-    // Provide nice mock commentaries in case the API doesn't have records for this particular match, 
-    // so the live page looks full of matches-specific insights and commentary actions!
-    const fallbackCommentary = {
-      liveCommentary: [
-        { time: 1, text: "KICK-OFF! The referee blows the whistle and we are underway." },
-        { time: 12, text: "Corner kick awarded. Defended well by the tactical box layout." },
-        { time: 24, text: "Shots on target! A spectacular save keeps the clean sheet." },
-        { time: 45, text: "Halftime whistle. Teams retreat to the dressing rooms after a high-octane half." },
-        { time: 46, text: "Second half starts! Intense battles ahead." }
-      ],
-      manualCommentary: [
-        { time: 6, text: "Heavy local support is roaring in the grandstands today. The atmosphere is absolute electric." }
-      ]
-    };
-
-    return NextResponse.json(fallbackCommentary);
+    return NextResponse.json({ liveCommentary: [], manualCommentary: [], error: true }, { status: 500 });
   }
 }

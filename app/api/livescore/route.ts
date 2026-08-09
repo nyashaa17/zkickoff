@@ -5,8 +5,9 @@ import {
   parseRawEventToMatch, 
   LivescoreResponseRaw 
 } from '@/lib/totalsports-api';
-import { Match, mockMatches } from '@/lib/matches-data';
+import { Match } from '@/lib/matches-data';
 import { getTeamLogoUrl, getLeagueLogoUrl } from '@/lib/bzzoiro-api';
+import { apiRateLimiter } from '@/lib/rate-limit';
 
 // Helper to enrich matches with dynamic Bzzoiro Sports Data API logos
 async function enrichMatchesWithLogos(matches: Match[]): Promise<Match[]> {
@@ -40,6 +41,11 @@ async function enrichMatchesWithLogos(matches: Match[]): Promise<Match[]> {
 }
 
 export async function GET(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for') || 'unknown';
+  if (!apiRateLimiter(ip)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   const { searchParams } = new URL(req.url);
   const dateParam = searchParams.get('date');
 
@@ -120,21 +126,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ matches });
     }
   } catch (error: any) {
-    console.error('Livescore Route Error (graceful mock fallback applied):', error);
-    try {
-      const fallbackMatches = await enrichMatchesWithLogos(mockMatches);
-      return NextResponse.json({ 
-        error: 'Failed to retrieve real-time score feeds, using offline cached data',
-        message: error.message,
-        matches: fallbackMatches 
-      });
-    } catch (fallbackErr: any) {
-      console.error('Livescore Route Error fallback failed:', fallbackErr);
-      return NextResponse.json({ 
-        error: 'Failed to retrieve real-time score feeds',
-        message: error.message,
-        matches: mockMatches 
-      });
-    }
+    console.error('Livescore Route Error:', error);
+    return NextResponse.json({ 
+      error: true,
+      message: 'Unable to load matches right now',
+      matches: [] 
+    }, { status: 500 });
   }
 }

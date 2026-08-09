@@ -191,54 +191,13 @@ function HomeContent() {
   );
 
   const matches = React.useMemo<Match[]>(() => {
-    if (livescoreData && livescoreData.matches) {
+    if (livescoreData && livescoreData.matches && !livescoreData.error) {
       return livescoreData.matches;
     }
-    if (loading) {
-      return [];
-    }
-    // Return mock data if there is an error or no data is fetched yet (while not loading)
-    if (livescoreError) {
-      return [
-        {
-          id: "mock-1",
-          slug: "dynamos-vs-caps-united-mock-1",
-          teams: {
-            home: { name: "Dynamos FC", code: "DYN", logoColor: "#0056B3" },
-            away: { name: "CAPS United", code: "CAP", logoColor: "#000000" },
-          },
-          score: { home: 1, away: 0 },
-          status: "LIVE",
-          minute: 34,
-          competition: "Zimbabwe Premier Soccer League",
-          kickoffTime: "15:00",
-          dateString: "Today",
-          category: "ZPSL",
-          venue: "Rufaro Stadium",
-          spectators: "15,000",
-          servers: [],
-        } as Match,
-        {
-          id: "mock-2",
-          slug: "highlanders-vs-fc-platinum-mock-2",
-          teams: {
-            home: { name: "Highlanders FC", code: "HIG", logoColor: "#111111" },
-            away: { name: "FC Platinum", code: "FCP", logoColor: "#007a33" },
-          },
-          score: { home: 0, away: 0 },
-          status: "TODAY",
-          competition: "Zimbabwe Premier Soccer League",
-          kickoffTime: "18:00",
-          dateString: "Today",
-          category: "ZPSL",
-          venue: "Barbourfields Stadium",
-          spectators: "12,000",
-          servers: [],
-        } as Match,
-      ];
-    }
     return [];
-  }, [livescoreData, livescoreError, loading]);
+  }, [livescoreData]);
+
+  const isMatchesError = livescoreError || (livescoreData && livescoreData.error);
 
   // Load player statistics directly on the client to avoid server-side request blocking
   const { data: statsData, isLoading: statsLoading } = useSWR(
@@ -641,7 +600,21 @@ function HomeContent() {
                   transition={{ duration: 0.15, ease: "easeOut" }}
                   className="space-y-6"
                 >
-                  {filteredMatches.length > 0 ? (
+                  {isMatchesError ? (
+                    <div className="bg-white border border-neutral-200/60 rounded-2xl p-10 text-center flex flex-col items-center justify-center gap-3 my-4 shadow-2xs">
+                      <div className="w-12 h-12 rounded-full bg-red-50 border border-red-100 flex items-center justify-center text-red-500">
+                        <AlertCircle className="w-6 h-6" />
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="font-display font-bold text-neutral-900 text-sm">
+                          Matches unavailable
+                        </h4>
+                        <p className="text-neutral-500 text-xs">
+                          Unable to load matches right now. Please check back shortly.
+                        </p>
+                      </div>
+                    </div>
+                  ) : filteredMatches.length > 0 ? (
                     activeTab === "TODAY" || selectedDateFilter !== null ? (
                       // Grouped by league on Today's tab
                       groupedTodayMatches.map((group) => (

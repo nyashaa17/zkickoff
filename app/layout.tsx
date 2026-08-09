@@ -4,11 +4,13 @@ import Script from 'next/script';
 import './globals.css'; // Global styles
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
-import { WhatsAppPopup } from '@/components/whatsapp-popup';
-import { GlobalAdBanner } from '@/components/global-ad-banner';
-import AdblockNotice from '@/components/adblock-notice';
+import dynamic from 'next/dynamic';
 import WorldCupTicker from '@/components/worldcup-ticker';
-import { DelayedVignetteAd } from '@/components/delayed-vignette-ad';
+
+const WhatsAppPopup = dynamic(() => import('@/components/whatsapp-popup').then(mod => mod.WhatsAppPopup));
+const GlobalAdBanner = dynamic(() => import('@/components/global-ad-banner').then(mod => mod.GlobalAdBanner));
+const AdblockNotice = dynamic(() => import('@/components/adblock-notice'));
+const DelayedVignetteAd = dynamic(() => import('@/components/delayed-vignette-ad').then(mod => mod.DelayedVignetteAd));
 
 const inter = Inter({
   subsets: ['latin'],
@@ -142,7 +144,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
         <meta name="monetag" content="15fd02df8bbf6f0f2db83bb49f023835" />
       </head>
       <body className="font-sans bg-[#F9F9FB] text-neutral-900 selection:bg-[#009739] selection:text-white antialiased min-h-screen flex flex-col" suppressHydrationWarning>
-        <Script id="monetag-script" strategy="afterInteractive">
+        <Script id="monetag-script" strategy="lazyOnload">
           {`(function(s){s.dataset.zone='11055207',s.src='https://al5sm.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`}
         </Script>
         <DelayedVignetteAd />

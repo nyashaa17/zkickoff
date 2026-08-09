@@ -720,7 +720,12 @@ export default function MatchPreviewPage({ params }: PageProps) {
 
                   {/* Play-by-play vertical timeline */}
                   <div className="relative border-l border-neutral-200 ml-4 pl-6 space-y-6">
-                    {cData && cData.liveCommentary && cData.liveCommentary.length > 0 ? (
+                    {cData?.error ? (
+                      <div className="py-4 text-center text-red-500 text-xs font-semibold flex flex-col items-center gap-2">
+                        <AlertTriangle className="w-8 h-8 text-red-400 mx-auto" />
+                        <p>Commentary unavailable</p>
+                      </div>
+                    ) : cData && cData.liveCommentary && cData.liveCommentary.length > 0 ? (
                       cData.liveCommentary.map((log: any, idx: number) => {
                         return (
                           <div key={idx} className="relative">

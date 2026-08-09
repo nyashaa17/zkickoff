@@ -574,7 +574,12 @@ export default function WatchPage({ params }: PageProps) {
                 </div>
 
                 <div className="relative border-l border-neutral-100 pl-4 ml-2 space-y-5 py-2 max-h-96 overflow-y-auto pr-2 scrollbar-thin">
-                  {commentary.length > 0 ? (
+                  {cData?.error ? (
+                    <div className="py-8 text-center text-red-500 text-xs font-semibold flex flex-col items-center gap-2">
+                      <AlertTriangle className="w-5 h-5 text-red-400" />
+                      Commentary unavailable
+                    </div>
+                  ) : commentary.length > 0 ? (
                     commentary.map((entry, index) => {
                       const textLower = entry.text.toLowerCase();
                       const isGoal = textLower.includes('goal') || textLower.includes('g-o-a-l');

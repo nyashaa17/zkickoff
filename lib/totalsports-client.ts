@@ -3,7 +3,7 @@ import {
   parseRawEventToMatch, 
   LivescoreResponseRaw 
 } from './totalsports-api';
-import { Match, mockMatches } from './matches-data';
+import { Match } from './matches-data';
 import { getClientTeamLogo, getClientLeagueLogo } from './bzzoiro-client';
 
 /**
@@ -23,8 +23,8 @@ export async function fetchLivescoresDirect(dateParam?: string) {
     const data = await res.json();
     return data;
   } catch (error: any) {
-    console.error('Livescore direct fetch error (graceful client fallback applied):', error);
-    return { matches: mockMatches, error: error.message };
+    console.error('Livescore direct fetch error:', error);
+    return { matches: [], error: true, message: "Unable to load matches right now" };
   }
 }
 
@@ -181,16 +181,9 @@ export async function fetchCommentaryDirect(matchId: string) {
   } catch (error) {
     console.error('Commentary direct fetch error:', error);
     return {
-      liveCommentary: [
-        { time: 1, text: "KICK-OFF! The referee blows the whistle and we are underway." },
-        { time: 12, text: "Corner kick awarded. Defended well by the tactical box layout." },
-        { time: 24, text: "Shots on target! A spectacular save keeps the clean sheet." },
-        { time: 45, text: "Halftime whistle. Teams retreat to the dressing rooms after a high-octane half." },
-        { time: 46, text: "Second half starts! Intense battles ahead." }
-      ],
-      manualCommentary: [
-        { time: 6, text: "Heavy local support is roaring in the grandstands today. The atmosphere is absolute electric." }
-      ]
+      liveCommentary: [],
+      manualCommentary: [],
+      error: true
     };
   }
 }

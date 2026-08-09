@@ -4,11 +4,23 @@ import React, { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { RefreshCw, MessageCircle } from 'lucide-react';
 import { PredictionsBanner } from '@/components/predictions-banner';
+import DOMPurify from 'dompurify';
 
 function IframePlayer() {
   const searchParams = useSearchParams();
-  const fixture = searchParams.get('fixture');
-  const stream = searchParams.get('stream') || '1';
+  
+  const rawFixture = searchParams.get('fixture');
+  const rawStream = searchParams.get('stream') || '1';
+  
+  // Validate alphanumeric, hyphens, underscores, max 100 chars
+  const isValidParam = (param: string | null) => {
+    if (!param) return false;
+    return /^[A-Za-z0-9\-_]{1,100}$/.test(param);
+  };
+
+  const fixture = isValidParam(rawFixture) ? rawFixture : null;
+  const stream = isValidParam(rawStream) ? rawStream : '1';
+
   const [dashHtml, setDashHtml] = useState<string>('');
 
   useEffect(() => {
@@ -17,7 +29,7 @@ function IframePlayer() {
         .then((res) => res.text())
         .then((html) => {
           if (html && html.trim()) {
-            setDashHtml(html);
+            setDashHtml(DOMPurify.sanitize(html));
           }
         })
         .catch((err) => console.error("DASH button load error:", err));

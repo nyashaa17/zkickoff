@@ -1,9 +1,15 @@
 // Real-time Bzzoiro standings proxy API
 import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
+import { apiRateLimiter } from '@/lib/rate-limit';
 
 export async function GET(req: NextRequest) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'unknown';
+    if (!apiRateLimiter(ip)) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     const { searchParams } = new URL(req.url);
     const competitionParam = searchParams.get('competition') || 'ALL';
 
