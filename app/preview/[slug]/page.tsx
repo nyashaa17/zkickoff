@@ -44,12 +44,18 @@ export default function MatchPreviewPage({ params }: PageProps) {
   const [shareText, setShareText] = useState('Share');
   const [showShareTooltip, setShowShareTooltip] = useState(false);
   const [adClicked, setAdClicked] = useState(false);
+  const [showHint, setShowHint] = useState(false);
 
   const handlePlayClick = (e: React.MouseEvent) => {
     if (!adClicked) {
       e.preventDefault();
       window.open('https://omg10.com/4/11519037', '_blank');
       setAdClicked(true);
+      setShowHint(true);
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('smartlink_last_shown', 'true');
+      }
+      setTimeout(() => setShowHint(false), 5000);
     }
   };
 
@@ -90,6 +96,14 @@ export default function MatchPreviewPage({ params }: PageProps) {
       const savedStar = localStorage.getItem(`star-${slug}`);
       if (savedStar === 'true') {
         setIsStarred(true);
+      }
+
+      // Ad gating from session
+      if (typeof window !== 'undefined') {
+        const adShown = sessionStorage.getItem('smartlink_last_shown');
+        if (adShown === 'true') {
+          setAdClicked(true);
+        }
       }
     }, 0);
 
@@ -418,15 +432,22 @@ export default function MatchPreviewPage({ params }: PageProps) {
               Live Stream Links
             </h3>
 
-            <Link 
-              href={`/watch/${slug}`}
-              onClick={handlePlayClick}
-              className="w-full group cursor-pointer py-3.5 px-4 bg-[#009739] text-white hover:bg-opacity-95 rounded-xl font-display text-xs font-extrabold flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-500/10 hover:shadow-lg hover:shadow-emerald-500/20"
-            >
-              <Tv className="w-4 h-4 fill-white/10" />
-              <span>▶️ PlayMatch Live</span>
-              <ChevronRight className="w-3.5 h-3.5 text-white group-hover:translate-x-0.5 transition-transform" />
-            </Link>
+            <div className="space-y-2">
+              <Link 
+                href={`/watch/${slug}`}
+                onClick={handlePlayClick}
+                className="w-full group cursor-pointer py-3.5 px-4 bg-[#009739] text-white hover:bg-opacity-95 rounded-xl font-display text-xs font-extrabold flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-500/10 hover:shadow-lg hover:shadow-emerald-500/20"
+              >
+                <Tv className="w-4 h-4 fill-white/10" />
+                <span>▶️ PlayMatch Live</span>
+                <ChevronRight className="w-3.5 h-3.5 text-white group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+              {showHint && (
+                <p className="text-center text-xs font-bold text-red-500 font-display animate-pulse pt-1">
+                  Tap again to watch ▶️
+                </p>
+              )}
+            </div>
           </div>
 
                   {/* Facts / Pre-match */}
