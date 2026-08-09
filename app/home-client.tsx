@@ -186,16 +186,16 @@ function HomeContent() {
     {
       refreshInterval: 25000,
       revalidateOnFocus: true,
-      keepPreviousData: false,
+      keepPreviousData: true,
     },
   );
 
   const matches = React.useMemo<Match[]>(() => {
-    if (loading) {
-      return [];
-    }
     if (livescoreData && livescoreData.matches) {
       return livescoreData.matches;
+    }
+    if (loading) {
+      return [];
     }
     // Return mock data if there is an error or no data is fetched yet (while not loading)
     if (livescoreError) {

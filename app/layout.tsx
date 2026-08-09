@@ -8,6 +8,7 @@ import { WhatsAppPopup } from '@/components/whatsapp-popup';
 import { GlobalAdBanner } from '@/components/global-ad-banner';
 import AdblockNotice from '@/components/adblock-notice';
 import WorldCupTicker from '@/components/worldcup-ticker';
+import { DelayedVignetteAd } from '@/components/delayed-vignette-ad';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -144,9 +145,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
         <Script id="monetag-script" strategy="afterInteractive">
           {`(function(s){s.dataset.zone='11055207',s.src='https://al5sm.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`}
         </Script>
-        <Script id="monetag-vignette-script" strategy="afterInteractive">
-          {`(function(s){s.dataset.zone='11055245',s.src='https://n6wxm.com/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`}
-        </Script>
+        <DelayedVignetteAd />
         <AdblockNotice />
         <div className="sticky top-0 z-50 w-full flex flex-col [transform:translate3d(0,0,0)] [will-change:transform]">
           <WorldCupTicker />
