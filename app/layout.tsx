@@ -5,7 +5,6 @@ import './globals.css'; // Global styles
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
 import dynamic from 'next/dynamic';
-import WorldCupTicker from '@/components/worldcup-ticker';
 
 const WhatsAppPopup = dynamic(() => import('@/components/whatsapp-popup').then(mod => mod.WhatsAppPopup));
 const GlobalAdBanner = dynamic(() => import('@/components/global-ad-banner').then(mod => mod.GlobalAdBanner));
@@ -150,7 +149,6 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
         <DelayedVignetteAd />
         <AdblockNotice />
         <div className="sticky top-0 z-50 w-full flex flex-col [transform:translate3d(0,0,0)] [will-change:transform]">
-          <WorldCupTicker />
           <Navbar />
         </div>
         <main className="flex-1 pb-12">

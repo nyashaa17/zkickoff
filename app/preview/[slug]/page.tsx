@@ -31,6 +31,7 @@ import { Match } from '@/lib/matches-data';
 import { TeamLogo } from '@/components/team-logo';
 import { fetchLivescoresDirect, fetchCommentaryDirect, fetchMatchButtonsDirect } from '@/lib/totalsports-client';
 import Breadcrumbs from '@/components/breadcrumbs';
+import { ShareButtons } from '@/components/share-buttons';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface PageProps {
@@ -467,6 +468,17 @@ export default function MatchPreviewPage({ params }: PageProps) {
                   <ChevronRight className="w-3.5 h-3.5 text-white group-hover:translate-x-0.5 transition-transform" />
                 </button>
               )}
+            </div>
+
+            {/* Social share */}
+            <div className="pt-3 border-t border-neutral-100 flex items-center justify-between">
+              <span className="text-[10px] font-mono font-bold text-neutral-400 uppercase tracking-widest">
+                Share this match
+              </span>
+              <ShareButtons
+                matchUrl={`https://zimkickoff.com/preview/${slug}`}
+                shareText={`${queryMatch.teams.home.name} vs ${queryMatch.teams.away.name} — watch live on ZimKickOff!`}
+              />
             </div>
           </div>
 
@@ -913,6 +925,14 @@ export default function MatchPreviewPage({ params }: PageProps) {
           </p>
           <p>
             Stream top matches from the Premier League, UEFA Champions League, and more live for free on ZimKickoff.
+          </p>
+          <p>
+            <Link
+              href={`/watch/${slug}`}
+              className="inline-flex items-center gap-1.5 text-[#009739] font-bold hover:underline"
+            >
+              Watch {queryMatch.teams.home.name} vs {queryMatch.teams.away.name} Live →
+            </Link>
           </p>
         </div>
       </section>

@@ -34,6 +34,7 @@ import { PredictionsBanner } from '@/components/predictions-banner';
 import { TeamLogo } from '@/components/team-logo';
 import Breadcrumbs from '@/components/breadcrumbs';
 import { fetchLivescoresDirect, fetchMatchButtonsDirect, fetchCommentaryDirect } from '@/lib/totalsports-client';
+import { ShareButtons } from '@/components/share-buttons';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -423,7 +424,11 @@ export default function WatchPage({ params, searchParams }: PageProps) {
                 ZimKickOff Player
               </p>
               {/* Fast interactive tools */}
-              <div className="flex items-center justify-end w-full sm:w-auto">
+              <div className="flex items-center justify-end w-full sm:w-auto gap-2">
+                <ShareButtons
+                  matchUrl={`https://zimkickoff.com/watch/${slug}`}
+                  shareText={`Watch ${queryMatch.teams.home.name} vs ${queryMatch.teams.away.name} live on ZimKickOff!`}
+                />
                 <button
                   onClick={copyShareLink}
                   className="cursor-pointer px-3 py-1.5 bg-white hover:bg-neutral-100 border border-neutral-200 text-neutral-750 rounded-lg text-xs font-display font-bold flex items-center gap-1.5 transition-colors shadow-4xs"

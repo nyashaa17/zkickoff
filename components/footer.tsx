@@ -54,6 +54,9 @@ export default function Footer() {
             <Link href="/live" className="hover:text-zim-green transition-colors">
               Today&apos;s Matches
             </Link>
+            <Link href="/?tab=UPCOMING" className="hover:text-zim-green transition-colors">
+              Upcoming Matches
+            </Link>
             <Link href="/worldcup" className="hover:text-zim-green transition-colors">
               World Cup
             </Link>

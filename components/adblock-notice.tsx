@@ -12,7 +12,7 @@ export default function AdblockNotice() {
     <div className="bg-emerald-50 text-emerald-900 py-2 px-4 text-xs text-center border-b border-emerald-100 shadow-sm">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <span>
-          Ads help cover our server costs and keep our video player <strong className="font-bold">100% ad-free</strong>. Please support us by disabling your adblocker.
+          Some links open a pop-up ad tab — just close it and keep watching. It helps keep the streams free.
         </span>
         <button 
           onClick={() => setVisible(false)} 

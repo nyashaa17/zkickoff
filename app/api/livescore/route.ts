@@ -82,16 +82,38 @@ export async function GET(req: NextRequest) {
       const matches = await enrichMatchesWithLogos(rawMatches);
       return NextResponse.json({ matches });
     } else {
-      // Parallel fetch for Yesterday, Today, and Tomorrow to fully populate all tabs
-      const yesterdayStr = getFormattedDateString(-1);
-      const todayStr = getFormattedDateString(0);
-      const tomorrowStr = getFormattedDateString(1);
+      // Parallel fetch for yesterday, today, and the next 6 days to populate all tabs
+      // including the UPCOMING tab with fixtures well before kickoff
+      const dayConfigs: { offset: number; label: string; revalidate: number }[] = [
+        { offset: -1, label: 'Yesterday', revalidate: 30 },
+        { offset: 0, label: 'Today', revalidate: 15 },
+        { offset: 1, label: 'Tomorrow', revalidate: 60 },
+        { offset: 2, label: getDateLabel(2), revalidate: 300 },
+        { offset: 3, label: getDateLabel(3), revalidate: 300 },
+        { offset: 4, label: getDateLabel(4), revalidate: 300 },
+        { offset: 5, label: getDateLabel(5), revalidate: 300 },
+        { offset: 6, label: getDateLabel(6), revalidate: 300 },
+      ];
 
-      const [yesterdayRes, todayRes, tomorrowRes] = await Promise.all([
-        fetch(`https://king.totalsportslive.co.zw/api/livescore?date=${yesterdayStr}`, { next: { revalidate: 30 } }).catch(() => null),
-        fetch(`https://king.totalsportslive.co.zw/api/livescore?date=${todayStr}`, { next: { revalidate: 15 } }).catch(() => null),
-        fetch(`https://king.totalsportslive.co.zw/api/livescore?date=${tomorrowStr}`, { next: { revalidate: 60 } }).catch(() => null)
-      ]);
+      // Helper to get a readable date label
+      function getDateLabel(offset: number): string {
+        const d = new Date();
+        d.setDate(d.getDate() + offset);
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        return `${dd}/${mm}/${yyyy}`;
+      }
+
+      const fetchPromises = dayConfigs.map(({ offset, label, revalidate }) => {
+        const dateStr = getFormattedDateString(offset);
+        return fetch(
+          `https://king.totalsportslive.co.zw/api/livescore?date=${dateStr}`,
+          { next: { revalidate } },
+        ).catch(() => null);
+      });
+
+      const responses = await Promise.all(fetchPromises);
 
       // Helper to process response
       const processResponse = async (res: Response | null, dateLabel: string) => {
@@ -114,13 +136,11 @@ export async function GET(req: NextRequest) {
         return list;
       };
 
-      const [yesterdayMatches, todayMatches, tomorrowMatches] = await Promise.all([
-        processResponse(yesterdayRes, 'Yesterday'),
-        processResponse(todayRes, 'Today'),
-        processResponse(tomorrowRes, 'Tomorrow')
-      ]);
+      const allMatchArrays = await Promise.all(
+        responses.map((res, i) => processResponse(res, dayConfigs[i].label))
+      );
 
-      const rawMatches = [...yesterdayMatches, ...todayMatches, ...tomorrowMatches];
+      const rawMatches = allMatchArrays.flat();
       const matches = await enrichMatchesWithLogos(rawMatches);
 
       return NextResponse.json({ matches });

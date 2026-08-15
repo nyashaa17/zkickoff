@@ -86,6 +86,8 @@ export default async function WatchLayout({
     "name": `${homeName} vs ${awayName} Live Stream`,
     "description": `Watch ${homeName} vs ${awayName} live football match stream in HD. No signup required.`,
     "sport": "https://en.wikipedia.org/wiki/Association_football",
+    "eventStatus": "https://schema.org/EventScheduled",
+    "eventAttendanceMode": "https://schema.org/OnlineEventAttendanceMode",
     "homeTeam": {
       "@type": "SportsTeam",
       "name": homeName
@@ -94,17 +96,26 @@ export default async function WatchLayout({
       "@type": "SportsTeam",
       "name": awayName
     },
+    "competitor": [
+      { "@type": "SportsTeam", "name": homeName },
+      { "@type": "SportsTeam", "name": awayName }
+    ],
     "location": {
-      "@type": "Place",
-      "name": "Virtual / Online Stream",
+      "@type": "VirtualLocation",
       "url": `https://zimkickoff.co.zw/watch/${slug}`
     },
     "url": `https://zimkickoff.co.zw/watch/${slug}`,
+    "organizer": {
+      "@type": "Organization",
+      "name": "ZimKickOff",
+      "url": "https://zimkickoff.co.zw"
+    },
     "offers": {
       "@type": "Offer",
       "price": "0",
       "priceCurrency": "USD",
-      "availability": "https://schema.org/InStock"
+      "availability": "https://schema.org/InStock",
+      "url": `https://zimkickoff.co.zw/watch/${slug}`
     }
   };
 

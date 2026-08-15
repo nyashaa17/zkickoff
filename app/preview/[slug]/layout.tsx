@@ -86,6 +86,8 @@ export default async function PreviewLayout({
     "name": `Match Preview & Analytics: ${homeName} vs ${awayName}`,
     "description": `Read match stats, predictions, win probability, head-to-head forms, predictive polls, and watch ${homeName} vs ${awayName} live football match stream in HD.`,
     "sport": "https://en.wikipedia.org/wiki/Association_football",
+    "eventStatus": "https://schema.org/EventScheduled",
+    "eventAttendanceMode": "https://schema.org/OnlineEventAttendanceMode",
     "homeTeam": {
       "@type": "SportsTeam",
       "name": homeName
@@ -94,17 +96,26 @@ export default async function PreviewLayout({
       "@type": "SportsTeam",
       "name": awayName
     },
+    "competitor": [
+      { "@type": "SportsTeam", "name": homeName },
+      { "@type": "SportsTeam", "name": awayName }
+    ],
     "location": {
-      "@type": "Place",
-      "name": "Virtual / Online Stream",
+      "@type": "VirtualLocation",
       "url": `https://zimkickoff.co.zw/preview/${slug}`
     },
     "url": `https://zimkickoff.co.zw/preview/${slug}`,
+    "organizer": {
+      "@type": "Organization",
+      "name": "ZimKickOff",
+      "url": "https://zimkickoff.co.zw"
+    },
     "offers": {
       "@type": "Offer",
       "price": "0",
       "priceCurrency": "USD",
-      "availability": "https://schema.org/InStock"
+      "availability": "https://schema.org/InStock",
+      "url": `https://zimkickoff.co.zw/preview/${slug}`
     }
   };
 
