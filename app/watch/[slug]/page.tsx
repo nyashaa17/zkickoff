@@ -26,6 +26,7 @@ import {
   Download,
   Copy,
   Check,
+  Target,
   X
 } from 'lucide-react';
 import { Match } from '@/lib/matches-data';
@@ -35,6 +36,8 @@ import { TeamLogo } from '@/components/team-logo';
 import Breadcrumbs from '@/components/breadcrumbs';
 import { fetchLivescoresDirect, fetchMatchButtonsDirect, fetchCommentaryDirect } from '@/lib/totalsports-client';
 import { ShareButtons } from '@/components/share-buttons';
+import { Shotmap } from '@/components/match/shotmap';
+import { IncidentsTimeline } from '@/components/match/incidents-timeline';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -70,7 +73,7 @@ export default function WatchPage({ params, searchParams }: PageProps) {
   const [activeServer, setActiveServer] = useState<string>(initialServer || '');
   const [copiedLink, setCopiedLink] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [detailTab, setDetailTab] = useState<'COMMENTARY' | 'DETAILS'>('COMMENTARY');
+  const [detailTab, setDetailTab] = useState<'COMMENTARY' | 'TIMELINE' | 'SHOTMAP' | 'DETAILS'>('COMMENTARY');
 
   // Set isMounted to true on client load
   useEffect(() => {
@@ -98,11 +101,18 @@ export default function WatchPage({ params, searchParams }: PageProps) {
 
   // Fetch Bzzoiro dynamic match metadata/venue info
   const { data: bzzoiroData } = useSWR(
-    `/api/bzzoiro/match-preview?home=${encodeURIComponent(fallbackData.homeName)}&away=${encodeURIComponent(fallbackData.awayName)}`,
+    fallbackData.homeName && fallbackData.awayName
+      ? `/api/bzzoiro/match-preview?home=${encodeURIComponent(fallbackData.homeName)}&away=${encodeURIComponent(fallbackData.awayName)}`
+      : null,
     async (url) => {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('Failed to fetch bzzoiro preview data');
-      return res.json();
+      try {
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const json = await res.json();
+        return json?.notFound ? null : json;
+      } catch (e) {
+        return null;
+      }
     },
     { revalidateOnFocus: false, revalidateIfStale: false }
   );
@@ -426,7 +436,7 @@ export default function WatchPage({ params, searchParams }: PageProps) {
               {/* Fast interactive tools */}
               <div className="flex items-center justify-end w-full sm:w-auto gap-2">
                 <ShareButtons
-                  matchUrl={`https://zimkickoff.com/watch/${slug}`}
+                  matchUrl={`https://zimkickoff.co.zw/watch/${slug}`}
                   shareText={`Watch ${queryMatch.teams.home.name} vs ${queryMatch.teams.away.name} live on ZimKickOff!`}
                 />
                 <button
@@ -519,30 +529,62 @@ export default function WatchPage({ params, searchParams }: PageProps) {
               </div>
 
               <div className="flex items-center justify-center md:justify-end gap-2">
-                <div className="flex bg-neutral-100 p-0.5 rounded-lg text-[10px] font-bold">
+                <div className="flex bg-neutral-100 p-0.5 rounded-lg text-[10px] font-bold overflow-x-auto max-w-full">
                   <button
                     onClick={() => setDetailTab('COMMENTARY')}
-                    className={`px-3 py-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1 ${
+                    className={`px-2.5 py-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
                       detailTab === 'COMMENTARY' ? 'bg-white text-neutral-900 shadow-3xs' : 'text-neutral-500 hover:text-neutral-900'
                     }`}
                   >
                     <MessageSquare className="w-3 h-3 text-zim-green" />
-                    LIVE COMMENTARY
+                    <span>COMMENTARY</span>
+                  </button>
+                  <button
+                    onClick={() => setDetailTab('TIMELINE')}
+                    className={`px-2.5 py-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
+                      detailTab === 'TIMELINE' ? 'bg-white text-neutral-900 shadow-3xs' : 'text-neutral-500 hover:text-neutral-900'
+                    }`}
+                  >
+                    <Clock className="w-3 h-3 text-[#009739]" />
+                    <span>INCIDENTS</span>
+                  </button>
+                  <button
+                    onClick={() => setDetailTab('SHOTMAP')}
+                    className={`px-2.5 py-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
+                      detailTab === 'SHOTMAP' ? 'bg-white text-neutral-900 shadow-3xs' : 'text-neutral-500 hover:text-neutral-900'
+                    }`}
+                  >
+                    <Target className="w-3 h-3 text-amber-500" />
+                    <span>SHOTMAP</span>
                   </button>
                   <button
                     onClick={() => setDetailTab('DETAILS')}
-                    className={`px-3 py-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1 ${
+                    className={`px-2.5 py-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
                       detailTab === 'DETAILS' ? 'bg-white text-neutral-900 shadow-3xs' : 'text-neutral-500 hover:text-neutral-900'
                     }`}
                   >
                     <Info className="w-3 h-3" />
-                    MATCH DETAILS
+                    <span>DETAILS</span>
                   </button>
                 </div>
               </div>
             </div>
 
-            {detailTab === 'COMMENTARY' ? (
+            {detailTab === 'TIMELINE' ? (
+              <IncidentsTimeline
+                incidents={bzzoiroData?.incidents || []}
+                homeTeamName={queryMatch.teams.home.name}
+                awayTeamName={queryMatch.teams.away.name}
+                isUpcoming={queryMatch.status !== 'LIVE' && queryMatch.status !== 'FINISHED'}
+              />
+            ) : detailTab === 'SHOTMAP' ? (
+              <Shotmap
+                shotmap={bzzoiroData?.stats?.shotmap || []}
+                homeTeamName={queryMatch.teams.home.name}
+                awayTeamName={queryMatch.teams.away.name}
+                isUpcoming={queryMatch.status !== 'LIVE' && queryMatch.status !== 'FINISHED'}
+              />
+            ) : detailTab === 'COMMENTARY' ? (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <p className="text-[10px] font-mono font-bold text-neutral-400 uppercase tracking-widest flex items-center gap-1">

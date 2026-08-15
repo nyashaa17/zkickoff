@@ -7,7 +7,6 @@ import Footer from '@/components/footer';
 import dynamic from 'next/dynamic';
 
 const WhatsAppPopup = dynamic(() => import('@/components/whatsapp-popup').then(mod => mod.WhatsAppPopup));
-const GlobalAdBanner = dynamic(() => import('@/components/global-ad-banner').then(mod => mod.GlobalAdBanner));
 const AdblockNotice = dynamic(() => import('@/components/adblock-notice'));
 const DelayedVignetteAd = dynamic(() => import('@/components/delayed-vignette-ad').then(mod => mod.DelayedVignetteAd));
 
@@ -156,7 +155,6 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
         </main>
         <Footer />
         <WhatsAppPopup />
-        <GlobalAdBanner />
         {/* Visual Zimbabwe Flag Strip accent */}
         <div className="h-1 w-full bg-linear-to-r from-[#009739] via-[#FFD100] to-[#D62828] flex">
           <div className="w-[30%] h-full bg-[#009739]"></div>

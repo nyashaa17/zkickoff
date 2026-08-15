@@ -14,6 +14,7 @@
  */
 import { MetadataRoute } from 'next';
 import { getUpcomingFixtures } from '@/lib/upcoming-fixtures';
+import { LEAGUES_REGISTRY } from '@/lib/leagues-config';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://zimkickoff.co.zw';
@@ -43,6 +44,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/league`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
     },
     {
       url: `${baseUrl}/about`,
@@ -118,5 +125,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('[sitemap] Error fetching upcoming fixtures:', err);
   }
 
-  return [...staticPages, ...matchPages];
+  // 3. League Standings pages
+  const leaguePages: MetadataRoute.Sitemap = LEAGUES_REGISTRY.map((league) => ({
+    url: `${baseUrl}/league/${league.slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'daily',
+    priority: league.featured ? 0.85 : 0.75,
+  }));
+
+  return [...staticPages, ...leaguePages, ...matchPages];
 }

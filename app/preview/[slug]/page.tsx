@@ -32,6 +32,8 @@ import { TeamLogo } from '@/components/team-logo';
 import { fetchLivescoresDirect, fetchCommentaryDirect, fetchMatchButtonsDirect } from '@/lib/totalsports-client';
 import Breadcrumbs from '@/components/breadcrumbs';
 import { ShareButtons } from '@/components/share-buttons';
+import { Shotmap } from '@/components/match/shotmap';
+import { IncidentsTimeline } from '@/components/match/incidents-timeline';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface PageProps {
@@ -41,7 +43,7 @@ interface PageProps {
 export default function MatchPreviewPage({ params }: PageProps) {
   const { slug } = use(params);
   const [isMounted, setIsMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState<'SUMMARY' | 'LINEUPS' | 'ODDS' | 'STATS' | 'EVENTS'>('SUMMARY');
+  const [activeTab, setActiveTab] = useState<'SUMMARY' | 'LINEUPS' | 'ODDS' | 'STATS' | 'SHOTMAP' | 'EVENTS'>('SUMMARY');
   const [isStarred, setIsStarred] = useState(false);
   const [shareText, setShareText] = useState('Share');
   const [showShareTooltip, setShowShareTooltip] = useState(false);
@@ -165,11 +167,18 @@ export default function MatchPreviewPage({ params }: PageProps) {
   }
 
   const { data: bzzoiroData, isValidating: isLoadingBzzoiro } = useSWR(
-    `/api/bzzoiro/match-preview?home=${encodeURIComponent(fallbackData.homeName)}&away=${encodeURIComponent(fallbackData.awayName)}`,
+    fallbackData.homeName && fallbackData.awayName
+      ? `/api/bzzoiro/match-preview?home=${encodeURIComponent(fallbackData.homeName)}&away=${encodeURIComponent(fallbackData.awayName)}`
+      : null,
     async (url) => {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('Failed to fetch bzzoiro preview data');
-      return res.json();
+      try {
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const json = await res.json();
+        return json?.notFound ? null : json;
+      } catch (e) {
+        return null;
+      }
     },
     { revalidateOnFocus: false, revalidateIfStale: false }
   );
@@ -395,7 +404,8 @@ export default function MatchPreviewPage({ params }: PageProps) {
               { id: 'LINEUPS', label: 'LINEUPS' },
               { id: 'ODDS', label: 'ODDS' },
               { id: 'STATS', label: 'STATS' },
-              { id: 'EVENTS', label: 'EVENTS & COMMENTARY' }
+              { id: 'SHOTMAP', label: 'SHOTMAP' },
+              { id: 'EVENTS', label: 'EVENTS & TIMELINE' }
             ].map((tab) => {
               const isActive = activeTab === tab.id;
               return (
@@ -476,7 +486,7 @@ export default function MatchPreviewPage({ params }: PageProps) {
                 Share this match
               </span>
               <ShareButtons
-                matchUrl={`https://zimkickoff.com/preview/${slug}`}
+                matchUrl={`https://zimkickoff.co.zw/preview/${slug}`}
                 shareText={`${queryMatch.teams.home.name} vs ${queryMatch.teams.away.name} — watch live on ZimKickOff!`}
               />
             </div>
@@ -488,7 +498,7 @@ export default function MatchPreviewPage({ params }: PageProps) {
                       <div className="h-4 bg-neutral-100 rounded w-1/3 animate-pulse"></div>
                       <div className="h-20 bg-neutral-100 rounded-xl animate-pulse"></div>
                     </div>
-                  ) : bzzoiroData?.metadata?.funfacts ? (
+                  ) : bzzoiroData?.metadata?.funfacts && bzzoiroData.metadata.funfacts.length > 0 ? (
                     <div className="space-y-3">
                       <h3 className="font-display font-extrabold text-sm text-neutral-950 flex items-center gap-2">
                         <Sparkles className="w-4 h-4 text-[#009739]" />
@@ -504,7 +514,7 @@ export default function MatchPreviewPage({ params }: PageProps) {
                       </div>
                     </div>
                   ) : (
-                    <div className="text-xs text-neutral-500 italic">No pre-match facts available.</div>
+                    <div className="text-xs text-neutral-500 italic">No pre-match facts available for this fixture.</div>
                   )}
 
                   {/* Pitch specs */}
@@ -536,14 +546,14 @@ export default function MatchPreviewPage({ params }: PageProps) {
                 <div className="p-5 md:p-6 space-y-6">
                   {isLoadingBzzoiro ? (
                     <div className="h-40 bg-neutral-100 rounded-xl animate-pulse"></div>
-                  ) : bzzoiroData?.lineups && bzzoiroData.lineups.lineups ? (
+                  ) : bzzoiroData?.lineups && bzzoiroData.lineups.lineups && (bzzoiroData.lineups.lineups.home || bzzoiroData.lineups.lineups.away) ? (
                     <>
                       <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
                         <h3 className="font-display font-extrabold text-sm text-neutral-950 uppercase tracking-wider">
                           {bzzoiroData.lineups.lineup_status === 'confirmed' ? 'Confirmed Lineups' : 'Expected Lineups'}
                         </h3>
                         <span className="text-[10px] font-mono font-bold text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded-md">
-                          Formations: {bzzoiroData.lineups.lineups.home?.formation} vs {bzzoiroData.lineups.lineups.away?.formation}
+                          Formations: {bzzoiroData.lineups.lineups.home?.formation || 'TBD'} vs {bzzoiroData.lineups.lineups.away?.formation || 'TBD'}
                         </span>
                       </div>
                       
@@ -554,14 +564,14 @@ export default function MatchPreviewPage({ params }: PageProps) {
                           return (
                             <div key={side} className="space-y-4">
                               <div className="flex items-center gap-2 border-b border-neutral-100 pb-2">
-                                <TeamLogo name={lineup.team_name} className="w-5 h-5" />
-                                <span className="font-display font-extrabold text-sm text-neutral-800">{lineup.team_name}</span>
+                                <TeamLogo name={lineup.team_name || (side === 'home' ? queryMatch.teams.home.name : queryMatch.teams.away.name)} className="w-5 h-5" />
+                                <span className="font-display font-extrabold text-sm text-neutral-800">{lineup.team_name || (side === 'home' ? queryMatch.teams.home.name : queryMatch.teams.away.name)}</span>
                               </div>
                               <div className="space-y-2">
                                 <p className="text-[10px] font-mono font-bold text-neutral-400 uppercase">Starting Eleven</p>
                                 <div className="space-y-1">
                                   {lineup.players?.map((p: any) => (
-                                    <div key={p.id} className="flex items-center justify-between text-xs p-2 bg-neutral-50 rounded-md border border-neutral-200/30">
+                                    <div key={p.id || p.name} className="flex items-center justify-between text-xs p-2 bg-neutral-50 rounded-md border border-neutral-200/30">
                                       <div className="flex items-center gap-2">
                                         <span className={`w-5 h-5 ${side === 'home' ? 'bg-[#009739]' : 'bg-red-600'} text-white text-[9px] font-bold rounded flex items-center justify-center font-mono`}>
                                           {p.jersey_number || '-'}
@@ -569,7 +579,7 @@ export default function MatchPreviewPage({ params }: PageProps) {
                                         <span className="font-medium text-neutral-800">{p.short_name || p.name}</span>
                                       </div>
                                       <span className="font-mono text-[9px] font-bold uppercase text-neutral-500 bg-neutral-200/50 px-1 py-0.5 rounded">
-                                        {p.position}
+                                        {p.position || 'Player'}
                                       </span>
                                     </div>
                                   ))}
@@ -581,7 +591,7 @@ export default function MatchPreviewPage({ params }: PageProps) {
                       </div>
                     </>
                   ) : (
-                    <div className="text-xs text-neutral-500 italic p-4 text-center">Lineup data is not available yet.</div>
+                    <div className="text-xs text-neutral-500 italic p-4 text-center">Predicted and confirmed lineups are not available for this fixture yet.</div>
                   )}
                 </div>
               )}
@@ -591,7 +601,7 @@ export default function MatchPreviewPage({ params }: PageProps) {
                 <div className="p-5 md:p-6 space-y-6">
                   {isLoadingBzzoiro ? (
                     <div className="h-40 bg-neutral-100 rounded-xl animate-pulse"></div>
-                  ) : bzzoiroData?.odds?.markets ? (
+                  ) : bzzoiroData?.odds?.markets && Object.keys(bzzoiroData.odds.markets).length > 0 ? (
                     <div className="space-y-5">
                       <div className="border-b border-neutral-100 pb-3">
                         <h3 className="font-display font-extrabold text-sm text-neutral-950 uppercase tracking-wider">
@@ -707,7 +717,7 @@ export default function MatchPreviewPage({ params }: PageProps) {
 
                   {isLoadingBzzoiro ? (
                     <div className="h-40 bg-neutral-100 rounded-xl animate-pulse"></div>
-                  ) : bzzoiroData?.stats?.stats ? (
+                  ) : bzzoiroData?.stats?.stats && (bzzoiroData.stats.stats.home?.total_shots !== undefined || bzzoiroData.stats.stats.home?.ball_possession !== undefined || bzzoiroData.stats.stats.home?.attack !== undefined || bzzoiroData.stats.stats.home?.corner_kicks !== undefined) ? (
                     <div className="space-y-4">
                       {['ball_possession', 'total_shots', 'shots_on_target', 'corner_kicks', 'fouls', 'yellow_cards'].map((statKey) => {
                         const hStat = bzzoiroData.stats.stats.home?.[statKey] ?? 0;
@@ -733,53 +743,79 @@ export default function MatchPreviewPage({ params }: PageProps) {
                       })}
                     </div>
                   ) : (
-                    <div className="text-xs text-neutral-500 italic p-4 text-center">Detailed statistics are not available for this event yet.</div>
+                    <div className="text-xs text-neutral-500 italic p-4 text-center">Detailed match statistics will update live once the match kicks off.</div>
                   )}
                 </div>
               )}
 
-              {/* 5. EVENTS / COMMENTARY TAB */}
-              {activeTab === 'EVENTS' && (
+              {/* 5. SHOTMAP TAB */}
+              {activeTab === 'SHOTMAP' && (
                 <div className="p-5 md:p-6 space-y-6">
-                  <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
-                    <h3 className="font-display font-extrabold text-sm text-neutral-950 uppercase tracking-wider">
-                      Live Action Events Logs
-                    </h3>
-                    <span className="bg-[#009739] text-white text-[9px] font-mono font-bold px-2 py-0.5 rounded-full animate-pulse">
-                      AUTO REFRESHEABLE
-                    </span>
-                  </div>
+                  <Shotmap
+                    shotmap={bzzoiroData?.stats?.shotmap || []}
+                    homeTeamName={queryMatch.teams.home.name}
+                    awayTeamName={queryMatch.teams.away.name}
+                    isUpcoming={isUpcoming}
+                    isLoading={isLoadingBzzoiro}
+                  />
+                </div>
+              )}
 
-                  {/* Play-by-play vertical timeline */}
-                  <div className="relative border-l border-neutral-200 ml-4 pl-6 space-y-6">
-                    {cData?.error ? (
-                      <div className="py-4 text-center text-red-500 text-xs font-semibold flex flex-col items-center gap-2">
-                        <AlertTriangle className="w-8 h-8 text-red-400 mx-auto" />
-                        <p>Commentary unavailable</p>
-                      </div>
-                    ) : cData && cData.liveCommentary && cData.liveCommentary.length > 0 ? (
-                      cData.liveCommentary.map((log: any, idx: number) => {
-                        return (
-                          <div key={idx} className="relative">
-                            {/* Dot indicator */}
-                            <span className="absolute -left-[31px] top-1.5 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-white ring-4 ring-red-100/45" />
-                            <div className="space-y-1.5">
-                              <span className="text-xs font-mono font-extrabold text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded-md border border-neutral-200/50">
-                                {log.time}&apos; Minute
-                              </span>
-                              <p className="text-xs text-neutral-700 leading-normal font-medium">
-                                {log.text}
-                              </p>
+              {/* 6. EVENTS / TIMELINE & COMMENTARY TAB */}
+              {activeTab === 'EVENTS' && (
+                <div className="p-5 md:p-6 space-y-8">
+                  {/* Match Incidents Timeline */}
+                  <IncidentsTimeline
+                    incidents={bzzoiroData?.incidents || []}
+                    homeTeamName={queryMatch.teams.home.name}
+                    awayTeamName={queryMatch.teams.away.name}
+                    isUpcoming={isUpcoming}
+                    isLoading={isLoadingBzzoiro}
+                  />
+
+                  {/* Live Commentary Stream */}
+                  <div className="space-y-4 pt-6 border-t border-neutral-100">
+                    <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+                      <h3 className="font-display font-extrabold text-sm text-neutral-950 uppercase tracking-wider flex items-center gap-2">
+                        <Tv className="w-4 h-4 text-[#009739]" />
+                        <span>Live Action Commentary Feed</span>
+                      </h3>
+                      <span className="bg-[#009739] text-white text-[9px] font-mono font-bold px-2 py-0.5 rounded-full animate-pulse">
+                        LIVE FEED
+                      </span>
+                    </div>
+
+                    {/* Play-by-play vertical timeline */}
+                    <div className="relative border-l border-neutral-200 ml-4 pl-6 space-y-6">
+                      {cData?.error ? (
+                        <div className="py-4 text-center text-red-500 text-xs font-semibold flex flex-col items-center gap-2">
+                          <AlertTriangle className="w-8 h-8 text-red-400 mx-auto" />
+                          <p>Commentary feed unavailable</p>
+                        </div>
+                      ) : cData && cData.liveCommentary && cData.liveCommentary.length > 0 ? (
+                        cData.liveCommentary.map((log: any, idx: number) => {
+                          return (
+                            <div key={idx} className="relative">
+                              {/* Dot indicator */}
+                              <span className="absolute -left-[31px] top-1.5 w-2.5 h-2.5 rounded-full bg-[#009739] border-2 border-white ring-4 ring-emerald-100" />
+                              <div className="space-y-1.5">
+                                <span className="text-xs font-mono font-extrabold text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded-md border border-neutral-200/50">
+                                  {log.time}&apos; Minute
+                                </span>
+                                <p className="text-xs text-neutral-700 leading-normal font-medium">
+                                  {log.text}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="py-4 text-center text-xs text-neutral-400 space-y-2">
-                        <AlertTriangle className="w-8 h-8 text-neutral-300 mx-auto" />
-                        <p>No action events logged for this game yet. Check back closer to kickoff!</p>
-                      </div>
-                    )}
+                          );
+                        })
+                      ) : (
+                        <div className="py-4 text-center text-xs text-neutral-400 space-y-2">
+                          <AlertTriangle className="w-8 h-8 text-neutral-300 mx-auto" />
+                          <p>No action commentary logged for this game yet. Check back closer to kickoff!</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}

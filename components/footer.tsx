@@ -57,6 +57,9 @@ export default function Footer() {
             <Link href="/?tab=UPCOMING" className="hover:text-zim-green transition-colors">
               Upcoming Matches
             </Link>
+            <Link href="/league" className="hover:text-zim-green transition-colors">
+              League Tables
+            </Link>
             <Link href="/worldcup" className="hover:text-zim-green transition-colors">
               World Cup
             </Link>

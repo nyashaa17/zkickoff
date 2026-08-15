@@ -1,9 +1,64 @@
 import { NextResponse } from 'next/server';
 
+function normalizeTeamName(name: string): string {
+  return (name || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function calculateTeamMatchScore(searchName: string, candidateName: string): number {
+  const s = normalizeTeamName(searchName);
+  const c = normalizeTeamName(candidateName);
+  if (!s || !c) return 0;
+  if (s === c) return 100;
+  if (s.includes(c) || c.includes(s)) return 80;
+
+  const ignoreWords = new Set(['fc', 'cf', 'club', 'de', 'the', 'sc', 'united', 'city', 'town', 'athletic', 'rovers', 'hotspur', 'hotspurs', 'afc']);
+  const sWords = s.split(' ').filter(w => w.length > 2 && !ignoreWords.has(w));
+  const cWords = c.split(' ').filter(w => w.length > 2 && !ignoreWords.has(w));
+
+  const matched = sWords.filter(w => cWords.includes(w));
+  if (matched.length > 0) {
+    return 50 + (matched.length * 15);
+  }
+  return 0;
+}
+
+function verifyKickoffAlignment(primaryDateStr?: string | null, candidateEventDateStr?: string): { aligned: boolean; diffHours: number } {
+  if (!primaryDateStr || !candidateEventDateStr) return { aligned: true, diffHours: 0 };
+  try {
+    const candidateDate = new Date(candidateEventDateStr);
+    let primaryDate: Date;
+    if (/^\d{8}$/.test(primaryDateStr)) {
+      const y = primaryDateStr.slice(0, 4);
+      const m = primaryDateStr.slice(4, 6);
+      const d = primaryDateStr.slice(6, 8);
+      primaryDate = new Date(`${y}-${m}-${d}T12:00:00Z`);
+    } else {
+      primaryDate = new Date(primaryDateStr);
+    }
+
+    if (isNaN(primaryDate.getTime()) || isNaN(candidateDate.getTime())) {
+      return { aligned: true, diffHours: 0 };
+    }
+
+    const diffHours = Math.abs(candidateDate.getTime() - primaryDate.getTime()) / (1000 * 60 * 60);
+    // 24h tolerance accommodates UTC vs local offsets while rejecting matches from other weeks
+    return { aligned: diffHours <= 24, diffHours };
+  } catch {
+    return { aligned: true, diffHours: 0 };
+  }
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const home = searchParams.get('home');
   const away = searchParams.get('away');
+  const dateParam = searchParams.get('date') || searchParams.get('kickoff');
   
   if (!home || !away) {
     return NextResponse.json({ error: 'Missing home or away team' }, { status: 400 });
@@ -11,7 +66,7 @@ export async function GET(request: Request) {
 
   const apiKey = process.env.BZZOIRO_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: 'Missing API Key' }, { status: 500 });
+    return NextResponse.json({ notFound: true, message: 'API key not configured' }, { status: 200 });
   }
 
   const headers = {
@@ -20,63 +75,141 @@ export async function GET(request: Request) {
   };
 
   try {
-    // 1. Search for the event using home team name
-    const eventsRes = await fetch(`https://sports.bzzoiro.com/api/v2/events/?team_name=${encodeURIComponent(home)}&limit=10`, { headers, cache: 'no-store' });
-    if (!eventsRes.ok) throw new Error('Failed to fetch events');
-    const eventsData = await eventsRes.json();
-    
-    // Find the event that has both teams
-    const homeLower = home.toLowerCase();
-    const awayLower = away.toLowerCase();
-    
-    // First, try exact matches or includes
-    let event = eventsData.results?.find((e: any) => 
-      (e.home_team.toLowerCase().includes(homeLower) && e.away_team.toLowerCase().includes(awayLower)) ||
-      (e.home_team.toLowerCase().includes(awayLower) && e.away_team.toLowerCase().includes(homeLower))
-    );
-    
-    // If not found, just take the first upcoming event for the home team if available, or just the first event
-    if (!event && eventsData.results && eventsData.results.length > 0) {
-      event = eventsData.results.find((e: any) => e.status !== 'finished') || eventsData.results[0];
+    const now = new Date();
+    const dateFrom = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const dateTo = new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    let matchedEvent: any = null;
+    const searchTerms = [home, away].filter(Boolean);
+
+    // Strategy 1: Search within active fixture window (±7 days) with limit=50
+    for (const term of searchTerms) {
+      try {
+        const url = `https://sports.bzzoiro.com/api/v2/events/?team_name=${encodeURIComponent(term)}&date_from=${dateFrom}&date_to=${dateTo}&limit=50`;
+        const res = await fetch(url, { headers, cache: 'no-store' });
+        if (!res.ok) continue;
+        const data = await res.json();
+        if (!data.results || data.results.length === 0) continue;
+
+        for (const ev of data.results) {
+          const hScore = calculateTeamMatchScore(home, ev.home_team);
+          const aScore = calculateTeamMatchScore(away, ev.away_team);
+          const revHScore = calculateTeamMatchScore(home, ev.away_team);
+          const revAScore = calculateTeamMatchScore(away, ev.home_team);
+
+          const isMatch = (hScore >= 50 && aScore >= 50);
+          const isRevMatch = (revHScore >= 50 && revAScore >= 50);
+
+          if (isMatch || isRevMatch) {
+            // Kickoff date alignment check
+            const verification = verifyKickoffAlignment(dateParam, ev.event_date);
+            if (!verification.aligned) {
+              console.warn(`[Bzzoiro Audit] Rejected candidate ID ${ev.id} (${ev.home_team} vs ${ev.away_team}): Kickoff mismatch with fixture date "${dateParam}" by ${verification.diffHours.toFixed(1)}h`);
+              continue;
+            }
+
+            const totalScore = isMatch ? (hScore + aScore) / 2 : (revHScore + revAScore) / 2;
+            if (totalScore < 75) {
+              console.warn(`[Bzzoiro Audit] Match resolved with moderate confidence (${totalScore}) for "${home}" vs "${away}" -> ID ${ev.id} ("${ev.home_team}" vs "${ev.away_team}")`);
+            }
+
+            matchedEvent = ev;
+            break;
+          }
+        }
+        if (matchedEvent) break;
+      } catch (err) {
+        console.error(`[Bzzoiro] Error searching events for ${term}:`, err);
+      }
     }
-    
-    if (!event) {
-      return NextResponse.json({ error: 'Match not found' }, { status: 404 });
+
+    // Strategy 2: If not found in date window, search wider (limit=50)
+    if (!matchedEvent) {
+      for (const term of searchTerms) {
+        try {
+          const url = `https://sports.bzzoiro.com/api/v2/events/?team_name=${encodeURIComponent(term)}&limit=50`;
+          const res = await fetch(url, { headers, cache: 'no-store' });
+          if (!res.ok) continue;
+          const data = await res.json();
+          if (!data.results || data.results.length === 0) continue;
+
+          for (const ev of data.results) {
+            const hScore = calculateTeamMatchScore(home, ev.home_team);
+            const aScore = calculateTeamMatchScore(away, ev.away_team);
+            const revHScore = calculateTeamMatchScore(home, ev.away_team);
+            const revAScore = calculateTeamMatchScore(away, ev.home_team);
+
+            const isMatch = (hScore >= 50 && aScore >= 50);
+            const isRevMatch = (revHScore >= 50 && revAScore >= 50);
+
+            if (isMatch || isRevMatch) {
+              const verification = verifyKickoffAlignment(dateParam, ev.event_date);
+              if (!verification.aligned) {
+                console.warn(`[Bzzoiro Audit] Rejected candidate ID ${ev.id} (${ev.home_team} vs ${ev.away_team}) in wider search: Kickoff mismatch with fixture date "${dateParam}"`);
+                continue;
+              }
+
+              const totalScore = isMatch ? (hScore + aScore) / 2 : (revHScore + revAScore) / 2;
+              if (totalScore < 75) {
+                console.warn(`[Bzzoiro Audit] Match resolved with moderate confidence (${totalScore}) for "${home}" vs "${away}" -> ID ${ev.id} ("${ev.home_team}" vs "${ev.away_team}")`);
+              }
+
+              matchedEvent = ev;
+              break;
+            }
+          }
+          if (matchedEvent) break;
+        } catch (err) {
+          console.error(`[Bzzoiro] Error in wider search for ${term}:`, err);
+        }
+      }
     }
-    
-    const eventId = event.id;
-    
-    // 2. Fetch Metadata (Facts) and Venue Details
-    const [metaRes, lineupsRes, oddsRes, statsRes, venueRes] = await Promise.all([
-      fetch(`https://sports.bzzoiro.com/api/v2/events/${eventId}/metadata/`, { headers, cache: 'no-store' }),
-      fetch(`https://sports.bzzoiro.com/api/v2/events/${eventId}/lineups/`, { headers, cache: 'no-store' }),
-      fetch(`https://sports.bzzoiro.com/api/v2/events/${eventId}/odds/comparison/`, { headers, cache: 'no-store' }),
-      fetch(`https://sports.bzzoiro.com/api/v2/events/${eventId}/stats/`, { headers, cache: 'no-store' }),
-      event.venue_id 
-        ? fetch(`https://sports.bzzoiro.com/api/v2/venues/${event.venue_id}/`, { headers, cache: 'no-store' })
+
+    // If still no exact match between the two teams, do not assign arbitrary match from 2027
+    if (!matchedEvent) {
+      return NextResponse.json({ notFound: true, message: 'Match not found in sports data provider' }, { status: 200 });
+    }
+
+    const eventId = matchedEvent.id;
+
+    // Helper for independent, resilient fetches
+    const safeFetch = async (url: string) => {
+      try {
+        const r = await fetch(url, { headers, cache: 'no-store' });
+        return r.ok ? await r.json() : null;
+      } catch (err) {
+        console.error(`[Bzzoiro] Failed fetching ${url}:`, err);
+        return null;
+      }
+    };
+
+    // Fetch sub-endpoints in parallel with independent failure isolation
+    const [metadata, lineups, odds, stats, incidents, venue] = await Promise.all([
+      safeFetch(`https://sports.bzzoiro.com/api/v2/events/${eventId}/metadata/`),
+      safeFetch(`https://sports.bzzoiro.com/api/v2/events/${eventId}/lineups/`),
+      safeFetch(`https://sports.bzzoiro.com/api/v2/events/${eventId}/odds/comparison/`),
+      safeFetch(`https://sports.bzzoiro.com/api/v2/events/${eventId}/stats/`),
+      safeFetch(`https://sports.bzzoiro.com/api/v2/events/${eventId}/incidents/`),
+      matchedEvent.venue_id 
+        ? safeFetch(`https://sports.bzzoiro.com/api/v2/venues/${matchedEvent.venue_id}/`)
         : Promise.resolve(null)
     ]);
-    
-    const metadata = metaRes.ok ? await metaRes.json() : null;
-    const lineups = lineupsRes.ok ? await lineupsRes.json() : null;
-    const odds = oddsRes.ok ? await oddsRes.json() : null;
-    const stats = statsRes.ok ? await statsRes.json() : null;
-    const venue = venueRes && venueRes.ok ? await venueRes.json() : null;
 
     if (venue) {
-      event.venue = venue;
+      matchedEvent.venue = venue;
     }
 
     return NextResponse.json({
-      event,
+      event: matchedEvent,
       metadata,
       lineups,
       odds,
-      stats
+      stats,
+      incidents: Array.isArray(incidents) ? incidents : incidents?.incidents || incidents?.results || []
     });
     
   } catch (err: any) {
     console.error('Bzzoiro Match Preview Error:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ notFound: true, error: err.message }, { status: 200 });
   }
 }

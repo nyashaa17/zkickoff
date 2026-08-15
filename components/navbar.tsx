@@ -83,6 +83,9 @@ export default function Navbar() {
                 </span>
                 Live Streaming
               </Link>
+              <Link href="/league" className="hover:text-zim-green transition-colors py-1">
+                Standings
+              </Link>
             </nav>
 
             {/* Unified Hamburger Menu Button */}
@@ -131,12 +134,12 @@ export default function Navbar() {
                 </Link>
 
                 <Link
-                  href="/"
+                  href="/league"
                   onClick={() => setIsDrawerOpen(false)}
                   className="flex items-center gap-4 px-4 py-3.5 text-slate-600 hover:bg-neutral-50 rounded-xl font-medium text-[15px] transition-colors"
                 >
-                  <Trophy className="w-5 h-5 stroke-[2]" />
-                  <span>Stats</span>
+                  <Trophy className="w-5 h-5 stroke-[2] text-[#009739]" />
+                  <span>League Tables</span>
                 </Link>
 
                 <Link
