@@ -27,7 +27,7 @@ async function fetchFixturesForDate(
 ): Promise<Match[]> {
   try {
     const res = await fetch(
-      `${BACKEND_BASE}?date=${dateStr}&t=${Date.now()}`,
+      `${BACKEND_BASE}?date=${dateStr}`,
       { next: { revalidate: revalidateSeconds } },
     );
     if (!res.ok) return [];

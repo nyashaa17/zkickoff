@@ -35,7 +35,7 @@ export default function Breadcrumbs({ items, className = '' }: BreadcrumbsProps)
             <div key={index} className="flex items-center gap-1 sm:gap-1.5">
               <ChevronRight className="w-3 h-3 text-neutral-300 shrink-0" />
               {isLast || !item.href ? (
-                <span className="text-neutral-800 font-extrabold font-display truncate max-w-[120px] xs:max-w-[180px] sm:max-w-[280px] md:max-w-md bg-neutral-100/90 text-neutral-900 border border-neutral-200/40 px-2 py-0.5 rounded-md text-[11px] tracking-wide">
+                <span className="text-neutral-800 font-bold font-display whitespace-nowrap bg-neutral-100/90 text-neutral-900 border border-neutral-200/40 px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] tracking-wide">
                   {item.label}
                 </span>
               ) : (

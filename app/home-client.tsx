@@ -172,17 +172,21 @@ function HomeContent() {
     }
   }, [selectedDateFilter, displayedWeekDates]);
 
-  // Load real scores directly on the client with explicit SWR key tuple mapping to prevent stale closure data updates
+  // Load real scores directly on the client with explicit SWR key tuple mapping:
+  // Defaults to today's matches for ultra-fast initial load, loads multi-day schedule on tab change
   const swrKey = selectedDateFilter
     ? ["livescores-direct", selectedDateFilter]
-    : ["livescores-direct", "today"];
+    : activeTab === "UPCOMING"
+      ? ["livescores-direct", "all"]
+      : ["livescores-direct", "today"];
+
   const {
     data: livescoreData,
     error: livescoreError,
     isLoading: loading,
   } = useSWR(
     swrKey,
-    ([, dateStr]) => fetchLivescoresDirect(dateStr === "today" ? undefined : dateStr),
+    ([, dateStr]) => fetchLivescoresDirect(dateStr),
     {
       refreshInterval: 25000,
       revalidateOnFocus: true,
@@ -333,6 +337,64 @@ function HomeContent() {
     });
     return Object.values(groups);
   }, [filteredMatches]);
+
+  // Progressive rendering: Load initial batch of ~45 matches / top leagues, load more on scroll
+  const INITIAL_RENDER_LIMIT = 45;
+  const RENDER_INCREMENT = 45;
+  const [renderLimit, setRenderLimit] = useState<number>(INITIAL_RENDER_LIMIT);
+  const loadMoreSentinelRef = React.useRef<HTMLDivElement>(null);
+
+  // Reset limit whenever active tab, league category, or date filter changes
+  useEffect(() => {
+    setRenderLimit(INITIAL_RENDER_LIMIT);
+  }, [activeTab, activeCategory, selectedDateFilter]);
+
+  // Sliced grouped matches based on render limit
+  const { visibleGroupedMatches, totalFilteredCount, hasMoreToRender } = React.useMemo(() => {
+    let count = 0;
+    const groups: typeof groupedTodayMatches = [];
+    let hasMore = false;
+
+    for (const group of groupedTodayMatches) {
+      if (count < renderLimit) {
+        groups.push(group);
+        count += group.matches.length;
+      } else {
+        hasMore = true;
+      }
+    }
+
+    return {
+      visibleGroupedMatches: groups,
+      totalFilteredCount: filteredMatches.length,
+      hasMoreToRender: hasMore || filteredMatches.length > renderLimit,
+    };
+  }, [groupedTodayMatches, filteredMatches.length, renderLimit]);
+
+  const visibleFlatMatches = React.useMemo(() => {
+    return filteredMatches.slice(0, renderLimit);
+  }, [filteredMatches, renderLimit]);
+
+  // IntersectionObserver to automatically load more matches as user scrolls near bottom
+  useEffect(() => {
+    if (!hasMoreToRender) return;
+    const sentinel = loadMoreSentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setRenderLimit((prev) => prev + RENDER_INCREMENT);
+        }
+      },
+      { rootMargin: "600px" }
+    );
+
+    observer.observe(sentinel);
+    return () => {
+      observer.unobserve(sentinel);
+    };
+  }, [hasMoreToRender, visibleGroupedMatches.length]);
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-10">
@@ -615,47 +677,64 @@ function HomeContent() {
                       </div>
                     </div>
                   ) : filteredMatches.length > 0 ? (
-                    activeTab === "TODAY" || selectedDateFilter !== null ? (
-                      // Grouped by league on Today's tab
-                      groupedTodayMatches.map((group) => (
-                        <div key={group.leagueName} className="space-y-3">
-                          <div className="flex items-center gap-2 px-1 py-1">
-                            {group.leagueLogoUrl ? (
-                              <Image
-                                src={group.leagueLogoUrl}
-                                alt={group.leagueName}
-                                width={16}
-                                height={16}
-                                className="object-contain shrink-0"
-                                referrerPolicy="no-referrer"
-                              />
-                            ) : (
-                              <div className="w-4 h-4 rounded-full bg-neutral-150 flex items-center justify-center border border-neutral-300 text-[8px] font-bold text-neutral-500 shrink-0">
-                                {group.leagueName.charAt(0)}
-                              </div>
-                            )}
-                            <h3 className="font-display font-bold text-xs md:text-sm text-neutral-800 tracking-tight uppercase">
-                              {group.leagueName}
-                            </h3>
-                            <span className="text-[10px] font-mono font-bold bg-neutral-100 text-neutral-500 px-2 py-0.5 rounded-full border border-neutral-200/50">
-                              {group.matches.length}
-                            </span>
+                    <>
+                      {activeTab === "TODAY" || selectedDateFilter !== null ? (
+                        // Grouped by league on Today's tab
+                        visibleGroupedMatches.map((group) => (
+                          <div key={group.leagueName} className="space-y-3">
+                            <div className="flex items-center gap-2 px-1 py-1">
+                              {group.leagueLogoUrl ? (
+                                <Image
+                                  src={group.leagueLogoUrl}
+                                  alt={group.leagueName}
+                                  width={16}
+                                  height={16}
+                                  className="object-contain shrink-0"
+                                  referrerPolicy="no-referrer"
+                                />
+                              ) : (
+                                <div className="w-4 h-4 rounded-full bg-neutral-150 flex items-center justify-center border border-neutral-300 text-[8px] font-bold text-neutral-500 shrink-0">
+                                  {group.leagueName.charAt(0)}
+                                </div>
+                              )}
+                              <h3 className="font-display font-bold text-xs md:text-sm text-neutral-800 tracking-tight uppercase">
+                                {group.leagueName}
+                              </h3>
+                              <span className="text-[10px] font-mono font-bold bg-neutral-100 text-neutral-500 px-2 py-0.5 rounded-full border border-neutral-200/50">
+                                {group.matches.length}
+                              </span>
+                            </div>
+                            <div className="space-y-3">
+                              {group.matches.map((match: Match) => (
+                                <MatchCard key={match.id} match={match} />
+                              ))}
+                            </div>
                           </div>
-                          <div className="space-y-3">
-                            {group.matches.map((match: Match) => (
-                              <MatchCard key={match.id} match={match} />
-                            ))}
-                          </div>
+                        ))
+                      ) : (
+                        // Normal flat list for other tabs
+                        <div className="space-y-3">
+                          {visibleFlatMatches.map((match: Match) => (
+                            <MatchCard key={match.id} match={match} />
+                          ))}
                         </div>
-                      ))
-                    ) : (
-                      // Normal flat list for other tabs
-                      <div className="space-y-3">
-                        {filteredMatches.map((match: Match) => (
-                          <MatchCard key={match.id} match={match} />
-                        ))}
-                      </div>
-                    )
+                      )}
+
+                      {/* Progressive load more sentinel & trigger */}
+                      {hasMoreToRender && (
+                        <div ref={loadMoreSentinelRef} className="pt-2 pb-6 flex flex-col items-center justify-center gap-2">
+                          <button
+                            onClick={() => setRenderLimit((prev) => prev + RENDER_INCREMENT)}
+                            className="cursor-pointer px-5 py-2.5 bg-white hover:bg-neutral-50 text-neutral-700 hover:text-neutral-900 border border-neutral-200 hover:border-neutral-300 rounded-xl text-xs font-display font-semibold transition-all shadow-2xs flex items-center gap-2"
+                          >
+                            <span>Load More Matches</span>
+                            <span className="text-[10px] font-mono font-bold text-neutral-400 bg-neutral-100 px-1.5 py-0.5 rounded">
+                              {Math.max(0, totalFilteredCount - renderLimit)} more
+                            </span>
+                          </button>
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <div className="bg-white border border-neutral-200/60 rounded-2xl p-10 text-center flex flex-col items-center justify-center gap-3 my-4 shadow-2xs">
                       <div className="w-12 h-12 rounded-full bg-neutral-50 border border-neutral-100 flex items-center justify-center text-neutral-400">

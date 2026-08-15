@@ -26,21 +26,28 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // Keep fallback
   }
   
+  const ogImageUrl = `https://zimkickoff.co.zw/preview/${slug}/opengraph-image`;
+  const canonicalUrl = `https://zimkickoff.co.zw/preview/${slug}`;
+
   return {
     title: `${title} | ZimKickOff`,
     description,
     alternates: {
-      canonical: `/preview/${slug}`, 
+      canonical: canonicalUrl, 
     },
     openGraph: {
       title: `${title} | ZimKickOff`,
       description,
-      url: `/preview/${slug}`,
+      url: canonicalUrl,
+      siteName: 'ZimKickOff',
+      type: 'website',
       images: [
         {
-          url: `/preview/${slug}/opengraph-image`,
+          url: ogImageUrl,
+          secureUrl: ogImageUrl,
           width: 1200,
           height: 630,
+          type: 'image/png',
           alt: `${title} | ZimKickOff`,
         },
       ],
@@ -49,7 +56,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: 'summary_large_image',
       title: `${title} | ZimKickOff`,
       description,
-      images: [`/preview/${slug}/opengraph-image`],
+      images: [ogImageUrl],
     },
   };
 }

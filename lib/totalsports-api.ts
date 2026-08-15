@@ -47,9 +47,9 @@ export function getTeamColor(name: string): string {
 
 // Helper to format Esd (e.g. "20260511190000") to "HH:MM"
 export function formatEsTime(esd?: string | number): string {
-  if (esd === undefined || esd === null) return '15:00';
+  if (esd === undefined || esd === null) return 'TBD';
   const esdStr = String(esd);
-  if (esdStr.length < 12) return '15:00';
+  if (esdStr.length < 12) return 'TBD';
   const hour = esdStr.slice(8, 10);
   const min = esdStr.slice(10, 12);
   return `${hour}:${min}`;

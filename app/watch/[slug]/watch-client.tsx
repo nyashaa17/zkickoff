@@ -1,0 +1,776 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import useSWR from 'swr';
+import { 
+  Play, 
+  Tv, 
+  ArrowLeft, 
+  AlertTriangle, 
+  RefreshCcw, 
+  MapPin, 
+  Users, 
+  Share2, 
+  Info, 
+  VolumeX, 
+  ExternalLink,
+  Award,
+  Video,
+  ListOrdered,
+  Clock,
+  Flame,
+  MessageSquare,
+  Sparkles,
+  Download,
+  Copy,
+  Check,
+  Target,
+  X
+} from 'lucide-react';
+import { Match } from '@/lib/matches-data';
+import { DetailedPageSkeleton } from '@/components/skeleton-loader';
+import { PredictionsBanner } from '@/components/predictions-banner';
+import { TeamLogo } from '@/components/team-logo';
+import Breadcrumbs from '@/components/breadcrumbs';
+import { fetchLivescoresDirect, fetchMatchButtonsDirect, fetchCommentaryDirect } from '@/lib/totalsports-client';
+import { ShareButtons } from '@/components/share-buttons';
+import { Shotmap } from '@/components/match/shotmap';
+import { IncidentsTimeline } from '@/components/match/incidents-timeline';
+
+interface WatchClientProps {
+  slug: string;
+  initialServer?: string;
+  initialMatch: Match | null;
+  initialAllMatches: Match[];
+}
+
+export default function WatchClient({
+  slug,
+  initialServer,
+  initialMatch,
+  initialAllMatches,
+}: WatchClientProps) {
+  const [activeServer, setActiveServer] = useState<string>(initialServer || '');
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [detailTab, setDetailTab] = useState<'COMMENTARY' | 'TIMELINE' | 'SHOTMAP' | 'DETAILS'>('COMMENTARY');
+
+  const matchId = slug.split('-').pop() || '0';
+
+  // 1. Fetch Livescore directly with server fallback data
+  const { data: lData } = useSWR('livescores-direct', () => fetchLivescoresDirect(), {
+    fallbackData: initialAllMatches?.length ? { matches: initialAllMatches } : undefined,
+    refreshInterval: 20000,
+    revalidateOnFocus: true,
+  });
+
+  let allMatches: Match[] = initialAllMatches || [];
+  let match: Match | undefined = initialMatch || undefined;
+
+  if (lData && lData.matches) {
+    allMatches = lData.matches;
+    const found = allMatches.find((m: Match) => m.id === matchId || m.slug === slug);
+    if (found) {
+      match = {
+        ...found,
+        teams: {
+          home: {
+            ...found.teams.home,
+            logoUrl: found.teams.home.logoUrl || initialMatch?.teams.home.logoUrl,
+            bzzBadge: found.teams.home.bzzBadge || initialMatch?.teams.home.bzzBadge,
+          },
+          away: {
+            ...found.teams.away,
+            logoUrl: found.teams.away.logoUrl || initialMatch?.teams.away.logoUrl,
+            bzzBadge: found.teams.away.bzzBadge || initialMatch?.teams.away.bzzBadge,
+          },
+        },
+        leagueLogoUrl: found.leagueLogoUrl || initialMatch?.leagueLogoUrl,
+      };
+    }
+  }
+
+  const queryMatch = match || initialMatch;
+
+  const homeName = queryMatch?.teams?.home?.name || '';
+  const awayName = queryMatch?.teams?.away?.name || '';
+
+  // Fetch Bzzoiro dynamic match metadata/venue info
+  const { data: bzzoiroData } = useSWR(
+    homeName && awayName
+      ? `/api/bzzoiro/match-preview?home=${encodeURIComponent(homeName)}&away=${encodeURIComponent(awayName)}`
+      : null,
+    async (url) => {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const json = await res.json();
+        return json?.notFound ? null : json;
+      } catch (e) {
+        return null;
+      }
+    },
+    { revalidateOnFocus: false, revalidateIfStale: false }
+  );
+
+  // 2. Fetch Match buttons (servers) directly
+  const { data: bData } = useSWR(
+    `match-buttons-${matchId}`,
+    () => fetchMatchButtonsDirect(matchId, homeName, awayName),
+    { revalidateOnFocus: true }
+  );
+
+  let servers: { id: string; name: string; embedUrl: string }[] = [];
+  if (bData && bData.servers && bData.servers.length > 0) {
+    servers = bData.servers;
+  }
+
+  useEffect(() => {
+    if (!activeServer && servers.length > 0) {
+      setActiveServer(servers[0].id);
+    }
+  }, [servers, activeServer]);
+
+  // 3. Fetch Commentary directly
+  const { data: cData } = useSWR(`commentary-${matchId}`, () => fetchCommentaryDirect(matchId), {
+    refreshInterval: 15000,
+    revalidateOnFocus: true,
+  });
+
+  // 4. Fetch all logos mapping from github Myfixture repository
+  const { data: allLogos } = useSWR<Record<string, string>>('github-all-logos', () => 
+    fetch('https://raw.githubusercontent.com/Vicecap/Myfixture/main/all_logos.json')
+      .then(res => res.json())
+  );
+
+  const getLogoForTeam = (teamName?: string) => {
+    if (!teamName || !allLogos) return null;
+    const nameLower = teamName.toLowerCase().trim();
+    const keys = Object.keys(allLogos);
+    
+    let foundKey = keys.find(k => k.toLowerCase().trim() === nameLower);
+    if (foundKey) return allLogos[foundKey];
+
+    const abbreviations: Record<string, string> = {
+      'psg': 'paris saint-germain',
+      'paris sg': 'paris saint-germain',
+      'man utd': 'manchester united',
+      'man city': 'manchester city',
+      'spurs': 'tottenham hotspur',
+      'tottenham': 'tottenham hotspur',
+      'bayern': 'bayern munich',
+      'leipzig': 'rb leipzig',
+      'leverkusen': 'bayer leverkusen',
+      'gladbach': 'borussia monchengladbach',
+      'milan': 'ac milan',
+      'inter': 'inter milan',
+      'atletico': 'atletico madrid',
+      'bilbao': 'athletic club',
+      'sociedad': 'real society',
+      'wolves': 'wolverhampton wanderers',
+      'sporting': 'sporting cp',
+      'benfica': 'sl benfica',
+      'porto': 'fc porto',
+    };
+
+    const expandedName = abbreviations[nameLower];
+    if (expandedName) {
+      foundKey = keys.find(k => k.toLowerCase().trim() === expandedName);
+      if (foundKey) return allLogos[foundKey];
+    }
+    
+    foundKey = keys.find(k => {
+      const kLower = k.toLowerCase().trim();
+      return kLower.includes(nameLower) || nameLower.includes(kLower);
+    });
+    if (foundKey) return allLogos[foundKey];
+
+    const stopWords = ['fc', 'f.c.', 'united', 'city', 'town', 'athletic', 'rovers', 'sport', 'real', 'cf', 'club', 'de'];
+    const getTokens = (str: string) => 
+      str.toLowerCase()
+         .replace(/[^a-z0-9]/g, ' ')
+         .split(/\s+/)
+         .filter(t => t.length > 2 && !stopWords.includes(t));
+
+    const nameTokens = getTokens(teamName);
+    if (nameTokens.length > 0) {
+      foundKey = keys.find(k => {
+        const kTokens = getTokens(k);
+        return nameTokens.some(nt => kTokens.includes(nt));
+      });
+      if (foundKey) return allLogos[foundKey];
+    }
+
+    if (nameTokens.length > 0) {
+      foundKey = keys.find(k => {
+        const kTokens = getTokens(k);
+        return nameTokens.some(nt => kTokens.some(kt => kt.includes(nt) || nt.includes(kt)));
+      });
+      if (foundKey) return allLogos[foundKey];
+    }
+    
+    return null;
+  };
+
+  let commentary: { time: number; text: string }[] = [];
+  if (cData) {
+    let entries: { time: number; text: string }[] = [];
+    if (cData.liveCommentary && Array.isArray(cData.liveCommentary)) {
+      entries = [...cData.liveCommentary];
+    }
+    if (cData.manualCommentary && Array.isArray(cData.manualCommentary)) {
+      cData.manualCommentary.forEach((m: any) => {
+        if (!entries.some(e => e.text === m.text)) {
+          entries.push(m);
+        }
+      });
+    }
+    entries.sort((a, b) => b.time - a.time);
+    commentary = entries;
+  }
+
+  // Copy link to share stream
+  const copyShareLink = () => {
+    if (typeof window !== 'undefined') {
+      navigator.clipboard.writeText(window.location.href);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    }
+  };
+
+  if (!queryMatch) {
+    return <DetailedPageSkeleton />;
+  }
+
+  const relatedMatches = allMatches
+    .filter((m) => m.id !== queryMatch.id && m.status !== 'FINISHED' && m.dateString !== 'Yesterday' && (m.category === queryMatch.category || m.status === 'LIVE'))
+    .slice(0, 4);
+
+  const isLive = queryMatch.status === 'LIVE';
+  const renderServersList = servers;
+
+  return (
+    <div className="w-full max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-8">
+      <h1 className="sr-only">
+        Watch {queryMatch.teams.home.name} vs {queryMatch.teams.away.name} Live Stream | ZimKickOff
+      </h1>
+      {/* Back button and breadcrumbs */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 border-b border-neutral-200/40 pb-4">
+        <Breadcrumbs 
+          items={[
+            { label: 'Live Broadcasts', href: '/live' },
+            { label: `${queryMatch.teams.home.name} vs ${queryMatch.teams.away.name}` }
+          ]} 
+        />
+        <Link href="/" className="inline-flex items-center gap-2 text-xs font-bold text-[#009739] hover:opacity-85 font-display transition-all py-1.5 px-3 bg-neutral-100/75 hover:bg-neutral-100 rounded-xl border border-neutral-200/40 shrink-0 self-start sm:self-auto shadow-4xs">
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Back to Live Feed
+        </Link>
+      </div>
+
+      {/* Main layout grids */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+        
+        {/* Left Column: Player & Core details */}
+        <div className="lg:col-span-2 space-y-6">
+          
+          {/* Main Streaming Player Terminal */}
+          <div className="bg-white border border-neutral-200/70 rounded-none md:rounded-3xl overflow-hidden shadow-xs -mx-4 md:mx-0 border-x-0 md:border relative">
+            
+            {/* Video Iframe Embed wrapper */}
+            <div className={`aspect-video relative overflow-hidden shadow-inner group transition-all duration-300 ${
+              (queryMatch.status === 'TODAY' || queryMatch.status === 'UPCOMING') ? 'bg-white' : 'bg-black'
+            }`}>
+              {(queryMatch.status === 'TODAY' || queryMatch.status === 'UPCOMING') ? (
+                <div id="not-started-empty-state" className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-white">
+                  {/* Decorative faint field elements to elevate visual style */}
+                  <div className="absolute inset-0 z-0 opacity-5 pointer-events-none">
+                    <div className="absolute inset-0 border-[2px] border-neutral-300 rounded-[30%] scale-[0.6] top-[-30%]"></div>
+                    <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-0.5 bg-neutral-300"></div>
+                  </div>
+                  
+                  <div className="relative z-10 flex flex-col items-center max-w-sm">
+                    <div className="w-16 h-16 bg-neutral-50 border border-neutral-100 rounded-full flex items-center justify-center mb-5 shadow-2xs relative">
+                      <div className="absolute inset-0 rounded-full bg-neutral-100 animate-ping opacity-30"></div>
+                      <Clock className="w-7 h-7 text-[#009739] animate-pulse relative z-10" />
+                    </div>
+                    <h3 className="text-neutral-900 font-display font-extrabold text-lg md:text-xl mb-2.5">
+                      Waiting for broadcast
+                    </h3>
+                    <p className="text-neutral-500 text-xs md:text-sm leading-relaxed mb-4">
+                      The stream typically starts 5-10 minutes before kickoff. We&apos;ll connect automatically when it&apos;s live.
+                    </p>
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-neutral-100/80 rounded-full text-[10px] font-mono font-extrabold text-[#009739] border border-neutral-200/50">
+                      <span className="w-1.5 h-1.5 bg-[#009739] rounded-full animate-pulse"></span>
+                      SCHEDULED START: {queryMatch.kickoffTime}
+                    </div>
+                  </div>
+                </div>
+              ) : queryMatch.status === 'FINISHED' ? (
+                <div id="stream-ended-empty-state" className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-black">
+                  {/* Decorative faint field elements to elevate visual style */}
+                  <div className="absolute inset-0 z-0 opacity-10 pointer-events-none">
+                    <div className="absolute inset-0 border-[2px] border-neutral-800 rounded-[30%] scale-[0.6] top-[-30%]"></div>
+                    <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-0.5 bg-neutral-850"></div>
+                  </div>
+                  
+                  <div className="relative z-10 flex flex-col items-center max-w-sm">
+                    <div className="w-16 h-16 bg-neutral-900 border border-neutral-850 rounded-full flex items-center justify-center mb-5 shadow-2xs relative">
+                      <div className="absolute inset-0 rounded-full bg-neutral-800 animate-ping opacity-20"></div>
+                      <Tv className="w-7 h-7 text-neutral-400 relative z-10" />
+                    </div>
+                    <h3 className="text-white font-display font-extrabold text-lg md:text-xl mb-2.5">
+                      Stream has ended
+                    </h3>
+                    <p className="text-neutral-400 text-xs md:text-sm leading-relaxed mb-4">
+                      The broadcast for this match has concluded. Check out the match stats or commentary.
+                    </p>
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-neutral-900 rounded-full text-[10px] font-mono font-extrabold text-neutral-400 border border-neutral-850">
+                      <span className="w-1.5 h-1.5 bg-neutral-500 rounded-full"></span>
+                      CONCLUDED
+                    </div>
+                  </div>
+                </div>
+              ) : renderServersList.length === 0 ? (
+                <div id="no-stream-empty-state" className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-black">
+                  {/* Decorative faint field elements to elevate visual style */}
+                  <div className="absolute inset-0 z-0 opacity-10 pointer-events-none">
+                    <div className="absolute inset-0 border-[2px] border-neutral-800 rounded-[30%] scale-[0.6] top-[-30%]"></div>
+                    <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-0.5 bg-neutral-850"></div>
+                  </div>
+                  
+                  <div className="relative z-10 flex flex-col items-center max-w-sm">
+                    <div className="w-16 h-16 bg-neutral-900 border border-neutral-850 rounded-full flex items-center justify-center mb-5 shadow-2xs relative">
+                      <div className="absolute inset-0 rounded-full bg-neutral-800 animate-ping opacity-20"></div>
+                      <Tv className="w-7 h-7 text-neutral-400 relative z-10" />
+                    </div>
+                    <h3 className="text-white font-display font-extrabold text-lg md:text-xl mb-2.5">
+                      No stream links available
+                    </h3>
+                    <p className="text-neutral-400 text-xs md:text-sm leading-relaxed mb-4">
+                      There are currently no stream links available for this Match.
+                    </p>
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-neutral-900 rounded-full text-[10px] font-mono font-extrabold text-neutral-400 border border-neutral-850">
+                      <span className="w-1.5 h-1.5 bg-neutral-500 rounded-full"></span>
+                      UNAVAILABLE
+                    </div>
+                  </div>
+                </div>
+              ) : activeServer ? (
+                <iframe
+                  id="streamContainer"
+                  className="absolute inset-0 w-full h-full border-none m-0 p-0 z-10 bg-black"
+                  allowFullScreen
+                  allow="fullscreen; autoplay; encrypted-media; picture-in-picture"
+                  src={renderServersList.find(s => s.id === activeServer)?.embedUrl || renderServersList[0]?.embedUrl}
+                  referrerPolicy="no-referrer"
+                ></iframe>
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-radial from-neutral-900 via-neutral-950 to-black p-4">
+                  <div className="absolute inset-0 z-0 opacity-10 pointer-events-none">
+                    <div className="absolute inset-0 border-[2px] border-white/25 rounded-[30%] scale-[0.6] top-[-30%]"></div>
+                    <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-0.5 bg-white/20"></div>
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-full border border-white/20"></div>
+                  </div>
+                  
+                  <div className="relative z-10 flex flex-col items-center text-center max-w-sm">
+                    <button 
+                      onClick={() => {
+                        if (renderServersList.length > 0) {
+                          setActiveServer(renderServersList[0].id);
+                        }
+                      }}
+                      className="w-16 h-16 cursor-pointer bg-zim-green text-white hover:scale-105 active:scale-95 transition-all rounded-full flex items-center justify-center mb-4 backdrop-blur-md shadow-lg shadow-zim-green/20"
+                    >
+                      <Play className="w-8 h-8 ml-1" />
+                    </button>
+                    <h3 className="text-white font-display font-bold text-xl mb-2">Live Broadcast Ready</h3>
+                    <p className="text-neutral-300 text-xs mb-4">
+                      Tap play or select an active server below to start streaming directly in our modern player wrapper.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Action panel underneath the player */}
+            <div className="p-3 bg-neutral-50 border-t border-neutral-100 flex items-center justify-between gap-4">
+              <p className="text-[10px] font-mono font-bold text-neutral-500 uppercase tracking-widest hidden sm:block pl-2">
+                ZimKickOff Player
+              </p>
+              <div className="flex items-center justify-end w-full sm:w-auto gap-2">
+                <ShareButtons
+                  matchUrl={`https://zimkickoff.co.zw/watch/${slug}`}
+                  shareText={`Watch ${queryMatch.teams.home.name} vs ${queryMatch.teams.away.name} live on ZimKickOff!`}
+                />
+                <button
+                  onClick={copyShareLink}
+                  className="cursor-pointer px-3 py-1.5 bg-white hover:bg-neutral-100 border border-neutral-200 text-neutral-750 rounded-lg text-xs font-display font-bold flex items-center gap-1.5 transition-colors shadow-4xs"
+                >
+                  {copiedLink ? <Check className="w-4 h-4 text-[#009739]" /> : <Share2 className="w-3.5 h-3.5 text-[#009739]" />}
+                  {copiedLink ? 'Copied!' : 'Share Stream'}
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Fallback instruction banner */}
+          <div id="fallback-ui-banner" className="bg-[#FFFDF4] border border-[#FFE1B5] rounded-2xl p-4 flex items-start gap-3">
+            <VolumeX className="w-5 h-5 text-zim-yellow shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <h4 className="font-display font-bold text-xs text-neutral-900">
+                Stream not loading or no audio?
+              </h4>
+              <p className="text-neutral-600 text-xs leading-relaxed">
+                Try switching to **Server 2** or **Server 3**. In case the stream requires enabling audio, tap on the speaker icon displayed directly inside of the iframe video player overlays.
+              </p>
+            </div>
+          </div>
+
+          {/* Tabbed Interactive Section */}
+          <div className="bg-white border border-neutral-200/60 rounded-3xl p-5 md:p-6 shadow-xs space-y-6">
+            
+            {/* Headers card */}
+            <div className="flex flex-col gap-5 border-b border-neutral-100 pb-5">
+              <div className="space-y-3">
+                <span className="text-[10px] font-mono font-bold text-neutral-400 uppercase tracking-widest flex items-center gap-1.5 justify-center md:justify-start">
+                  {queryMatch.leagueLogoUrl ? (
+                    <Image 
+                      src={queryMatch.leagueLogoUrl} 
+                      alt="" 
+                      width={16}
+                      height={16}
+                      className="w-4 h-4 object-contain" 
+                      referrerPolicy="no-referrer"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                  ) : (
+                    <Award className="w-3.5 h-3.5 text-zim-green" />
+                  )}
+                  {queryMatch.competition}
+                </span>
+
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4 w-full">
+                  {/* Home Team */}
+                  <div className="flex items-center gap-2.5 md:flex-row flex-col text-center md:text-left md:w-5/12">
+                    <TeamLogo 
+                      name={queryMatch.teams.home.name} 
+                      className="w-8 h-8 md:w-10 md:h-10 border border-neutral-100 shadow-3xs"
+                      bzzBadge={queryMatch.teams.home.bzzBadge}
+                      lsBadge={queryMatch.teams.home.lsBadge}
+                    />
+                    <div>
+                      <span className="text-neutral-900 font-extrabold text-sm md:text-lg block tracking-tight line-clamp-1">{queryMatch.teams.home.name}</span>
+                      <span className="text-[9px] text-[#009739] font-mono font-bold uppercase block md:hidden mt-0.5">HOME TEAM</span>
+                    </div>
+                  </div>
+
+                  {/* Score & VS */}
+                  <div className="flex flex-col items-center justify-center shrink-0 md:w-2/12 my-2 sm:my-0">
+                    <div className="bg-neutral-100/95 border border-neutral-200/50 text-neutral-900 font-mono text-lg md:text-2xl font-black px-4 py-1.5 rounded-2xl tracking-wider min-w-[80px] text-center shadow-4xs">
+                      {queryMatch.score?.home ?? 0} <span className="text-neutral-300 mx-0.5">:</span> {queryMatch.score?.away ?? 0}
+                    </div>
+                    <span className="text-[9px] font-mono font-bold text-neutral-400 uppercase tracking-widest mt-1">
+                      {isLive ? 'LIVE' : 'SCORE'}
+                    </span>
+                  </div>
+
+                  {/* Away Team */}
+                  <div className="flex items-center gap-2.5 md:flex-row-reverse flex-col text-center md:text-right md:w-5/12">
+                    <TeamLogo 
+                      name={queryMatch.teams.away.name} 
+                      className="w-8 h-8 md:w-10 md:h-10 border border-neutral-100 shadow-3xs"
+                      bzzBadge={queryMatch.teams.away.bzzBadge}
+                      lsBadge={queryMatch.teams.away.lsBadge}
+                    />
+                    <div>
+                      <span className="text-neutral-900 font-extrabold text-sm md:text-lg block tracking-tight line-clamp-1">{queryMatch.teams.away.name}</span>
+                      <span className="text-[9px] text-neutral-400 font-mono font-bold uppercase block md:hidden mt-0.5">AWAY TEAM</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-center md:justify-end gap-2">
+                <div className="flex bg-neutral-100 p-0.5 rounded-lg text-[10px] font-bold overflow-x-auto max-w-full">
+                  <button
+                    onClick={() => setDetailTab('COMMENTARY')}
+                    className={`px-2.5 py-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
+                      detailTab === 'COMMENTARY' ? 'bg-white text-neutral-900 shadow-3xs' : 'text-neutral-500 hover:text-neutral-900'
+                    }`}
+                  >
+                    <MessageSquare className="w-3 h-3 text-zim-green" />
+                    <span>COMMENTARY</span>
+                  </button>
+                  <button
+                    onClick={() => setDetailTab('TIMELINE')}
+                    className={`px-2.5 py-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
+                      detailTab === 'TIMELINE' ? 'bg-white text-neutral-900 shadow-3xs' : 'text-neutral-500 hover:text-neutral-900'
+                    }`}
+                  >
+                    <Clock className="w-3 h-3 text-[#009739]" />
+                    <span>INCIDENTS</span>
+                  </button>
+                  <button
+                    onClick={() => setDetailTab('SHOTMAP')}
+                    className={`px-2.5 py-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
+                      detailTab === 'SHOTMAP' ? 'bg-white text-neutral-900 shadow-3xs' : 'text-neutral-500 hover:text-neutral-900'
+                    }`}
+                  >
+                    <Target className="w-3 h-3 text-amber-500" />
+                    <span>SHOTMAP</span>
+                  </button>
+                  <button
+                    onClick={() => setDetailTab('DETAILS')}
+                    className={`px-2.5 py-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
+                      detailTab === 'DETAILS' ? 'bg-white text-neutral-900 shadow-3xs' : 'text-neutral-500 hover:text-neutral-900'
+                    }`}
+                  >
+                    <Info className="w-3 h-3" />
+                    <span>DETAILS</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {detailTab === 'TIMELINE' ? (
+              <IncidentsTimeline
+                incidents={bzzoiroData?.incidents || []}
+                homeTeamName={queryMatch.teams.home.name}
+                awayTeamName={queryMatch.teams.away.name}
+                isUpcoming={queryMatch.status !== 'LIVE' && queryMatch.status !== 'FINISHED'}
+              />
+            ) : detailTab === 'SHOTMAP' ? (
+              <Shotmap
+                shotmap={bzzoiroData?.stats?.shotmap || []}
+                homeTeamName={queryMatch.teams.home.name}
+                awayTeamName={queryMatch.teams.away.name}
+                isUpcoming={queryMatch.status !== 'LIVE' && queryMatch.status !== 'FINISHED'}
+              />
+            ) : detailTab === 'COMMENTARY' ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-mono font-bold text-neutral-400 uppercase tracking-widest flex items-center gap-1">
+                    <Clock className="w-3 h-3 animate-spin text-zim-green" />
+                    REAL-TIME EVENTS FEED
+                  </p>
+                  <span className="bg-green-50 text-zim-green text-[9px] font-bold px-2 py-0.5 rounded border border-green-100 flex items-center gap-1 animate-pulse">
+                    <span className="w-1 h-1 bg-zim-green rounded-full"></span>
+                    POLLING ACTIVE
+                  </span>
+                </div>
+
+                <div className="relative border-l border-neutral-100 pl-4 ml-2 space-y-5 py-2 max-h-96 overflow-y-auto pr-2 scrollbar-thin">
+                  {cData?.error ? (
+                    <div className="py-8 text-center text-red-500 text-xs font-semibold flex flex-col items-center gap-2">
+                      <AlertTriangle className="w-5 h-5 text-red-400" />
+                      Commentary unavailable
+                    </div>
+                  ) : commentary.length > 0 ? (
+                    commentary.map((entry, index) => {
+                      const textLower = entry.text.toLowerCase();
+                      const isGoal = textLower.includes('goal') || textLower.includes('g-o-a-l');
+                      const isYellowCard = textLower.includes('yellow card');
+                      const isRedCard = textLower.includes('red card');
+
+                      return (
+                        <div key={index} className="relative group text-xs text-neutral-700 leading-relaxed">
+                          <div className={`absolute -left-[21px] top-1.5 w-2 h-2 rounded-full border-2 bg-white transition-transform group-hover:scale-125 ${
+                            isGoal ? 'border-zim-yellow bg-zim-yellow animate-bounce' : isYellowCard ? 'border-amber-400 bg-amber-400' : isRedCard ? 'border-red-600 bg-red-600' : 'border-neutral-300'
+                          }`} />
+                          
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5 font-mono">
+                              <span className={`text-[10px] font-extrabold ${isGoal ? 'text-zim-yellow' : isYellowCard ? 'text-amber-500' : isRedCard ? 'text-red-500' : 'text-neutral-400'}`}>
+                                {entry.time}&apos;
+                              </span>
+                              {isGoal && (
+                                <span className="bg-yellow-50 text-yellow-600 border border-yellow-200 text-[8px] font-bold px-1 py-0.2 rounded font-sans uppercase">
+                                  Goal Event
+                                </span>
+                              )}
+                              {isYellowCard && (
+                                <span className="bg-amber-50 text-amber-600 border border-amber-200 text-[8px] font-bold px-1 py-0.2 rounded font-sans uppercase">
+                                  Yellow Card
+                                </span>
+                              )}
+                              {isRedCard && (
+                                <span className="bg-red-50 text-red-600 border border-red-200 text-[8px] font-bold px-1 py-0.2 rounded font-sans uppercase">
+                                  Red Card
+                                </span>
+                              )}
+                            </div>
+                            <p className="font-medium text-neutral-700">{entry.text}</p>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="py-8 text-center text-neutral-400 text-xs">
+                      No live events reported yet. Tap switch servers to verify kickoff states.
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100 flex items-center gap-3">
+                    <MapPin className="w-5 h-5 text-neutral-400 shrink-0" />
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] font-mono text-neutral-400 uppercase tracking-wide">Stadium Venue</p>
+                      <p className="text-xs font-semibold text-neutral-800 line-clamp-1">
+                        {bzzoiroData?.event?.venue?.name || queryMatch.venue}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100 flex items-center gap-3">
+                    <Users className="w-5 h-5 text-neutral-400 shrink-0" />
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] font-mono text-neutral-400 uppercase tracking-wide">Expected Crowd</p>
+                      <p className="text-xs font-semibold text-neutral-800">
+                        {bzzoiroData?.event?.venue?.capacity 
+                          ? `${bzzoiroData.event.venue.capacity.toLocaleString()} cap` 
+                          : bzzoiroData?.event?.attendance 
+                            ? `${bzzoiroData.event.attendance.toLocaleString()} cap`
+                            : `${queryMatch.spectators} cap`}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="col-span-2 md:col-span-1 bg-neutral-50 p-4 rounded-2xl border border-neutral-100 flex items-center gap-3">
+                    <Info className="w-5 h-5 text-neutral-400 shrink-0" />
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] font-mono text-neutral-400 uppercase tracking-wide">Category</p>
+                      <p className="text-xs font-semibold text-neutral-800">Soccer • {queryMatch.category}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-neutral-50 rounded-2xl border border-neutral-100 space-y-2">
+                  <h4 className="text-xs font-bold text-neutral-900 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-zim-green" />
+                    ZimKickOff Smart-Codec Configured
+                  </h4>
+                  <p className="text-neutral-500 text-[11px] leading-relaxed">
+                    This stream uses adaptive HLS/MPEG-DASH stream segments to bypass regional connection drops and deliver smooth 1080p highlights. Switch broadcast pipelines above in case of buffering. No VPN or accounts needed.
+                  </p>
+                </div>
+              </div>
+            )}
+
+          </div>
+
+        </div>
+
+        {/* Right Sidebar: Broadcast Servers and related streams */}
+        <div className="space-y-6">
+          
+          {/* External Broadcast Servers */}
+          <div className="bg-white border border-neutral-200/60 rounded-3xl p-5 shadow-xs space-y-4">
+            <h3 className="font-display font-bold text-sm text-neutral-950 pb-2 border-b border-neutral-100 flex items-center justify-between">
+              <span>Broadcast Servers</span>
+              <span className="bg-neutral-100 text-neutral-600 font-mono text-[9px] font-bold px-1.5 py-0.5 rounded">
+                LINKS
+              </span>
+            </h3>
+            <div className="flex flex-col gap-2">
+              {renderServersList.map((srv, idx) => (
+                <button
+                  key={srv.id}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setActiveServer(srv.id);
+                  }}
+                  className={`w-full cursor-pointer px-4 py-3 rounded-xl text-xs font-display font-bold transition-all border flex items-center justify-between gap-1.5 ${
+                    activeServer === srv.id
+                      ? 'bg-zim-green text-white border-zim-green shadow-xs shadow-zim-green/10'
+                      : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-700 border-neutral-200/60'
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <Tv className="w-4 h-4 opacity-80" />
+                    {srv.name.replace(' (HD)', '').replace(' (FHD)', '') || `Server ${idx + 1}`}
+                  </span>
+                  {activeServer === srv.id && <Check className="w-4 h-4 text-white" />}
+                </button>
+              ))}
+              {renderServersList.length === 0 && (
+                <p className="text-neutral-400 text-xs text-center py-2">No servers available.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Related matches list section */}
+          <div className="bg-white border border-neutral-200/60 rounded-3xl p-5 shadow-xs space-y-4">
+            <h3 className="font-display font-bold text-sm text-neutral-950 pb-2 border-b border-neutral-100 flex items-center justify-between">
+              <span>Related Football Streams</span>
+              <span className="bg-neutral-100 text-neutral-600 font-mono text-[9px] font-bold px-1.5 py-0.5 rounded">
+                RECOMMENDED
+              </span>
+            </h3>
+
+            <div className="flex flex-col gap-3">
+              {relatedMatches.length > 0 ? (
+                relatedMatches.map((m) => (
+                  <Link href={`/preview/${m.slug}`} key={m.id} className="block group">
+                    <div className="p-3 bg-neutral-50 hover:bg-neutral-100/50 border border-neutral-200/50 hover:border-neutral-200 rounded-xl transition-all flex items-center justify-between gap-3 text-left">
+                      <div className="space-y-1 overflow-hidden">
+                        <span className="text-[9px] font-mono text-neutral-400 uppercase tracking-wider block font-bold truncate">
+                          {m.competition}
+                        </span>
+                        <p className="text-xs font-bold text-neutral-800 line-clamp-1 group-hover:text-zim-green transition-colors">
+                          {m.teams.home.name} vs {m.teams.away.name}
+                        </p>
+                      </div>
+                      <div className="shrink-0">
+                        {m.status === 'LIVE' ? (
+                          <span className="bg-red-50 text-zim-red text-[9px] font-bold px-2 py-0.5 rounded border border-red-100 animate-pulse">
+                            LIVE
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-neutral-500 font-mono font-bold bg-white border border-neutral-200/40 px-2 py-0.5 rounded shadow-3xs">
+                            {m.kickoffTime}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <p className="text-neutral-400 text-xs text-center py-4">No related streaming schedules.</p>
+              )}
+            </div>
+
+            <div className="pt-2 text-center">
+              <Link href="/" className="text-xs font-semibold text-[#009739] hover:underline">
+                View all scheduled streams &rsaquo;
+              </Link>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* Floating Closable Affiliate Banner */}
+      <PredictionsBanner />
+
+      {/* SEO Section */}
+      <section className="mt-12 bg-white rounded-2xl border border-neutral-200/60 p-6 shadow-sm text-center">
+        <h2 className="text-xl font-extrabold text-neutral-900 mb-3">Watch {queryMatch.teams.home.name} vs {queryMatch.teams.away.name} Live Stream Free</h2>
+        <div className="space-y-4 text-sm text-neutral-600 leading-relaxed max-w-3xl mx-auto">
+          <p>
+            Watch the {queryMatch.teams.home.name} vs {queryMatch.teams.away.name} live stream free in HD. 
+          </p>
+          <p>
+            ZimKickoff brings you live coverage of the biggest football events globally including the FIFA World Cup 2026, LaLiga, and Saudi Pro League. Enjoy buffer-free streaming today!
+          </p>
+        </div>
+      </section>
+    </div>
+  );
+}

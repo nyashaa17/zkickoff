@@ -48,12 +48,17 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const dateParam = searchParams.get('date');
+  const fetchWindow = searchParams.get('window') === 'true' || dateParam === 'all';
 
   try {
-    if (dateParam) {
-      // Fetch specifically for one date
-      const res = await fetch(`https://king.totalsportslive.co.zw/api/livescore?date=${dateParam}&t=${Date.now()}`, {
-        next: { revalidate: 30 } // Cache for 30s
+    if (!fetchWindow) {
+      // Single-date fetch (defaults to Today for fast initial payload & mobile bundle optimization)
+      const targetDate = (!dateParam || dateParam === 'today') ? getFormattedDateString(0) : dateParam;
+      const isToday = targetDate === getFormattedDateString(0);
+      const revalidateSeconds = isToday ? 15 : 300;
+
+      const res = await fetch(`https://king.totalsportslive.co.zw/api/livescore?date=${targetDate}`, {
+        next: { revalidate: revalidateSeconds }
       });
       if (!res.ok) {
         throw new Error(`Failed to fetch from backend score provider: ${res.status}`);
@@ -61,12 +66,12 @@ export async function GET(req: NextRequest) {
       const data: LivescoreResponseRaw = await res.json();
       const rawMatches: Match[] = [];
       
-      let dateLabel = 'Today';
-      if (dateParam && dateParam.length === 8) {
-        const yyyy = dateParam.slice(0, 4);
-        const mm = dateParam.slice(4, 6);
-        const dd = dateParam.slice(6, 8);
-        dateLabel = `${dd}/${mm}/${yyyy}`;
+      let dateLabel = isToday ? 'Today' : 'Upcoming';
+      if (targetDate && targetDate.length === 8) {
+        const yyyy = targetDate.slice(0, 4);
+        const mm = targetDate.slice(4, 6);
+        const dd = targetDate.slice(6, 8);
+        dateLabel = isToday ? 'Today' : `${dd}/${mm}/${yyyy}`;
       }
 
       if (data.Stages) {
@@ -80,10 +85,18 @@ export async function GET(req: NextRequest) {
       }
 
       const matches = await enrichMatchesWithLogos(rawMatches);
-      return NextResponse.json({ matches });
+      return NextResponse.json(
+        { matches },
+        {
+          headers: {
+            'Cache-Control': isToday
+              ? 'public, s-maxage=15, stale-while-revalidate=30'
+              : 'public, s-maxage=300, stale-while-revalidate=600',
+          },
+        }
+      );
     } else {
-      // Parallel fetch for yesterday, today, and the next 6 days to populate all tabs
-      // including the UPCOMING tab with fixtures well before kickoff
+      // Extended multi-day window fetch (Yesterday, Today, and next 6 days) when explicitly requested
       const dayConfigs: { offset: number; label: string; revalidate: number }[] = [
         { offset: -1, label: 'Yesterday', revalidate: 30 },
         { offset: 0, label: 'Today', revalidate: 15 },
@@ -95,7 +108,6 @@ export async function GET(req: NextRequest) {
         { offset: 6, label: getDateLabel(6), revalidate: 300 },
       ];
 
-      // Helper to get a readable date label
       function getDateLabel(offset: number): string {
         const d = new Date();
         d.setDate(d.getDate() + offset);
@@ -115,7 +127,6 @@ export async function GET(req: NextRequest) {
 
       const responses = await Promise.all(fetchPromises);
 
-      // Helper to process response
       const processResponse = async (res: Response | null, dateLabel: string) => {
         const list: Match[] = [];
         if (!res || !res.ok) return list;
@@ -143,7 +154,14 @@ export async function GET(req: NextRequest) {
       const rawMatches = allMatchArrays.flat();
       const matches = await enrichMatchesWithLogos(rawMatches);
 
-      return NextResponse.json({ matches });
+      return NextResponse.json(
+        { matches },
+        {
+          headers: {
+            'Cache-Control': 'public, s-maxage=20, stale-while-revalidate=40',
+          },
+        }
+      );
     }
   } catch (error: any) {
     console.error('Livescore Route Error:', error);

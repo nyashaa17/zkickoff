@@ -4,8 +4,8 @@
  * All queries are safely cached to improve loading times.
  */
 
-const teamIdCache = new Map<string, string>();
-const leagueIdCache = new Map<string, string>();
+const teamIdCache = new Map<string, string | null>();
+const leagueIdCache = new Map<string, string | null>();
 
 // High-fidelity preseeded records for zero-latency initial rendering of top clubs
 const COMMON_TEAM_IDS: Record<string, string> = {
@@ -97,9 +97,20 @@ const COMMON_LEAGUE_IDS: Record<string, string> = {
   'bundesliga': '5',
   'ligue 1': '6',
   'champions league': '7',
+  'uefa champions league': '7',
   'europa league': '8',
+  'uefa europa league': '8',
+  'championship': '12',
+  'efl championship': '12',
   'saudi pro league': '17',
   'mls': '18',
+  'major league soccer': '18',
+  'brasileirao': '9',
+  'brasileirão': '9',
+  'eredivisie': '10',
+  'liga portugal': '2',
+  'scottish premiership': '13',
+  'caf champions league': '29',
   'j1 league': '49',
   'j-league': '49',
   'j.league': '49',
@@ -133,7 +144,7 @@ export async function getTeamLogoUrl(teamName: string): Promise<string | undefin
     return `https://sports.bzzoiro.com/img/team/${COMMON_TEAM_IDS[matchedTeamKey]}`;
   }
   
-  // 2. Check runtime in-memory cache
+  // 2. Check runtime in-memory cache (including negative cache entries)
   if (teamIdCache.has(normalizedKey)) {
     const cachedId = teamIdCache.get(normalizedKey);
     return cachedId ? `https://sports.bzzoiro.com/img/team/${cachedId}` : undefined;
@@ -142,6 +153,7 @@ export async function getTeamLogoUrl(teamName: string): Promise<string | undefin
   // 3. Fallback to API query if BZZOIRO_API_KEY is available
   const apiKey = process.env.BZZOIRO_API_KEY;
   if (!apiKey) {
+    teamIdCache.set(normalizedKey, null); // Negative cache
     return undefined;
   }
 
@@ -174,6 +186,7 @@ export async function getTeamLogoUrl(teamName: string): Promise<string | undefin
     console.error(`Bzzoiro API team lookup error for '${teamName}':`, err);
   }
 
+  teamIdCache.set(normalizedKey, null); // Negative cache so we don't repeat failed requests
   return undefined;
 }
 
@@ -196,7 +209,7 @@ export async function getLeagueLogoUrl(leagueName: string): Promise<string | und
     return `https://sports.bzzoiro.com/img/league/${COMMON_LEAGUE_IDS[matchedKey]}`;
   }
 
-  // 2. Check in-memory cache
+  // 2. Check in-memory cache (including negative cache entries)
   if (leagueIdCache.has(normalizedKey)) {
     const cachedId = leagueIdCache.get(normalizedKey);
     return cachedId ? `https://sports.bzzoiro.com/img/league/${cachedId}` : undefined;
@@ -205,6 +218,7 @@ export async function getLeagueLogoUrl(leagueName: string): Promise<string | und
   // 3. Request search from the API
   const apiKey = process.env.BZZOIRO_API_KEY;
   if (!apiKey) {
+    leagueIdCache.set(normalizedKey, null); // Negative cache
     return undefined;
   }
 
@@ -239,5 +253,6 @@ export async function getLeagueLogoUrl(leagueName: string): Promise<string | und
     console.error(`Bzzoiro API league lookup error for '${leagueName}':`, err);
   }
 
+  leagueIdCache.set(normalizedKey, null); // Negative cache
   return undefined;
 }

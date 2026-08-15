@@ -33,56 +33,106 @@ const COMMON_ABBREVIATIONS: Record<string, string> = {
   'porto': 'fc porto',
 };
 
+// Shared module-level index and lookup cache across all TeamLogo instances
+interface LogoIndexState {
+  exactMap: Map<string, string>;
+  tokenMap: Map<string, string>;
+  allKeys: string[];
+  sourceRef: Record<string, string> | null;
+}
+
+const logoIndexState: LogoIndexState = {
+  exactMap: new Map(),
+  tokenMap: new Map(),
+  allKeys: [],
+  sourceRef: null,
+};
+
+const resolutionCache = new Map<string, string | null>();
+const STOP_WORDS = new Set(['fc', 'f.c.', 'united', 'city', 'town', 'athletic', 'rovers', 'sport', 'real', 'cf', 'club', 'de', 'the', 'sc', 'ac']);
+
+function buildLogoIndex(allLogos: Record<string, string>) {
+  if (logoIndexState.sourceRef === allLogos) return;
+
+  logoIndexState.exactMap.clear();
+  logoIndexState.tokenMap.clear();
+  logoIndexState.allKeys = [];
+  resolutionCache.clear();
+
+  for (const [key, url] of Object.entries(allLogos)) {
+    const normKey = key.toLowerCase().trim();
+    logoIndexState.exactMap.set(normKey, url);
+    logoIndexState.allKeys.push(normKey);
+
+    const tokens = normKey
+      .replace(/[^a-z0-9]/g, ' ')
+      .split(/\s+/)
+      .filter((t) => t.length > 2 && !STOP_WORDS.has(t));
+
+    for (const token of tokens) {
+      if (!logoIndexState.tokenMap.has(token)) {
+        logoIndexState.tokenMap.set(token, url);
+      }
+    }
+  }
+
+  logoIndexState.sourceRef = allLogos;
+}
+
 function getFuzzyLogoUrl(teamName?: string, allLogos?: Record<string, string> | null): string | null {
   if (!teamName || !allLogos) return null;
-  const nameLower = teamName.toLowerCase().trim();
-  const keys = Object.keys(allLogos);
 
-  // 1. Check direct / exact match
-  let foundKey = keys.find(k => k.toLowerCase().trim() === nameLower);
-  if (foundKey) return allLogos[foundKey];
+  const norm = teamName.toLowerCase().trim();
+  if (resolutionCache.has(norm)) {
+    return resolutionCache.get(norm) ?? null;
+  }
 
-  // 2. Expand common abbreviations
-  const expandedName = COMMON_ABBREVIATIONS[nameLower];
+  buildLogoIndex(allLogos);
+
+  // 1. Direct exact match in indexed Map (O(1))
+  let url = logoIndexState.exactMap.get(norm);
+  if (url) {
+    resolutionCache.set(norm, url);
+    return url;
+  }
+
+  // 2. Expand common abbreviations (O(1))
+  const expandedName = COMMON_ABBREVIATIONS[norm];
   if (expandedName) {
-    foundKey = keys.find(k => k.toLowerCase().trim() === expandedName);
-    if (foundKey) return allLogos[foundKey];
+    url = logoIndexState.exactMap.get(expandedName);
+    if (url) {
+      resolutionCache.set(norm, url);
+      return url;
+    }
   }
 
-  // 3. Substring containment match
-  foundKey = keys.find(k => {
-    const kLower = k.toLowerCase().trim();
-    return kLower.includes(nameLower) || nameLower.includes(kLower);
-  });
-  if (foundKey) return allLogos[foundKey];
+  // 3. Meaningful unique token match (O(1))
+  const nameTokens = norm
+    .replace(/[^a-z0-9]/g, ' ')
+    .split(/\s+/)
+    .filter((t) => t.length > 2 && !STOP_WORDS.has(t));
 
-  // 4. Token match - match if they share a unique token (excluding stop words)
-  const stopWords = ['fc', 'f.c.', 'united', 'city', 'town', 'athletic', 'rovers', 'sport', 'real', 'cf', 'club', 'de'];
-  const getTokens = (str: string) => 
-    str.toLowerCase()
-       .replace(/[^a-z0-9]/g, ' ')
-       .split(/\s+/)
-       .filter(t => t.length > 2 && !stopWords.includes(t));
-
-  const nameTokens = getTokens(teamName);
-  if (nameTokens.length > 0) {
-    // Exact word token match
-    foundKey = keys.find(k => {
-      const kTokens = getTokens(k);
-      return nameTokens.some(nt => kTokens.includes(nt));
-    });
-    if (foundKey) return allLogos[foundKey];
+  for (const token of nameTokens) {
+    url = logoIndexState.tokenMap.get(token);
+    if (url) {
+      resolutionCache.set(norm, url);
+      return url;
+    }
   }
 
-  // 5. Check if any word token is a partial match
-  if (nameTokens.length > 0) {
-    foundKey = keys.find(k => {
-      const kTokens = getTokens(k);
-      return nameTokens.some(nt => kTokens.some(kt => kt.includes(nt) || nt.includes(kt)));
-    });
-    if (foundKey) return allLogos[foundKey];
+  // 4. Substring fallback over indexed keys
+  for (let i = 0; i < logoIndexState.allKeys.length; i++) {
+    const k = logoIndexState.allKeys[i];
+    if (k.includes(norm) || norm.includes(k)) {
+      url = logoIndexState.exactMap.get(k);
+      if (url) {
+        resolutionCache.set(norm, url);
+        return url;
+      }
+    }
   }
 
+  resolutionCache.set(norm, null);
   return null;
 }
 
@@ -103,10 +153,15 @@ export function TeamLogo({ name, className, bzzBadge, lsBadge }: TeamLogoProps) 
   const [lsError, setLsError] = useState(false);
   const [githubError, setGithubError] = useState(false);
 
-  // Fetch the github-all-logos mapping
+  // Fetch the github-all-logos mapping (deduplicated by SWR)
   const { data: allLogos } = useSWR<Record<string, string>>('github-all-logos', () => 
     fetch('https://raw.githubusercontent.com/Vicecap/Myfixture/main/all_logos.json')
-      .then(res => res.json())
+      .then(res => res.json()),
+    {
+      revalidateOnFocus: false,
+      revalidateIfStale: false,
+      dedupingInterval: 3600000,
+    }
   );
 
   const matchedGithubLogoUrl = React.useMemo(() => {
@@ -149,6 +204,6 @@ export function TeamLogo({ name, className, bzzBadge, lsBadge }: TeamLogoProps) 
     );
   }
 
-  // Ultimate fallback to Chessboard/Soccer custom Shield vector to remove initials entirely
+  // Ultimate fallback to Soccer Shield vector
   return <SoccerFieldShield className={className} />;
 }

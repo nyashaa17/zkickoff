@@ -75,50 +75,78 @@ function getKickoffDate(match: Match): Date {
   return target;
 }
 
-const MatchCountdown = ({ match }: { match: Match }) => {
-  const [timeLeft, setTimeLeft] = React.useState<string>('');
+// Global shared ticker for match countdowns — runs a single interval across all mounted MatchCards
+let tickerInterval: ReturnType<typeof setInterval> | null = null;
+const tickerListeners = new Set<() => void>();
+let currentTickerTime = Date.now();
+
+function subscribeToTicker(callback: () => void) {
+  tickerListeners.add(callback);
+  if (!tickerInterval && tickerListeners.size > 0) {
+    tickerInterval = setInterval(() => {
+      currentTickerTime = Date.now();
+      tickerListeners.forEach((fn) => fn());
+    }, 1000);
+  }
+  return () => {
+    tickerListeners.delete(callback);
+    if (tickerListeners.size === 0 && tickerInterval) {
+      clearInterval(tickerInterval);
+      tickerInterval = null;
+    }
+  };
+}
+
+function formatCountdownDiff(diffMs: number): string {
+  if (diffMs <= 0) return 'Started';
+  const secs = Math.floor(diffMs / 1000) % 60;
+  const mins = Math.floor(diffMs / (1000 * 60)) % 60;
+  const hours = Math.floor(diffMs / (1000 * 60 * 60)) % 24;
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${mins}m ${secs}s`;
+  if (mins > 0) return `${mins}m ${secs}s`;
+  return `${secs}s`;
+}
+
+const MatchCountdown = React.memo(function MatchCountdown({ match }: { match: Match }) {
+  const isLive = match.status === 'LIVE';
+  const isFinished = match.status === 'FINISHED';
+
+  const targetDate = React.useMemo(() => {
+    if (isLive || isFinished) return null;
+    return getKickoffDate(match);
+  }, [match, isLive, isFinished]);
+
+  const [timeLeft, setTimeLeft] = React.useState<string>(() => {
+    if (!targetDate) return '';
+    return formatCountdownDiff(targetDate.getTime() - Date.now());
+  });
 
   React.useEffect(() => {
-    if (match.status === 'LIVE') {
-      return;
-    }
-    if (match.status === 'FINISHED') {
-      return;
+    if (!targetDate) return;
+
+    const update = () => {
+      const diff = targetDate.getTime() - currentTickerTime;
+      setTimeLeft(formatCountdownDiff(diff));
+    };
+
+    // Calculate immediately
+    update();
+
+    // If match is > 24 hours away, tick every 60 seconds instead of every second
+    const initialDiff = targetDate.getTime() - Date.now();
+    if (initialDiff > 86400000) {
+      const slowTimer = setInterval(update, 60000);
+      return () => clearInterval(slowTimer);
     }
 
-    const targetDate = getKickoffDate(match);
-    
-    function updateTimer() {
-      const now = new Date();
-      const diff = targetDate.getTime() - now.getTime();
-      
-      if (diff <= 0) {
-        setTimeLeft('Started');
-        return;
-      }
-      
-      const secs = Math.floor(diff / 1000) % 60;
-      const mins = Math.floor(diff / (1000 * 60)) % 60;
-      const hours = Math.floor(diff / (1000 * 60 * 60)) % 24;
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      
-      if (days > 0) {
-        setTimeLeft(`${days}d ${hours}h`);
-      } else if (hours > 0) {
-        setTimeLeft(`${hours}h ${mins}m ${secs}s`);
-      } else if (mins > 0) {
-        setTimeLeft(`${mins}m ${secs}s`);
-      } else {
-        setTimeLeft(`${secs}s`);
-      }
-    }
-    
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-    return () => clearInterval(interval);
-  }, [match]);
+    // Subscribe to shared 1s ticker for today's / imminent matches
+    return subscribeToTicker(update);
+  }, [targetDate]);
 
-  if (match.status === 'LIVE') {
+  if (isLive) {
     return (
       <span className="text-[10px] font-bold text-zim-red animate-pulse flex items-center gap-1">
         <span className="w-1.5 h-1.5 rounded-full bg-zim-red inline-block"></span>
@@ -127,7 +155,7 @@ const MatchCountdown = ({ match }: { match: Match }) => {
     );
   }
 
-  if (match.status === 'FINISHED') {
+  if (isFinished) {
     return (
       <span className="text-[10px] font-bold text-neutral-400">
         FINISHED
@@ -143,7 +171,7 @@ const MatchCountdown = ({ match }: { match: Match }) => {
       </span>
     </div>
   );
-};
+});
 
 export default function MatchCard({ match }: MatchCardProps) {
   const isLive = match.status === 'LIVE';

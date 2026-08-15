@@ -7,6 +7,16 @@ export const size = {
   height: 630,
 };
 export const contentType = 'image/png';
+export const revalidate = 86400; // Cache dynamic OG image for 24 hours
+
+async function safeGetLogo(name: string): Promise<string | undefined> {
+  try {
+    const timeoutPromise = new Promise<undefined>((resolve) => setTimeout(() => resolve(undefined), 1500));
+    return await Promise.race([getTeamLogoUrl(name), timeoutPromise]);
+  } catch {
+    return undefined;
+  }
+}
 
 export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = await params;
@@ -29,10 +39,11 @@ export default async function Image({ params }: { params: Promise<{ slug: string
     // standard fallbacks
   }
 
-  // Pre-fetch team logos using our API lookup cache
-  // This will try to match exact names to known common IDs, or fetch remotely if not cached.
-  const homeLogo = await getTeamLogoUrl(homeName);
-  const awayLogo = await getTeamLogoUrl(awayName);
+  // Pre-fetch team logos safely with timeout protection
+  const [homeLogo, awayLogo] = await Promise.all([
+    safeGetLogo(homeName),
+    safeGetLogo(awayName),
+  ]);
 
   return new ImageResponse(
     (
