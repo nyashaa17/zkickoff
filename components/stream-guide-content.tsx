@@ -12,15 +12,25 @@ function IframePlayer() {
   const rawFixture = searchParams.get('fixture');
   const rawStream = searchParams.get('stream') || '1';
   
-  // Validate alphanumeric, hyphens, underscores, max 100 chars
+  // Validate match-name characters: Unicode letters/numbers, spaces, hyphens,
+  // underscores, apostrophes, periods, commas — max 200 chars.
+  // Excludes <, >, quotes, backticks, ${}, ;, % to prevent injection.
   const isValidParam = (param: string | null) => {
     if (!param) return false;
-    return /^[A-Za-z0-9\-_]{1,100}$/.test(param);
+    return /^[\p{L}\p{N}\s\-_'.,]{1,200}$/u.test(param);
   };
 
   const fixture = isValidParam(rawFixture) ? rawFixture : null;
   const stream = isValidParam(rawStream) ? rawStream : '1';
 
+  // Read and validate the optional `type` param (e.g. hls, dash, mp4).
+  // Narrower pattern: constrained alphanumeric token, not a free-text name.
+  const rawType = searchParams.get('type');
+  const isValidType = (param: string | null) => {
+    if (!param) return false;
+    return /^[a-z0-9]{1,20}$/i.test(param);
+  };
+  const type = isValidType(rawType) ? rawType : null;
   const [dashHtml, setDashHtml] = useState<string>('');
 
   useEffect(() => {
@@ -53,7 +63,7 @@ function IframePlayer() {
         allow="fullscreen; autoplay; encrypted-media; picture-in-picture"
         loading="eager"
         className="w-full h-[260px] md:h-[400px] border-none bg-[#111] rounded-xl my-4"
-        src={`https://king.totalsportss.online/embed?fixture=${encodeURIComponent(fixture)}&stream=${encodeURIComponent(stream)}`}
+        src={`https://king.totalsportss.online/embed?fixture=${encodeURIComponent(fixture)}&stream=${encodeURIComponent(stream)}${type ? `&type=${encodeURIComponent(type)}` : ''}`}
       ></iframe>
 
       {dashHtml && (
