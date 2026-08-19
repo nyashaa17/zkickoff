@@ -186,43 +186,8 @@ export async function getMatchForPreview(slug: string): Promise<{
   let enrichedMatch: Match | null = null;
   if (foundMatch) {
     enrichedMatch = await enrichMatchWithLogos(foundMatch);
-  } else {
-    // Graceful fallback without dummy/fake data
-    const [homeLogo, awayLogo] = await Promise.all([
-      getTeamLogoUrl(homeName),
-      getTeamLogoUrl(awayName),
-    ]);
-
-    enrichedMatch = {
-      id: matchId,
-      slug,
-      teams: {
-        home: {
-          name: homeName,
-          code: homeName.slice(0, 3).toUpperCase().replace(/[^A-Z]/g, 'T'),
-          logoColor: '#009739',
-          logoUrl: homeLogo,
-          bzzBadge: homeLogo || null,
-        },
-        away: {
-          name: awayName,
-          code: awayName.slice(0, 3).toUpperCase().replace(/[^A-Z]/g, 'T'),
-          logoColor: '#D62828',
-          logoUrl: awayLogo,
-          bzzBadge: awayLogo || null,
-        },
-      },
-      score: { home: 0, away: 0 },
-      status: 'UPCOMING',
-      competition: 'Football',
-      kickoffTime: 'TBD',
-      dateString: 'Upcoming',
-      category: 'INTERNATIONAL',
-      venue: 'Stadium',
-      spectators: '24,500',
-      servers: [],
-    };
   }
+  // If no real match found, enrichedMatch stays null — caller handles 404
 
   // Enrich related matches (up to 15) so sidebar displays logos instantly
   const previewSlice = allMatches.slice(0, 15);
