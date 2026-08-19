@@ -225,7 +225,9 @@ function HomeContent() {
     },
   );
 
-  const standings = standingsData || [];
+  // Handle new response shapes: noLeagueSelected, error object, or plain array
+  const standings = Array.isArray(standingsData) ? standingsData : (standingsData?.standings || []);
+  const noLeagueSelected = standingsData?.noLeagueSelected === true;
 
   // Sync category filter and tab from URL search params if present
   useEffect(() => {
@@ -895,6 +897,11 @@ function HomeContent() {
                       </Link>
                     </div>
                   </>
+                ) : noLeagueSelected ? (
+                  <div className="text-center py-6 text-neutral-400 text-xs space-y-1">
+                    <p className="font-semibold text-neutral-500">Select a league above</p>
+                    <p>Pick a specific league to view its standings table.</p>
+                  </div>
                 ) : (
                   <div className="text-center py-6 text-neutral-400 text-xs">
                     No standings available at the moment.

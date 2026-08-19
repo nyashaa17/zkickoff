@@ -1,7 +1,72 @@
-// Real-time Bzzoiro standings proxy API
+// Real-time Bzzoiro standings proxy API — delegates to lib/standings-service.ts
 import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 import { apiRateLimiter } from '@/lib/rate-limit';
+import { LEAGUES_REGISTRY } from '@/lib/leagues-config';
+import { fetchLeagueStandings } from '@/lib/standings-service';
+
+/**
+ * Maps a competition query parameter (from the homepage activeCategory state)
+ * to a league slug from LEAGUES_REGISTRY. Returns null for "ALL" — the caller
+ * should hide the standings card rather than silently substituting one league.
+ */
+function resolveSlug(competition: string): string | null {
+  const comp = competition.toLowerCase().trim();
+
+  // "ALL" means no single league is selected — don't show any standings
+  if (comp === 'all') return null;
+
+  // Try to match against known league slugs, names, shortNames
+  for (const league of LEAGUES_REGISTRY) {
+    if (
+      comp === league.slug ||
+      comp === league.name.toLowerCase() ||
+      comp === league.shortName.toLowerCase() ||
+      comp === league.country.toLowerCase()
+    ) {
+      return league.slug;
+    }
+  }
+
+  // Fuzzy fallbacks for common keyword forms used by the homepage category filter
+  const keywordMap: Record<string, string> = {
+    'laliga': 'la-liga',
+    'la liga': 'la-liga',
+    'spain': 'la-liga',
+    'primera': 'la-liga',
+    'serie a': 'serie-a',
+    'italy': 'serie-a',
+    'bundesliga': 'bundesliga',
+    'germany': 'bundesliga',
+    'ligue 1': 'ligue-1',
+    'france': 'ligue-1',
+    'champions league': 'champions-league',
+    'uefa': 'champions-league',
+    'europa league': 'europa-league',
+    'saudi': 'saudi-pro-league',
+    'pro league': 'saudi-pro-league',
+    'mls': 'mls',
+    'major league soccer': 'mls',
+    'j1': 'mls',
+    'j-league': 'mls',
+    'j.league': 'mls',
+    'japan': 'mls',
+    'zimbabwe': 'premier-league',
+    'zpsl': 'premier-league',
+    'premier soccer league': 'premier-league',
+    'championship': 'championship',
+    'premier league': 'premier-league',
+    'english premier league': 'premier-league',
+  };
+
+  for (const [keyword, slug] of Object.entries(keywordMap)) {
+    if (comp.includes(keyword)) {
+      return slug;
+    }
+  }
+
+  return null;
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -13,78 +78,35 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const competitionParam = searchParams.get('competition') || 'ALL';
 
-    const apiKey = process.env.BZZOIRO_API_KEY;
-    if (!apiKey) {
-      throw new Error('BZZOIRO_API_KEY is not defined in the environment.');
+    const slug = resolveSlug(competitionParam);
+
+    // When activeCategory is "ALL", return an explicit empty state
+    // so the client can hide the standings card entirely
+    if (!slug) {
+      return NextResponse.json({
+        noLeagueSelected: true,
+        standings: [],
+      });
     }
 
-    // Map competition keyword to the exact official Bzzoiro League ID
-    let leagueId = '1'; // Default: English Premier League
-    const compLower = competitionParam.toLowerCase().trim();
+    // Delegate to the canonical standings service
+    const result = await fetchLeagueStandings(slug);
 
-    if (compLower !== 'all') {
-      if (compLower.includes('laliga') || compLower.includes('la liga') || compLower.includes('spain') || compLower.includes('primera')) {
-        leagueId = '3';
-      } else if (compLower.includes('serie a') || compLower.includes('italy')) {
-        leagueId = '4';
-      } else if (compLower.includes('bundesliga') || compLower.includes('germany')) {
-        leagueId = '5';
-      } else if (compLower.includes('ligue 1') || compLower.includes('france')) {
-        leagueId = '6';
-      } else if (compLower.includes('champions league') || compLower.includes('uefa')) {
-        leagueId = '7';
-      } else if (compLower.includes('europa league')) {
-        leagueId = '8';
-      } else if (compLower.includes('saudi') || compLower.includes('pro league')) {
-        leagueId = '17';
-      } else if (compLower.includes('mls') || compLower.includes('major league soccer')) {
-        leagueId = '18';
-      } else if (compLower.includes('j1') || compLower.includes('j-league') || compLower.includes('j.league') || compLower.includes('japan')) {
-        leagueId = '49';
-      } else if (compLower.includes('zimbabwe') || compLower.includes('zpsl') || compLower.includes('premier soccer league')) {
-        leagueId = '45';
-      }
+    if (!result || result.error) {
+      // Return explicit error state — never fabricated data
+      return NextResponse.json({
+        error: true,
+        message: result?.error || 'Unable to load standings',
+        standings: [],
+      });
     }
 
-    const url = `https://sports.bzzoiro.com/api/v2/leagues/${leagueId}/standings/`;
-    const res = await fetch(url, {
-      headers: {
-        'Authorization': `Token ${apiKey}`,
-        'Accept': 'application/json'
-      },
-      next: { revalidate: 60 } // cache for 1 minute
-    });
-
-    if (!res.ok) {
-      throw new Error(`Bzzoiro API returned status: ${res.status}`);
-    }
-
-    const data = await res.json();
-    let rawList: any[] = [];
-
-    if (data && Array.isArray(data.standings)) {
-      rawList = data.standings;
-    } else if (data && typeof data.standings === 'object') {
-      // If the standings are grouped by groups, e.g. {"Group A": [...], "Group B": [...]}
-      const standingsObj = data.standings;
-      const groups = Object.keys(standingsObj);
-      for (const group of groups) {
-        if (Array.isArray(standingsObj[group])) {
-          // Append with group reference
-          const groupedItems = standingsObj[group].map((item: any) => ({
-            ...item,
-            team_name: `${item.team_name} (${group})`
-          }));
-          rawList.push(...groupedItems);
-        }
-      }
-    }
-
-    // Limit to top 20 or less for elegant visual rendering
-    const maxEntries = rawList.length > 20 ? 20 : rawList.length;
+    // Transform to the shape the homepage sidebar expects
+    const rawList = result.standings || [];
+    const maxEntries = Math.min(rawList.length, 20);
     const itemsToShow = rawList.slice(0, maxEntries);
 
-    const standings = itemsToShow.map((item: any) => {
+    const standings = itemsToShow.map((item) => {
       // Safely split form text (e.g. "WDWLW" -> ["W", "D", "W", "L", "W"])
       let parsedForm: string[] = [];
       if (item.form && typeof item.form === 'string') {
@@ -95,11 +117,11 @@ export async function GET(req: NextRequest) {
 
       return {
         rank: item.position || 0,
-        team: item.team_name || 'Generic FC',
+        team: item.team_name || 'Unknown',
         played: item.played || 0,
         points: item.pts || 0,
-        form: parsedForm.length > 0 ? parsedForm : ["D", "D"],
-        logoUrl: item.team_id ? `https://sports.bzzoiro.com/img/team/${item.team_id}` : null
+        form: parsedForm.length > 0 ? parsedForm : [],
+        logoUrl: item.team_id ? `https://sports.bzzoiro.com/img/team/${item.team_id}` : null,
       };
     });
 
@@ -107,18 +129,11 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     console.error('Standings Proxy Error:', error);
 
-    // Dynamic clean fallback mock in case of standard errors, representing real Premier League table state
-    const fallbackMock = [
-      { rank: 1, team: "Manchester City", played: 38, points: 91, form: ["W", "W", "W", "W", "W"], logoUrl: "https://sports.bzzoiro.com/img/team/14" },
-      { rank: 2, team: "Arsenal", played: 38, points: 89, form: ["W", "W", "W", "W", "W"], logoUrl: "https://sports.bzzoiro.com/img/team/42" },
-      { rank: 3, team: "Liverpool", played: 38, points: 82, form: ["W", "D", "W", "D", "W"], logoUrl: "https://sports.bzzoiro.com/img/team/8" },
-      { rank: 4, team: "Aston Villa", played: 38, points: 68, form: ["L", "D", "D", "L", "W"], logoUrl: "https://sports.bzzoiro.com/img/team/66" },
-      { rank: 5, team: "Tottenham Hotspurs", played: 38, points: 66, form: ["W", "L", "W", "W", "L"], logoUrl: "https://sports.bzzoiro.com/img/team/34" },
-      { rank: 6, team: "Chelsea", played: 38, points: 63, form: ["W", "W", "W", "W", "W"], logoUrl: "https://sports.bzzoiro.com/img/team/19" },
-      { rank: 7, team: "Newcastle United", played: 38, points: 60, form: ["W", "L", "D", "W", "W"], logoUrl: "https://sports.bzzoiro.com/img/team/31" },
-      { rank: 8, team: "Manchester United", played: 38, points: 60, form: ["W", "W", "L", "D", "W"], logoUrl: "https://sports.bzzoiro.com/img/team/33" }
-    ];
-
-    return NextResponse.json(fallbackMock);
+    // Return explicit error — no fake mock data
+    return NextResponse.json({
+      error: true,
+      message: 'Unable to load standings',
+      standings: [],
+    });
   }
 }
