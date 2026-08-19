@@ -84,6 +84,22 @@ const COMMON_TEAM_IDS: Record<string, string> = {
   'dynamos fc': '595',
   'highlanders fc': '102',
   'highlanders': '102',
+
+  // Saudi Pro League
+  'al nassr': '812',
+  'al-nassr': '812',
+  'al hilal': '778',
+  'al-hilal': '778',
+  'al ittihad': '807',
+  'al-ittihad': '807',
+  'al ahli': '804',
+  'al-ahli': '804',
+  'al khaleej': '817',
+  'al-khaleej': '817',
+  'al ettifaq': '814',
+  'al-ettifaq': '814',
+  'al shabab': '780',
+  'al-shabab': '780',
 };
 
 const COMMON_LEAGUE_IDS: Record<string, string> = {
@@ -211,6 +227,7 @@ export async function getTeamLogoUrl(teamName: string): Promise<string | undefin
         'Authorization': `Token ${apiKey}`,
         'Accept': 'application/json'
       },
+      signal: AbortSignal.timeout(3000),
       cache: 'force-cache'
     });
 
@@ -229,8 +246,10 @@ export async function getTeamLogoUrl(teamName: string): Promise<string | undefin
         return `https://sports.bzzoiro.com/img/team/${teamId}`;
       }
     }
-  } catch (err) {
-    console.error(`Bzzoiro API team lookup error for '${teamName}':`, err);
+  } catch (err: any) {
+    if (err.name !== 'AbortError' && err.name !== 'TimeoutError') {
+      console.error(`Bzzoiro API team lookup error for '${teamName}':`, err);
+    }
   }
 
   teamIdCache.set(normalizedKey, null); // Negative cache so we don't repeat failed requests
@@ -269,6 +288,7 @@ export async function getLeagueLogoUrl(leagueName: string): Promise<string | und
         'Authorization': `Token ${apiKey}`,
         'Accept': 'application/json'
       },
+      signal: AbortSignal.timeout(3000),
       cache: 'force-cache'
     });
 
@@ -289,10 +309,56 @@ export async function getLeagueLogoUrl(leagueName: string): Promise<string | und
         return `https://sports.bzzoiro.com/img/league/${leagueId}`;
       }
     }
-  } catch (err) {
-    console.error(`Bzzoiro API league lookup error for '${leagueName}':`, err);
+  } catch (err: any) {
+    if (err.name !== 'AbortError' && err.name !== 'TimeoutError') {
+      console.error(`Bzzoiro API league lookup error for '${leagueName}':`, err);
+    }
   }
 
   leagueIdCache.set(normalizedKey, null); // Negative cache
   return undefined;
+}
+
+/**
+ * Pre-fetches and validates team logo image bytes for OG image generation.
+ * Returns a base64 Data URL if the image is valid (PNG, JPEG, WebP, SVG > 100 bytes),
+ * or undefined on any error/timeout/404, ensuring ImageResponse / Satori never crashes.
+ */
+export async function safeGetOgLogo(teamName: string): Promise<string | undefined> {
+  try {
+    const logoUrl = await getTeamLogoUrl(teamName);
+    if (!logoUrl) return undefined;
+
+    const res = await fetch(logoUrl, {
+      signal: AbortSignal.timeout(2500),
+      redirect: 'follow',
+      headers: {
+        'Accept': 'image/png,image/jpeg,image/webp,image/*;q=0.8',
+      },
+    });
+
+    if (!res.ok) return undefined;
+
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.startsWith('image/')) return undefined;
+
+    const arrayBuffer = await res.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    if (buffer.length < 100) return undefined;
+
+    // Validate magic header bytes — Satori only supports PNG, JPEG, SVG (WebP causes Satori crash)
+    const isPng = buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47;
+    const isJpg = buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+    const isSvg = buffer.subarray(0, 100).toString().includes('<svg');
+
+    if (!isPng && !isJpg && !isSvg) {
+      return undefined;
+    }
+
+    const mime = isPng ? 'image/png' : isJpg ? 'image/jpeg' : 'image/svg+xml';
+    return `data:${mime};base64,${buffer.toString('base64')}`;
+  } catch {
+    return undefined;
+  }
 }

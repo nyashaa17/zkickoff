@@ -1,5 +1,5 @@
 import { ImageResponse } from 'next/og';
-import { getTeamLogoUrl } from '@/lib/bzzoiro-api';
+import { safeGetOgLogo } from '@/lib/bzzoiro-api';
 import { parseSlug } from '@/lib/server-matches';
 
 export const alt = 'ZimKickOff Live Football Stream Preview';
@@ -10,15 +10,6 @@ export const size = {
 export const contentType = 'image/png';
 export const revalidate = 86400; // Cache dynamic OG image for 24 hours
 
-async function safeGetLogo(name: string): Promise<string | undefined> {
-  try {
-    const timeoutPromise = new Promise<undefined>((resolve) => setTimeout(() => resolve(undefined), 1500));
-    return await Promise.race([getTeamLogoUrl(name), timeoutPromise]);
-  } catch {
-    return undefined;
-  }
-}
-
 export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = await params;
   const slug = resolvedParams?.slug || '';
@@ -28,10 +19,10 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   const homeName = isParseable && parsedHome ? parsedHome : 'Home Team';
   const awayName = isParseable && parsedAway ? parsedAway : 'Away Team';
 
-  // Pre-fetch team logos safely with timeout protection
+  // Pre-fetch and validate team logo images into memory with fallback protection
   const [homeLogo, awayLogo] = await Promise.all([
-    safeGetLogo(homeName),
-    safeGetLogo(awayName),
+    safeGetOgLogo(homeName),
+    safeGetOgLogo(awayName),
   ]);
 
   return new ImageResponse(
@@ -152,6 +143,8 @@ export default async function Image({ params }: { params: Promise<{ slug: string
                  <img 
                    src={homeLogo} 
                    alt={homeName}
+                   width="200"
+                   height="200"
                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                  />
                ) : (
@@ -195,6 +188,8 @@ export default async function Image({ params }: { params: Promise<{ slug: string
                  <img 
                    src={awayLogo} 
                    alt={awayName}
+                   width="200"
+                   height="200"
                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                  />
                ) : (
