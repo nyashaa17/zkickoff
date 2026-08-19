@@ -120,6 +120,64 @@ const COMMON_LEAGUE_IDS: Record<string, string> = {
   'caf world cup qualifiers': '10'
 };
 
+function matchIdByTokens(
+  normalizedInput: string,
+  dict: Record<string, string>
+): string | undefined {
+  // Exact match takes absolute priority
+  if (dict[normalizedInput]) return normalizedInput;
+
+  const inputTokens = normalizedInput.split(/\s+/).filter(Boolean);
+  const genericWords = new Set(['united', 'city', 'town', 'athletic', 'rovers', 'fc', 'sport', 'real', 'cf', 'sc', 'club', 'de', 'the', 'afc']);
+  const meaningfulInputTokens = inputTokens.filter(t => !genericWords.has(t) && t.length > 1);
+
+  const sortedKeys = Object.keys(dict).sort((a, b) => b.length - a.length);
+
+  let bestMatch: string | undefined;
+  let bestScore = 0;
+
+  for (const key of sortedKeys) {
+    const keyTokens = key.split(/\s+/).filter(Boolean);
+
+    // Strategy 1: Every token in the key appears as a whole word in the input
+    const allKeyTokensInInput = keyTokens.every(kt => inputTokens.includes(kt));
+    if (allKeyTokensInInput) {
+      // Guard: if key has fewer meaningful tokens than input, it might be
+      // too ambiguous (e.g. key "inter" matching "inter miami").
+      // Require that key tokens cover ALL meaningful input tokens, OR
+      // that the key has at least as many tokens as the meaningful input.
+      const keyMeaningful = keyTokens.filter(t => !genericWords.has(t) && t.length > 1);
+      const uncoveredInputTokens = meaningfulInputTokens.filter(t => !keyTokens.includes(t));
+      
+      // Only accept if there are no significant uncovered tokens in the input
+      if (uncoveredInputTokens.length === 0) {
+        const score = 100 + keyTokens.length * 10 + key.length;
+        if (score > bestScore) {
+          bestScore = score;
+          bestMatch = key;
+        }
+      }
+    }
+
+    // Strategy 2: Input tokens are a subset of key tokens (reverse containment)
+    // For short aliases: input="inter" matching key="inter milan"
+    if (normalizedInput.length >= 4 && meaningfulInputTokens.length > 0) {
+      const allMeaningfulInKey = meaningfulInputTokens.every(it => keyTokens.includes(it));
+      if (allMeaningfulInKey) {
+        const uncoveredKeyTokens = keyTokens.filter(kt => !genericWords.has(kt) && !inputTokens.includes(kt));
+        // Accept reverse containment, but with lower priority
+        const score = 50 + meaningfulInputTokens.length * 5 + key.length - uncoveredKeyTokens.length * 3;
+        if (score > bestScore) {
+          bestScore = score;
+          bestMatch = key;
+        }
+      }
+    }
+  }
+
+  return bestMatch;
+}
+
 /**
  * Resolves properties to a static team logo image URL via Bzzoiro Sports Data proxy
  */
@@ -127,18 +185,7 @@ export async function getTeamLogoUrl(teamName: string): Promise<string | undefin
   const normalizedKey = teamName.toLowerCase().trim();
   
   // 1. Check pre-seeded known team IDs to avoid unnecessary network latency
-  const sortedTeamKeys = Object.keys(COMMON_TEAM_IDS).sort((a, b) => b.length - a.length);
-  const matchedTeamKey = sortedTeamKeys.find(k => {
-    if (normalizedKey === k) return true;
-    if (normalizedKey.includes(k)) return true;
-    if (normalizedKey.length >= 5 && k.includes(normalizedKey)) {
-      const genericWords = ['united', 'city', 'town', 'athletic', 'rovers', 'fc', 'sport', 'real', 'cf'];
-      if (!genericWords.includes(normalizedKey)) {
-        return true;
-      }
-    }
-    return false;
-  });
+  const matchedTeamKey = matchIdByTokens(normalizedKey, COMMON_TEAM_IDS);
 
   if (matchedTeamKey) {
     return `https://sports.bzzoiro.com/img/team/${COMMON_TEAM_IDS[matchedTeamKey]}`;
@@ -197,14 +244,7 @@ export async function getLeagueLogoUrl(leagueName: string): Promise<string | und
   const normalizedKey = leagueName.toLowerCase().trim();
 
   // 1. Check common pre-seeded league ID mappings
-  const sortedLeagueKeys = Object.keys(COMMON_LEAGUE_IDS).sort((a, b) => b.length - a.length);
-  const matchedKey = sortedLeagueKeys.find(k => {
-    if (normalizedKey === k) return true;
-    if (k === 'premier league') {
-      return ['premier league', 'english premier league', 'england: premier league', 'england premier league'].includes(normalizedKey);
-    }
-    return normalizedKey.includes(k) || (normalizedKey.length > 4 && k.includes(normalizedKey));
-  });
+  const matchedKey = matchIdByTokens(normalizedKey, COMMON_LEAGUE_IDS);
   if (matchedKey) {
     return `https://sports.bzzoiro.com/img/league/${COMMON_LEAGUE_IDS[matchedKey]}`;
   }
