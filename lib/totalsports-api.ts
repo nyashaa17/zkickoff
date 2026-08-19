@@ -136,6 +136,24 @@ export function parseRawEventToMatch(event: ListEventRaw, stageName: string, cou
     status = 'UPCOMING';
   }
 
+  // Server-side reconciliation: if kickoff has passed but upstream eps is
+  // still NS (not started), optimistically bump to LIVE so tab bucketing
+  // is correct on initial render. Will be corrected on next SWR poll.
+  if (status !== 'LIVE' && status !== 'FINISHED' && eps === 'NS' && event.Esd) {
+    const esdStr = String(event.Esd);
+    if (esdStr.length >= 12) {
+      const yyyy = parseInt(esdStr.slice(0, 4), 10);
+      const mm = parseInt(esdStr.slice(4, 6), 10) - 1;
+      const dd = parseInt(esdStr.slice(6, 8), 10);
+      const hh = parseInt(esdStr.slice(8, 10), 10);
+      const min = parseInt(esdStr.slice(10, 12), 10);
+      const kickoff = new Date(yyyy, mm, dd, hh, min, 0);
+      if (!isNaN(kickoff.getTime()) && Date.now() > kickoff.getTime()) {
+        status = 'LIVE';
+      }
+    }
+  }
+
   // Guess category
   let category: 'ZPSL' | 'INTERNATIONAL' | 'AFRICA' = 'INTERNATIONAL';
   const compLower = (stageName + ' ' + (countryName || '')).toLowerCase();

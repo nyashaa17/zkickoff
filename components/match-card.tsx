@@ -97,8 +97,14 @@ function subscribeToTicker(callback: () => void) {
   };
 }
 
-function formatCountdownDiff(diffMs: number): string {
-  if (diffMs <= 0) return 'Started';
+function formatCountdownDiff(diffMs: number, matchStatus?: string): string {
+  if (diffMs <= 0) {
+    // Don't claim "Started" if the upstream status hasn't confirmed it yet
+    if (matchStatus && matchStatus !== 'LIVE' && matchStatus !== 'FINISHED') {
+      return 'Kickoff imminent';
+    }
+    return 'Started';
+  }
   const secs = Math.floor(diffMs / 1000) % 60;
   const mins = Math.floor(diffMs / (1000 * 60)) % 60;
   const hours = Math.floor(diffMs / (1000 * 60 * 60)) % 24;
@@ -121,7 +127,7 @@ const MatchCountdown = React.memo(function MatchCountdown({ match }: { match: Ma
 
   const [timeLeft, setTimeLeft] = React.useState<string>(() => {
     if (!targetDate) return '';
-    return formatCountdownDiff(targetDate.getTime() - Date.now());
+    return formatCountdownDiff(targetDate.getTime() - Date.now(), match.status);
   });
 
   React.useEffect(() => {
@@ -129,7 +135,7 @@ const MatchCountdown = React.memo(function MatchCountdown({ match }: { match: Ma
 
     const update = () => {
       const diff = targetDate.getTime() - currentTickerTime;
-      setTimeLeft(formatCountdownDiff(diff));
+      setTimeLeft(formatCountdownDiff(diff, match.status));
     };
 
     // Calculate immediately
@@ -174,9 +180,29 @@ const MatchCountdown = React.memo(function MatchCountdown({ match }: { match: Ma
 });
 
 export default function MatchCard({ match }: MatchCardProps) {
-  const isLive = match.status === 'LIVE';
-  const isUpcoming = match.status === 'UPCOMING';
-  const isToday = match.status === 'TODAY';
+  // Client-side status reconciliation: if kickoff time has passed but
+  // upstream status hasn't caught up yet, treat as "probably live"
+  const effectiveStatus = React.useMemo(() => {
+    if (match.status === 'LIVE' || match.status === 'FINISHED') return match.status;
+    // Check if kickoff time has passed
+    if (match.esd && match.esd.length >= 12) {
+      const yyyy = parseInt(match.esd.slice(0, 4), 10);
+      const mm = parseInt(match.esd.slice(4, 6), 10) - 1;
+      const dd = parseInt(match.esd.slice(6, 8), 10);
+      const hh = parseInt(match.esd.slice(8, 10), 10);
+      const min = parseInt(match.esd.slice(10, 12), 10);
+      const kickoff = new Date(yyyy, mm, dd, hh, min, 0);
+      if (!isNaN(kickoff.getTime()) && Date.now() > kickoff.getTime()) {
+        // Kickoff has passed but upstream hasn't updated — treat as probably live
+        return 'LIVE';
+      }
+    }
+    return match.status;
+  }, [match.status, match.esd]);
+
+  const isLive = effectiveStatus === 'LIVE';
+  const isUpcoming = effectiveStatus === 'UPCOMING';
+  const isToday = effectiveStatus === 'TODAY';
 
   const homeScore = match.score?.home ?? 0;
   const awayScore = match.score?.away ?? 0;
