@@ -19,7 +19,6 @@ import {
   BarChart2,
   ChevronRight,
   ShieldCheck,
-  Zap,
   Info,
   Star,
   Share2,
@@ -896,22 +895,6 @@ export default function MatchPreviewClient({
                           ? `${queryMatch.spectators} Spectators Expected`
                           : 'To be announced'}
                   </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <Tv className="w-4 h-4 text-neutral-400 shrink-0 mt-0.5" />
-                <div className="space-y-0.5">
-                  <p className="text-[9px] font-mono text-neutral-400 uppercase tracking-wide">Competition category</p>
-                  <p className="font-bold text-neutral-800 leading-tight">Football • {queryMatch.category}</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <Zap className="w-4 h-4 text-neutral-400 shrink-0 mt-0.5" />
-                <div className="space-y-0.5">
-                  <p className="text-[9px] font-mono text-neutral-400 uppercase tracking-wide">Broadcast pipeline</p>
-                  <p className="font-bold text-neutral-800 leading-tight">Uptilt Adaptive Multi-Server HLS</p>
                 </div>
               </div>
             </div>
