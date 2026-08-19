@@ -2,6 +2,7 @@ import {
   getFormattedDateString,
   parseRawEventToMatch,
   LivescoreResponseRaw,
+  getTeamColor,
 } from './totalsports-api';
 import { Match } from './matches-data';
 import { getTeamLogoUrl, getLeagueLogoUrl } from './bzzoiro-api';
@@ -128,43 +129,107 @@ export async function enrichMatchesWithLogos(matches: Match[]): Promise<Match[]>
   }
 }
 
+export interface ParsedSlug {
+  isParseable: boolean;
+  homeName: string;
+  awayName: string;
+  id: string;
+}
+
 /**
- * Parse team names and ID from slug fallback.
+ * Parse team names and ID from fixture slug.
+ * Distinguishes well-formed slugs (e.g. 'arsenal-vs-chelsea-123456') from malformed inputs.
+ */
+export function parseSlug(slug: string): ParsedSlug {
+  if (!slug || typeof slug !== 'string') {
+    return { isParseable: false, homeName: '', awayName: '', id: '0' };
+  }
+
+  const vsIndex = slug.indexOf('-vs-');
+  if (vsIndex === -1) {
+    return { isParseable: false, homeName: '', awayName: '', id: '0' };
+  }
+
+  const homeRaw = slug.slice(0, vsIndex).trim();
+  const awayAndIdRaw = slug.slice(vsIndex + 4).trim();
+
+  if (!homeRaw || !awayAndIdRaw) {
+    return { isParseable: false, homeName: '', awayName: '', id: '0' };
+  }
+
+  // Extract trailing numeric ID from away part if present (e.g., chelsea-123456)
+  const lastHyphen = awayAndIdRaw.lastIndexOf('-');
+  let awayRaw = awayAndIdRaw;
+  let id = '0';
+
+  if (lastHyphen !== -1) {
+    const potentialId = awayAndIdRaw.slice(lastHyphen + 1);
+    const potentialAway = awayAndIdRaw.slice(0, lastHyphen);
+    if (/^\d+$/.test(potentialId) && potentialAway.length > 0) {
+      awayRaw = potentialAway;
+      id = potentialId;
+    }
+  }
+
+  const formatTeamName = (raw: string) =>
+    raw
+      .split('-')
+      .filter(Boolean)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ');
+
+  const homeName = formatTeamName(homeRaw);
+  const awayName = formatTeamName(awayRaw);
+
+  if (!homeName || !awayName) {
+    return { isParseable: false, homeName: '', awayName: '', id: '0' };
+  }
+
+  return { isParseable: true, homeName, awayName, id };
+}
+
+/**
+ * Backward-compatible wrapper for slug fallback parsing.
  */
 export function parseSlugFallback(slug: string) {
-  try {
-    const parts = slug.split('-');
-    const id = parts[parts.length - 1] || '0';
-    const teamsPart = parts.slice(0, parts.length - 1).join('-');
-    const teams = teamsPart.split('-vs-');
-    const homeName = teams[0]
-      ? teams[0].split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-      : 'Home Team';
-    const awayName = teams[1]
-      ? teams[1].split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-      : 'Away Team';
+  const { homeName, awayName, id } = parseSlug(slug);
+  return {
+    homeName: homeName || 'Home Team',
+    awayName: awayName || 'Away Team',
+    id: id || '0',
+  };
+}
 
-    return { homeName, awayName, id };
-  } catch (e) {
-    return { homeName: 'Home Team', awayName: 'Away Team', id: '0' };
-  }
+export interface MatchPreviewResult {
+  match: Match | null;
+  allMatches: Match[];
+  isParseable: boolean;
+  isFeedMatch: boolean;
 }
 
 /**
  * Server-side helper to get authoritative match data for a fixture slug before render.
- * Cross-checks active window (and future schedule if needed) and enriches with Bzzoiro logos.
+ * Cross-checks active window (and extended schedule if needed) and enriches with Bzzoiro logos.
+ * For well-formed slugs not found in the feed (e.g. friendlies), provides an honest fallback without fake data.
  */
-export async function getMatchForPreview(slug: string): Promise<{
-  match: Match | null;
-  allMatches: Match[];
-}> {
-  const { homeName, awayName, id: matchId } = parseSlugFallback(slug);
+export async function getMatchForPreview(slug: string): Promise<MatchPreviewResult> {
+  const { isParseable, homeName, awayName, id: matchId } = parseSlug(slug);
+
+  // If the slug cannot be parsed into two teams at all (e.g. malformed/garbage input), return unparseable
+  if (!isParseable) {
+    return {
+      match: null,
+      allMatches: [],
+      isParseable: false,
+      isFeedMatch: false,
+    };
+  }
 
   // 1. Fetch active window matches (Yesterday, Today, Tomorrow, +2 to +6 days)
   const allMatches = await fetchActiveWindowMatches();
 
   // 2. Try finding match by ID or slug in active window
-  let foundMatch = allMatches.find((m) => m.id === matchId || m.slug === slug);
+  let foundMatch = allMatches.find((m) => (matchId !== '0' && m.id === matchId) || m.slug === slug);
 
   // 3. If not found in 8-day window, search extended window (7 to 14 days out)
   if (!foundMatch && matchId !== '0') {
@@ -176,18 +241,58 @@ export async function getMatchForPreview(slug: string): Promise<{
     }
     const extendedResults = await Promise.all(extendedFetches);
     const extendedMatches = extendedResults.flat();
-    foundMatch = extendedMatches.find((m) => m.id === matchId || m.slug === slug);
+    foundMatch = extendedMatches.find((m) => (matchId !== '0' && m.id === matchId) || m.slug === slug);
     if (foundMatch) {
       allMatches.push(...extendedMatches);
     }
   }
 
-  // 4. Enrich found match with logos
+  // 4. Enrich found match or create honest fallback for well-formed slugs not in feed
   let enrichedMatch: Match | null = null;
+  let isFeedMatch = false;
+
   if (foundMatch) {
     enrichedMatch = await enrichMatchWithLogos(foundMatch);
+    enrichedMatch.isFeedMatch = true;
+    isFeedMatch = true;
+  } else {
+    // Honest fallback for real matches not present in upstream feed (e.g. friendlies)
+    // Fetch team logos independently so OG image and preview render correctly without fabricated score/venue
+    const [homeLogo, awayLogo] = await Promise.all([
+      getTeamLogoUrl(homeName),
+      getTeamLogoUrl(awayName),
+    ]);
+
+    enrichedMatch = {
+      id: matchId,
+      slug,
+      teams: {
+        home: {
+          name: homeName,
+          code: homeName.slice(0, 3).toUpperCase().replace(/[^A-Z]/g, 'T'),
+          logoColor: getTeamColor(homeName),
+          logoUrl: homeLogo,
+          bzzBadge: homeLogo || null,
+        },
+        away: {
+          name: awayName,
+          code: awayName.slice(0, 3).toUpperCase().replace(/[^A-Z]/g, 'T'),
+          logoColor: getTeamColor(awayName),
+          logoUrl: awayLogo,
+          bzzBadge: awayLogo || null,
+        },
+      },
+      status: 'UPCOMING',
+      competition: 'Match Preview',
+      kickoffTime: 'TBD',
+      dateString: 'Upcoming',
+      category: 'INTERNATIONAL',
+      venue: undefined,
+      spectators: undefined,
+      servers: [],
+      isFeedMatch: false,
+    };
   }
-  // If no real match found, enrichedMatch stays null — caller handles 404
 
   // Enrich related matches (up to 15) so sidebar displays logos instantly
   const previewSlice = allMatches.slice(0, 15);
@@ -196,5 +301,7 @@ export async function getMatchForPreview(slug: string): Promise<{
   return {
     match: enrichedMatch,
     allMatches: enrichedAllMatches,
+    isParseable: true,
+    isFeedMatch,
   };
 }

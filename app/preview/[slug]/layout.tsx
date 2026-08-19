@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import React from 'react';
+import { parseSlug } from '@/lib/server-matches';
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -7,23 +8,14 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  
-  // Format teams nicely for title
-  const parts = slug.split('-');
+  const { isParseable, homeName, awayName } = parseSlug(slug);
+
   let title = 'Match Preview & Live Stream';
   let description = 'Read match stats, predictions, win probability, and watch free live football stream in HD. No signup required.';
-  
-  try {
-    const teamsPart = parts.slice(0, parts.length - 1).join('-');
-    const teams = teamsPart.split('-vs-');
-    if (teams.length === 2) {
-      const homeName = teams[0].split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-      const awayName = teams[1].split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-      title = `Match Preview: ${homeName} vs ${awayName}`;
-      description = `Read match stats, head-to-head forms, predictive polls, and watch ${homeName} vs ${awayName} live stream in HD. No signup required.`;
-    }
-  } catch (e) {
-    // Keep fallback
+
+  if (isParseable && homeName && awayName) {
+    title = `Match Preview: ${homeName} vs ${awayName}`;
+    description = `Read match stats, head-to-head forms, predictive polls, and watch ${homeName} vs ${awayName} live stream in HD. No signup required.`;
   }
   
   const ogImageUrl = `https://zimkickoff.co.zw/preview/${slug}/opengraph-image`;
@@ -69,22 +61,9 @@ export default async function PreviewLayout({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  
-  // Format teams nicely for title
-  const parts = slug.split('-');
-  let homeName = 'Home Team';
-  let awayName = 'Away Team';
-  
-  try {
-    const teamsPart = parts.slice(0, parts.length - 1).join('-');
-    const teams = teamsPart.split('-vs-');
-    if (teams.length === 2) {
-      homeName = teams[0].split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-      awayName = teams[1].split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-    }
-  } catch (e) {
-    // Keep fallback
-  }
+  const { isParseable, homeName: parsedHome, awayName: parsedAway } = parseSlug(slug);
+  const homeName = isParseable && parsedHome ? parsedHome : 'Home Team';
+  const awayName = isParseable && parsedAway ? parsedAway : 'Away Team';
 
   const sportsEventSchema = {
     "@context": "https://schema.org",

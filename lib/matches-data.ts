@@ -27,13 +27,14 @@ export interface Match {
   dateString: string;  // e.g., "Today", "Tomorrow"
   esd?: string;        // Raw start datetime (YYYYMMDDHHMMSS)
   category: 'ZPSL' | 'INTERNATIONAL' | 'AFRICA';
-  venue: string;
-  spectators: string;
+  venue?: string;
+  spectators?: string;
   servers: {
     id: string;
     name: string;
     embedUrl: string;
   }[];
+  isFeedMatch?: boolean;
 }
 
 

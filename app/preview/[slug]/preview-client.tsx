@@ -494,12 +494,25 @@ export default function MatchPreviewClient({
                     <div className="text-xs text-neutral-500 italic">No pre-match facts available for this fixture.</div>
                   )}
 
+                  {/* Unmonitored fixture / unfeed status callout */}
+                  {queryMatch.isFeedMatch === false && !bzzoiroData?.event && (
+                    <div className="p-3.5 bg-amber-50/70 border border-amber-200/70 rounded-xl flex items-start gap-2.5 text-xs text-amber-900">
+                      <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <div className="space-y-0.5">
+                        <p className="font-bold">Fixture Scheduled</p>
+                        <p className="text-amber-800 text-[11px] leading-relaxed">
+                          Match details and stream servers will update closer to kickoff. Check back for live score and streaming links.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Pitch specs */}
                   <div className="grid grid-cols-2 gap-4 text-xs">
                     <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200/30 flex flex-col gap-1">
                       <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wide">Stadium Venue</span>
                       <strong className="text-neutral-800 font-display font-bold leading-tight">
-                        {bzzoiroData?.event?.venue?.name || queryMatch.venue}
+                        {bzzoiroData?.event?.venue?.name || queryMatch.venue || 'To be announced'}
                       </strong>
                     </div>
 
@@ -510,7 +523,7 @@ export default function MatchPreviewClient({
                           ? bzzoiroData.event.venue.capacity.toLocaleString() 
                           : bzzoiroData?.event?.attendance 
                             ? bzzoiroData.event.attendance.toLocaleString()
-                            : queryMatch.spectators}
+                            : queryMatch.spectators || 'TBD'}
                       </strong>
                     </div>
                   </div>
@@ -865,7 +878,7 @@ export default function MatchPreviewClient({
                 <div className="space-y-0.5">
                   <p className="text-[9px] font-mono text-neutral-400 uppercase tracking-wide">Stadium Venue</p>
                   <p className="font-bold text-neutral-800 leading-tight">
-                    {bzzoiroData?.event?.venue?.name || queryMatch.venue}
+                    {bzzoiroData?.event?.venue?.name || queryMatch.venue || 'To be announced'}
                   </p>
                 </div>
               </div>
@@ -879,7 +892,9 @@ export default function MatchPreviewClient({
                       ? `${bzzoiroData.event.venue.capacity.toLocaleString()} Capacity` 
                       : bzzoiroData?.event?.attendance 
                         ? `${bzzoiroData.event.attendance.toLocaleString()} Attendance`
-                        : `${queryMatch.spectators} Spectators Expected`}
+                        : queryMatch.spectators && queryMatch.spectators !== 'TBD'
+                          ? `${queryMatch.spectators} Spectators Expected`
+                          : 'To be announced'}
                   </p>
                 </div>
               </div>

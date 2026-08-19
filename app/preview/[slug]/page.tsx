@@ -8,9 +8,10 @@ interface PageProps {
 
 export default async function MatchPreviewPage({ params }: PageProps) {
   const { slug } = await params;
-  const { match, allMatches } = await getMatchForPreview(slug);
+  const { match, allMatches, isParseable } = await getMatchForPreview(slug);
 
-  if (!match) {
+  // Unparseable / malformed slugs trigger a real 404
+  if (!isParseable || !match) {
     notFound();
   }
 

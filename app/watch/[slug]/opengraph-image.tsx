@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { getTeamLogoUrl } from '@/lib/bzzoiro-api';
+import { parseSlug } from '@/lib/server-matches';
 
 export const alt = 'ZimKickOff Live Football Stream Preview';
 export const size = {
@@ -23,21 +24,9 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   const slug = resolvedParams?.slug || '';
 
   // Parse slug to extract human readable team names
-  let homeName = 'Home Team';
-  let awayName = 'Away Team';
-  try {
-    const parts = slug.split('-');
-    const teamsPart = parts.slice(0, parts.length - 1).join('-');
-    const teams = teamsPart.split('-vs-');
-    if (teams[0]) {
-      homeName = teams[0].split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-    }
-    if (teams[1]) {
-      awayName = teams[1].split('-').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-    }
-  } catch (e) {
-    // standard fallbacks
-  }
+  const { isParseable, homeName: parsedHome, awayName: parsedAway } = parseSlug(slug);
+  const homeName = isParseable && parsedHome ? parsedHome : 'Home Team';
+  const awayName = isParseable && parsedAway ? parsedAway : 'Away Team';
 
   // Pre-fetch team logos safely with timeout protection
   const [homeLogo, awayLogo] = await Promise.all([
