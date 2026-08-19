@@ -25,7 +25,8 @@ import {
   Share2,
   ListOrdered,
   Calendar,
-  AlertTriangle
+  AlertTriangle,
+  Play
 } from 'lucide-react';
 import { Match } from '@/lib/matches-data';
 import { TeamLogo } from '@/components/team-logo';
@@ -514,6 +515,53 @@ export default function MatchPreviewClient({
                     </div>
                   </div>
 
+                  {/* Video Highlights — only for finished matches */}
+                  {isFinished && bzzoiroData?.highlights && bzzoiroData.highlights.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="font-display font-extrabold text-sm text-neutral-950 flex items-center gap-2">
+                        <Play className="w-4 h-4 text-[#009739]" />
+                        <span>Match Highlights</span>
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {bzzoiroData.highlights.map((hl: any, idx: number) => (
+                          <a
+                            key={hl.id || idx}
+                            href={hl.url || hl.embed_url || '#'}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group block bg-neutral-50 rounded-xl border border-neutral-200/30 overflow-hidden hover:border-neutral-300 transition-colors"
+                          >
+                            {(hl.thumbnail || hl.image || hl.thumb) && (
+                              <div className="relative aspect-video bg-neutral-200">
+                                <Image
+                                  src={hl.thumbnail || hl.image || hl.thumb}
+                                  alt={hl.title || 'Match Highlight'}
+                                  fill
+                                  className="object-cover"
+                                  referrerPolicy="no-referrer"
+                                  onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
+                                />
+                                <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <div className="w-10 h-10 bg-white/90 rounded-full flex items-center justify-center">
+                                    <Play className="w-5 h-5 text-[#009739] ml-0.5" />
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            <div className="p-3 space-y-1">
+                              <p className="text-xs font-bold text-neutral-800 line-clamp-2 group-hover:text-[#009739] transition-colors">
+                                {hl.title || 'Match Highlight Video'}
+                              </p>
+                              {hl.source && (
+                                <p className="text-[10px] font-mono text-neutral-400">{hl.source}</p>
+                              )}
+                            </div>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                 </div>
               )}
 
@@ -853,6 +901,62 @@ export default function MatchPreviewClient({
               </div>
             </div>
           </div>
+
+          {/* WHERE TO WATCH — TV Channels / Broadcasters */}
+          {bzzoiroData?.tvChannels && bzzoiroData.tvChannels.length > 0 && (
+            <div className="bg-white border border-neutral-200/60 rounded-2xl p-5 shadow-xs space-y-4">
+              <h3 className="font-display font-extrabold text-xs text-neutral-950 pb-2 border-b border-neutral-100 flex items-center gap-1.5 uppercase tracking-wider">
+                <Tv className="w-3.5 h-3.5 text-[#009739]" />
+                Where to Watch
+              </h3>
+
+              <div className="space-y-2">
+                {(() => {
+                  // Prioritize Zimbabwe/Southern Africa channels
+                  const priorityCountries = ['zimbabwe', 'south africa', 'zambia', 'mozambique', 'botswana', 'malawi'];
+                  const channels = [...bzzoiroData.tvChannels].sort((a: any, b: any) => {
+                    const aCountry = (a.country || a.region || '').toLowerCase();
+                    const bCountry = (b.country || b.region || '').toLowerCase();
+                    const aLocal = priorityCountries.some(pc => aCountry.includes(pc));
+                    const bLocal = priorityCountries.some(pc => bCountry.includes(pc));
+                    if (aLocal && !bLocal) return -1;
+                    if (!aLocal && bLocal) return 1;
+                    return 0;
+                  });
+
+                  return channels.map((ch: any, idx: number) => (
+                    <div key={idx} className="flex items-center gap-3 p-2.5 bg-neutral-50 rounded-xl border border-neutral-200/30">
+                      {ch.logo_url || ch.logo ? (
+                        <Image
+                          src={ch.logo_url || ch.logo}
+                          alt={ch.name || ch.channel_name || 'Broadcaster'}
+                          width={24}
+                          height={24}
+                          className="w-6 h-6 object-contain shrink-0 rounded"
+                          referrerPolicy="no-referrer"
+                          onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
+                        />
+                      ) : (
+                        <div className="w-6 h-6 bg-neutral-200 rounded flex items-center justify-center text-[8px] font-bold text-neutral-500 shrink-0">
+                          TV
+                        </div>
+                      )}
+                      <div className="overflow-hidden">
+                        <p className="text-xs font-bold text-neutral-800 truncate">
+                          {ch.name || ch.channel_name || 'Unknown Channel'}
+                        </p>
+                        {(ch.country || ch.region) && (
+                          <p className="text-[10px] font-mono text-neutral-400 truncate">
+                            {ch.country || ch.region}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ));
+                })()}
+              </div>
+            </div>
+          )}
 
           {/* OTHER SCHEDULED FOOTBALL STREAMS */}
           <div className="bg-white border border-neutral-200/60 rounded-2xl p-5 shadow-xs space-y-4">

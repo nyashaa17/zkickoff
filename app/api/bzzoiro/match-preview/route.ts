@@ -184,7 +184,7 @@ export async function GET(request: Request) {
     };
 
     // Fetch sub-endpoints in parallel with independent failure isolation
-    const [metadata, lineups, odds, stats, incidents, venue] = await Promise.all([
+    const [metadata, lineups, odds, stats, incidents, venue, broadcasts, highlights] = await Promise.all([
       safeFetch(`https://sports.bzzoiro.com/api/v2/events/${eventId}/metadata/`),
       safeFetch(`https://sports.bzzoiro.com/api/v2/events/${eventId}/lineups/`),
       safeFetch(`https://sports.bzzoiro.com/api/v2/events/${eventId}/odds/comparison/`),
@@ -192,11 +192,27 @@ export async function GET(request: Request) {
       safeFetch(`https://sports.bzzoiro.com/api/v2/events/${eventId}/incidents/`),
       matchedEvent.venue_id 
         ? safeFetch(`https://sports.bzzoiro.com/api/v2/venues/${matchedEvent.venue_id}/`)
-        : Promise.resolve(null)
+        : Promise.resolve(null),
+      safeFetch(`https://sports.bzzoiro.com/api/v2/events/${eventId}/tv-channels/`),
+      safeFetch(`https://sports.bzzoiro.com/api/v2/social/?event_id=${eventId}&type=video&limit=5`)
     ]);
 
     if (venue) {
       matchedEvent.venue = venue;
+    }
+
+    // Normalize broadcasts to a flat array of channels
+    let tvChannels: any[] = [];
+    if (broadcasts) {
+      if (Array.isArray(broadcasts)) {
+        tvChannels = broadcasts;
+      } else if (broadcasts.tv_channels) {
+        tvChannels = Array.isArray(broadcasts.tv_channels) ? broadcasts.tv_channels : [];
+      } else if (broadcasts.channels) {
+        tvChannels = Array.isArray(broadcasts.channels) ? broadcasts.channels : [];
+      } else if (broadcasts.results) {
+        tvChannels = Array.isArray(broadcasts.results) ? broadcasts.results : [];
+      }
     }
 
     return NextResponse.json({
@@ -205,7 +221,16 @@ export async function GET(request: Request) {
       lineups,
       odds,
       stats,
-      incidents: Array.isArray(incidents) ? incidents : incidents?.incidents || incidents?.results || []
+      incidents: Array.isArray(incidents) ? incidents : incidents?.incidents || incidents?.results || [],
+      tvChannels,
+      highlights: (() => {
+        if (!highlights) return [];
+        const results = highlights.results || [];
+        return results.filter((item: any) => {
+          const t = (item.type || item.media_type || '').toLowerCase();
+          return t === 'video' || t === 'highlight' || t === 'highlights';
+        });
+      })()
     });
     
   } catch (err: any) {
