@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import HomeClient from './home-client';
 import { getUpcomingFixturesForSeo, UpcomingFixture } from '@/lib/upcoming-fixtures';
+import { getRecentHighlights, Highlight } from '@/lib/highlights-service';
 
 export const metadata: Metadata = {
   title: 'ZimKickOff - Watch Live Football Matches Free',
@@ -47,6 +48,15 @@ export default async function HomePage() {
     upcomingFixtures = await getUpcomingFixturesForSeo(14);
   } catch (err) {
     console.error('[HomePage] Error fetching upcoming fixtures:', err);
+  }
+
+  // Fetch recent highlights server-side for homepage carousel (limit 10)
+  let recentHighlights: Highlight[] = [];
+  try {
+    const result = await getRecentHighlights(10, 0);
+    recentHighlights = result.highlights;
+  } catch (err) {
+    console.error('[HomePage] Error fetching recent highlights:', err);
   }
 
   const websiteSchema = {
@@ -97,7 +107,7 @@ export default async function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(webpageSchema) }}
       />
-      <HomeClient />
+      <HomeClient highlights={recentHighlights} />
       {/* Server-rendered crawlable links for SEO — hidden from users */}
       <UpcomingFixturesNav fixtures={upcomingFixtures} />
     </>

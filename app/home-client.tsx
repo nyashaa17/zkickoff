@@ -22,6 +22,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { Match } from "@/lib/matches-data";
 import MatchCard from "@/components/match-card";
 import { MatchGridSkeleton } from "@/components/skeleton-loader";
+import HighlightsCarousel from "@/components/highlights-carousel";
+import { Highlight } from "@/lib/highlights-service";
 import {
   fetchLivescoresDirect,
   fetchStatsDirect,
@@ -40,7 +42,7 @@ interface StatCategory {
   players: PlayerStat[];
 }
 
-function HomeContent() {
+function HomeContent({ highlights }: { highlights: Highlight[] }) {
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get("filter");
   const initialTab = searchParams.get("tab") as
@@ -471,6 +473,9 @@ function HomeContent() {
           </p>
         </div>
       </section>
+
+      {/* Match Highlights carousel — server-rendered, hidden if empty */}
+      <HighlightsCarousel highlights={highlights} />
 
       {/* Main Grid: Match Feed vs Standings Column */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -1005,7 +1010,7 @@ function HomeContent() {
   );
 }
 
-export default function HomeClient() {
+export default function HomeClient({ highlights = [] }: { highlights?: Highlight[] }) {
   return (
     <Suspense
       fallback={
@@ -1018,7 +1023,7 @@ export default function HomeClient() {
         </div>
       }
     >
-      <HomeContent />
+      <HomeContent highlights={highlights} />
     </Suspense>
   );
 }
