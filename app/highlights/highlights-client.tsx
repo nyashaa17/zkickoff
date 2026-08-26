@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Script from 'next/script';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, Play, Loader2 } from 'lucide-react';
@@ -58,14 +57,6 @@ export default function HighlightsClient({ initialHighlights, initialHasMore }: 
           Back to Live Feed
         </Link>
       </div>
-
-      {/* Ad Slot */}
-      <Script async src="https://ads.totalsportss.online/ad.js" strategy="afterInteractive" />
-      <div
-        className="house-ad-slot mb-4"
-        data-campaign="cmp_1qk_JWGH6crTeCSU4_rkwA"
-        data-height="64"
-      />
 
       {/* Highlights Grid */}
       {highlights.length > 0 ? (
