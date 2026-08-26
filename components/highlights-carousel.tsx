@@ -57,7 +57,7 @@ export default function HighlightsCarousel({ highlights }: HighlightsCarouselPro
       </div>
 
       {/* Horizontal scroll row */}
-      <div className="flex gap-2.5 sm:gap-3 md:gap-4 overflow-x-auto scrollbar-thin pb-3 snap-x snap-mandatory scroll-smooth -mx-1 px-1">
+      <div className="flex gap-2.5 sm:gap-3 md:gap-4 overflow-x-auto scrollbar-thin pb-3 snap-x snap-proximity -mx-1 px-1">
         {highlights.map((hl, idx) => (
           <a
             key={hl.id || idx}

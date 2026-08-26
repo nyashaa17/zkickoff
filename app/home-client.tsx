@@ -570,7 +570,7 @@ function HomeContent({ highlights }: { highlights: Highlight[] }) {
                 {/* Horizontal scroll container with scroll-snap and customized padding */}
                 <div
                   ref={dateScrollRef}
-                  className="flex gap-2.5 overflow-x-auto scrollbar-thin pb-2.5 max-w-full snap-x snap-mandatory scroll-smooth flex-nowrap min-w-full"
+                  className="flex gap-2.5 overflow-x-auto scrollbar-thin pb-2.5 max-w-full snap-x snap-proximity flex-nowrap min-w-full"
                 >
                   {displayedWeekDates.map((d) => {
                     const isSelected = selectedDateFilter === d.dateString;
