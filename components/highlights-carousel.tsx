@@ -56,20 +56,16 @@ export default function HighlightsCarousel({ highlights }: HighlightsCarouselPro
         </Link>
       </div>
 
-      {/* Horizontal scroll row */}
-      <div
-        className="flex gap-2.5 sm:gap-3 md:gap-4 overflow-x-auto scrollbar-thin pb-3 snap-x snap-proximity -mx-1 px-1 touch-pan-x"
-        style={{ touchAction: 'pan-x' }}
-        onTouchStart={(e) => e.stopPropagation()}
-        onTouchMove={(e) => e.stopPropagation()}
-      >
+      {/* Horizontal scroll row (free-scrolling, no snap points) */}
+      {/* Note: touch-action: pan-x and onTouchStart/onTouchMove stopPropagation() were previously tried to prevent Monetag popunder interruptions during scrolling. Removed when scroll-snap was removed, but keep in mind if popunder issues resurface. */}
+      <div className="flex gap-2.5 sm:gap-3 md:gap-4 overflow-x-auto scrollbar-thin pb-3 -mx-1 px-1">
         {highlights.map((hl, idx) => (
           <a
             key={hl.id || idx}
             href={hl.url || hl.embed_url || '#'}
             target="_blank"
             rel="noopener noreferrer"
-            className="group snap-start shrink-0 w-[155px] sm:w-[200px] md:w-[220px] bg-white rounded-xl sm:rounded-2xl border border-neutral-200/80 overflow-hidden shadow-xs hover:shadow-md hover:border-neutral-300 transition-all"
+            className="group shrink-0 w-[155px] sm:w-[200px] md:w-[220px] bg-white rounded-xl sm:rounded-2xl border border-neutral-200/80 overflow-hidden shadow-xs hover:shadow-md hover:border-neutral-300 transition-all"
           >
             {/* Thumbnail */}
             <div className="relative aspect-video bg-neutral-200">
