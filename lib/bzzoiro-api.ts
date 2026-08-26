@@ -359,6 +359,7 @@ export async function safeGetOgLogo(teamName: string): Promise<string | undefine
     const isSvg = buffer.subarray(0, 100).toString().includes('<svg');
 
     if (!isPng && !isJpg && !isSvg) {
+      console.warn(`[safeGetOgLogo] Unsupported format/magic for '${teamName}': URL=${logoUrl}, contentType=${contentType}, magic=${buffer.subarray(0, 4).toString('hex')}, len=${buffer.length}`);
       return undefined;
     }
 
@@ -366,6 +367,9 @@ export async function safeGetOgLogo(teamName: string): Promise<string | undefine
     if (isSvg) {
       return `data:image/svg+xml;base64,${buffer.toString('base64')}`;
     }
+
+    // Log immediately before sharp call
+    console.log(`[safeGetOgLogo] Invoking sharp for '${teamName}': URL=${logoUrl}, contentType=${contentType}, bufferLength=${buffer.length}b`);
 
     // Normalize raster images to 8-bit RGBA PNG via sharp.
     // This handles CMYK JPEGs, 16-bit PNGs, interlaced PNGs, and other
@@ -375,12 +379,13 @@ export async function safeGetOgLogo(teamName: string): Promise<string | undefine
         .png()
         .toBuffer();
       return `data:image/png;base64,${normalizedBuffer.toString('base64')}`;
-    } catch {
-      // sharp decode failure — image is corrupt or uses an unsupported codec.
-      // Fall back to undefined so the initial-letter fallback renders instead.
+    } catch (sharpErr: any) {
+      // Log specific sharp error with team name before returning undefined
+      console.error(`[safeGetOgLogo ERROR] Sharp failed to decode/normalize '${teamName}' (${logoUrl}):`, sharpErr?.message || sharpErr);
       return undefined;
     }
-  } catch {
+  } catch (err: any) {
+    console.error(`[safeGetOgLogo ERROR] Unexpected failure for '${teamName}':`, err?.message || err);
     return undefined;
   }
 }

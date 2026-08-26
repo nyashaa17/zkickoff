@@ -21,6 +21,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   const awayName = isParseable && parsedAway ? parsedAway : 'Away Team';
 
   // Pre-fetch and validate team logo images into memory with fallback protection
+  console.log(`[OG-IMAGE] Generating preview OG image for slug '${slug}' (${homeName} vs ${awayName})`);
   const [homeLogo, awayLogo] = await Promise.all([
     safeGetOgLogo(homeName),
     safeGetOgLogo(awayName),
