@@ -4,6 +4,8 @@
  * All queries are safely cached to improve loading times.
  */
 
+import sharp from 'sharp';
+
 const teamIdCache = new Map<string, string | null>();
 const leagueIdCache = new Map<string, string | null>();
 
@@ -321,8 +323,12 @@ export async function getLeagueLogoUrl(leagueName: string): Promise<string | und
 
 /**
  * Pre-fetches and validates team logo image bytes for OG image generation.
- * Returns a base64 Data URL if the image is valid (PNG, JPEG, WebP, SVG > 100 bytes),
+ * Returns a base64 Data URL if the image is valid (PNG, JPEG, SVG > 100 bytes),
  * or undefined on any error/timeout/404, ensuring ImageResponse / Satori never crashes.
+ *
+ * Raster images (PNG, JPEG) are piped through sharp to normalize to 8-bit RGBA PNG,
+ * which fixes CMYK JPEGs, 16-bit PNGs, interlaced PNGs, and other encoding variants
+ * that pass magic-byte validation but crash Satori's resvg compositor.
  */
 export async function safeGetOgLogo(teamName: string): Promise<string | undefined> {
   try {
@@ -356,9 +362,26 @@ export async function safeGetOgLogo(teamName: string): Promise<string | undefine
       return undefined;
     }
 
-    const mime = isPng ? 'image/png' : isJpg ? 'image/jpeg' : 'image/svg+xml';
-    return `data:${mime};base64,${buffer.toString('base64')}`;
+    // SVGs pass through as-is — resvg renders SVG natively
+    if (isSvg) {
+      return `data:image/svg+xml;base64,${buffer.toString('base64')}`;
+    }
+
+    // Normalize raster images to 8-bit RGBA PNG via sharp.
+    // This handles CMYK JPEGs, 16-bit PNGs, interlaced PNGs, and other
+    // encoding variants that Satori/resvg cannot composite.
+    try {
+      const normalizedBuffer = await sharp(buffer)
+        .png()
+        .toBuffer();
+      return `data:image/png;base64,${normalizedBuffer.toString('base64')}`;
+    } catch {
+      // sharp decode failure — image is corrupt or uses an unsupported codec.
+      // Fall back to undefined so the initial-letter fallback renders instead.
+      return undefined;
+    }
   } catch {
     return undefined;
   }
 }
+
