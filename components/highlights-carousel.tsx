@@ -57,14 +57,14 @@ export default function HighlightsCarousel({ highlights }: HighlightsCarouselPro
       </div>
 
       {/* Horizontal scroll row */}
-      <div className="flex gap-4 overflow-x-auto scrollbar-thin pb-3 snap-x snap-mandatory scroll-smooth -mx-1 px-1">
+      <div className="flex gap-2.5 sm:gap-3 md:gap-4 overflow-x-auto scrollbar-thin pb-3 snap-x snap-mandatory scroll-smooth -mx-1 px-1">
         {highlights.map((hl, idx) => (
           <a
             key={hl.id || idx}
             href={hl.url || hl.embed_url || '#'}
             target="_blank"
             rel="noopener noreferrer"
-            className="group snap-start shrink-0 w-[280px] sm:w-[300px] bg-white rounded-2xl border border-neutral-200/80 overflow-hidden shadow-xs hover:shadow-md hover:border-neutral-300 transition-all"
+            className="group snap-start shrink-0 w-[155px] sm:w-[200px] md:w-[220px] bg-white rounded-xl sm:rounded-2xl border border-neutral-200/80 overflow-hidden shadow-xs hover:shadow-md hover:border-neutral-300 transition-all"
           >
             {/* Thumbnail */}
             <div className="relative aspect-video bg-neutral-200">
@@ -82,18 +82,18 @@ export default function HighlightsCarousel({ highlights }: HighlightsCarouselPro
               ) : null}
               {/* Play icon overlay on hover */}
               <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center shadow-lg">
-                  <Play className="w-6 h-6 text-zim-green ml-0.5" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-white/90 rounded-full flex items-center justify-center shadow-lg">
+                  <Play className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-zim-green ml-0.5" />
                 </div>
               </div>
             </div>
 
             {/* Card content */}
-            <div className="p-3.5 space-y-1.5">
-              <p className="text-sm font-bold text-neutral-800 line-clamp-2 group-hover:text-zim-green transition-colors leading-snug">
+            <div className="p-2 sm:p-3 md:p-3.5 space-y-1">
+              <p className="text-[11px] sm:text-xs md:text-sm font-bold text-neutral-800 line-clamp-2 group-hover:text-zim-green transition-colors leading-snug">
                 {hl.title || 'Match Highlight Video'}
               </p>
-              <div className="flex items-center justify-between text-[10px] font-mono text-neutral-400">
+              <div className="flex items-center justify-between text-[8px] sm:text-[9px] md:text-[10px] font-mono text-neutral-400">
                 <span className="truncate max-w-[60%]">
                   {hl.source || hl.league_name || ''}
                 </span>
