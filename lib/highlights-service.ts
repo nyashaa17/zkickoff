@@ -17,127 +17,6 @@ export interface Highlight {
   league_name?: string;
 }
 
-/**
- * Clubs whose matches should be boosted to the top of the highlights feed.
- * Premier League & Champions League regulars + Zimbabwean / African clubs
- * (core audience).
- */
-export const PRIORITY_CLUBS: string[] = [
-  // Premier League / English
-  'Manchester United', 'Man United', 'Man Utd',
-  'Manchester City', 'Man City',
-  'Liverpool',
-  'Arsenal',
-  'Chelsea',
-  'Tottenham', 'Spurs',
-  'Nottingham Forest', 'Nottingham',
-  'Leeds', 'Leeds United',
-  'Newcastle', 'Newcastle United',
-  'Aston Villa',
-  'West Ham',
-  'Brighton',
-  // European elite
-  'Real Madrid',
-  'Barcelona',
-  'Bayern Munich', 'Bayern München', 'Bayern',
-  'PSG', 'Paris Saint-Germain', 'Paris Saint Germain',
-  'Juventus',
-  'AC Milan', 'Milan',
-  'Inter Milan', 'Internazionale',
-  'Borussia Dortmund', 'Dortmund',
-  'Atletico Madrid', 'Atlético Madrid',
-  'Benfica',
-  'Porto',
-  // Zimbabwean clubs (always boosted — core audience)
-  'Dynamos', 'Dynamos FC',
-  'Highlanders', 'Highlanders FC',
-  'CAPS United',
-  'FC Platinum',
-  'Chicken Inn',
-  'Manica Diamonds',
-  'Ngezi Platinum', 'Ngezi Platinum Stars',
-  'Bulawayo Chiefs',
-  'Herentals',
-  'ZPC Kariba',
-  'Yadah',
-  'Cranborne Bullets',
-  'Hwange',
-  'Triangle United',
-  'Bikita Minerals',
-  'Simba Bhora',
-  'Telone',
-  'Green Fuel',
-  // Other African clubs that regularly feature
-  'Kaizer Chiefs',
-  'Orlando Pirates',
-  'Mamelodi Sundowns', 'Sundowns',
-  'Al Ahly',
-  'Zamalek',
-  'TP Mazembe',
-  'Esperance',
-  'Wydad',
-];
-
-/** Lowercase tokens for fast partial matching */
-const PRIORITY_TOKENS = PRIORITY_CLUBS.map((c) => c.toLowerCase());
-
-/**
- * Returns true if the text (event_name / title) mentions any priority club.
- * Uses case-insensitive partial (substring) matching.
- */
-function isPriorityMatch(text: string | undefined): boolean {
-  if (!text) return false;
-  const lower = text.toLowerCase();
-  return PRIORITY_TOKENS.some((token) => lower.includes(token));
-}
-
-/**
- * Deduplicate highlights by event_id, keeping the most recent item per match.
- * Items without an event_id are kept as-is (never deduped).
- */
-function dedupeByMatch(highlights: Highlight[]): Highlight[] {
-  const seen = new Map<string | number, Highlight>();
-  const noEvent: Highlight[] = [];
-
-  for (const hl of highlights) {
-    if (!hl.event_id) {
-      noEvent.push(hl);
-      continue;
-    }
-    const existing = seen.get(hl.event_id);
-    if (!existing) {
-      seen.set(hl.event_id, hl);
-    } else {
-      // Keep the most recent
-      const existingDate = existing.created_at ? new Date(existing.created_at).getTime() : 0;
-      const currentDate = hl.created_at ? new Date(hl.created_at).getTime() : 0;
-      if (currentDate > existingDate) {
-        seen.set(hl.event_id, hl);
-      }
-    }
-  }
-
-  return [...seen.values(), ...noEvent];
-}
-
-/**
- * Sort highlights: priority-club matches first, then recency descending.
- */
-function prioritySort(highlights: Highlight[]): Highlight[] {
-  return highlights.slice().sort((a, b) => {
-    const aPriority = isPriorityMatch(a.event_name) || isPriorityMatch(a.title) ? 1 : 0;
-    const bPriority = isPriorityMatch(b.event_name) || isPriorityMatch(b.title) ? 1 : 0;
-
-    // Priority matches come first
-    if (aPriority !== bPriority) return bPriority - aPriority;
-
-    // Within same priority group, sort by recency
-    const aDate = a.created_at ? new Date(a.created_at).getTime() : 0;
-    const bDate = b.created_at ? new Date(b.created_at).getTime() : 0;
-    return bDate - aDate;
-  });
-}
-
 const BSD_BASE = 'https://sports.bzzoiro.com/api/v2';
 
 /**
@@ -233,7 +112,7 @@ export async function getRecentHighlights(limit = 20, offset = 0): Promise<{
       }));
 
     return {
-      highlights: prioritySort(dedupeByMatch(highlights)),
+      highlights,
       total,
       hasMore: offset + limit < total,
     };

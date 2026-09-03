@@ -4,8 +4,6 @@
  * All queries are safely cached to improve loading times.
  */
 
-import sharp from 'sharp';
-
 const teamIdCache = new Map<string, string | null>();
 const leagueIdCache = new Map<string, string | null>();
 
@@ -323,12 +321,8 @@ export async function getLeagueLogoUrl(leagueName: string): Promise<string | und
 
 /**
  * Pre-fetches and validates team logo image bytes for OG image generation.
- * Returns a base64 Data URL if the image is valid (PNG, JPEG, SVG > 100 bytes),
+ * Returns a base64 Data URL if the image is valid (PNG, JPEG, WebP, SVG > 100 bytes),
  * or undefined on any error/timeout/404, ensuring ImageResponse / Satori never crashes.
- *
- * Raster images (PNG, JPEG) are piped through sharp to normalize to 8-bit RGBA PNG,
- * which fixes CMYK JPEGs, 16-bit PNGs, interlaced PNGs, and other encoding variants
- * that pass magic-byte validation but crash Satori's resvg compositor.
  */
 export async function safeGetOgLogo(teamName: string): Promise<string | undefined> {
   try {
@@ -359,34 +353,12 @@ export async function safeGetOgLogo(teamName: string): Promise<string | undefine
     const isSvg = buffer.subarray(0, 100).toString().includes('<svg');
 
     if (!isPng && !isJpg && !isSvg) {
-      console.warn(`[safeGetOgLogo] Unsupported format/magic for '${teamName}': URL=${logoUrl}, contentType=${contentType}, magic=${buffer.subarray(0, 4).toString('hex')}, len=${buffer.length}`);
       return undefined;
     }
 
-    // SVGs pass through as-is — resvg renders SVG natively
-    if (isSvg) {
-      return `data:image/svg+xml;base64,${buffer.toString('base64')}`;
-    }
-
-    // Log immediately before sharp call
-    console.log(`[safeGetOgLogo] Invoking sharp for '${teamName}': URL=${logoUrl}, contentType=${contentType}, bufferLength=${buffer.length}b`);
-
-    // Normalize raster images to 8-bit RGBA PNG via sharp.
-    // This handles CMYK JPEGs, 16-bit PNGs, interlaced PNGs, and other
-    // encoding variants that Satori/resvg cannot composite.
-    try {
-      const normalizedBuffer = await sharp(buffer)
-        .png()
-        .toBuffer();
-      return `data:image/png;base64,${normalizedBuffer.toString('base64')}`;
-    } catch (sharpErr: any) {
-      // Log specific sharp error with team name before returning undefined
-      console.error(`[safeGetOgLogo ERROR] Sharp failed to decode/normalize '${teamName}' (${logoUrl}):`, sharpErr?.message || sharpErr);
-      return undefined;
-    }
-  } catch (err: any) {
-    console.error(`[safeGetOgLogo ERROR] Unexpected failure for '${teamName}':`, err?.message || err);
+    const mime = isPng ? 'image/png' : isJpg ? 'image/jpeg' : 'image/svg+xml';
+    return `data:${mime};base64,${buffer.toString('base64')}`;
+  } catch {
     return undefined;
   }
 }
-

@@ -22,8 +22,6 @@ import { motion, AnimatePresence } from "motion/react";
 import { Match } from "@/lib/matches-data";
 import MatchCard from "@/components/match-card";
 import { MatchGridSkeleton } from "@/components/skeleton-loader";
-import HighlightsCarousel from "@/components/highlights-carousel";
-import { Highlight } from "@/lib/highlights-service";
 import {
   fetchLivescoresDirect,
   fetchStatsDirect,
@@ -42,7 +40,7 @@ interface StatCategory {
   players: PlayerStat[];
 }
 
-function HomeContent({ highlights }: { highlights: Highlight[] }) {
+function HomeContent() {
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get("filter");
   const initialTab = searchParams.get("tab") as
@@ -474,9 +472,6 @@ function HomeContent({ highlights }: { highlights: Highlight[] }) {
         </div>
       </section>
 
-      {/* Match Highlights carousel — server-rendered, hidden if empty */}
-      <HighlightsCarousel highlights={highlights} />
-
       {/* Main Grid: Match Feed vs Standings Column */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left main content feeding area */}
@@ -570,7 +565,7 @@ function HomeContent({ highlights }: { highlights: Highlight[] }) {
                 {/* Horizontal scroll container with scroll-snap and customized padding */}
                 <div
                   ref={dateScrollRef}
-                  className="flex gap-2.5 overflow-x-auto scrollbar-thin pb-2.5 max-w-full snap-x snap-proximity flex-nowrap min-w-full"
+                  className="flex gap-2.5 overflow-x-auto scrollbar-thin pb-2.5 max-w-full snap-x snap-mandatory scroll-smooth flex-nowrap min-w-full"
                 >
                   {displayedWeekDates.map((d) => {
                     const isSelected = selectedDateFilter === d.dateString;
@@ -1010,7 +1005,7 @@ function HomeContent({ highlights }: { highlights: Highlight[] }) {
   );
 }
 
-export default function HomeClient({ highlights = [] }: { highlights?: Highlight[] }) {
+export default function HomeClient() {
   return (
     <Suspense
       fallback={
@@ -1023,7 +1018,7 @@ export default function HomeClient({ highlights = [] }: { highlights?: Highlight
         </div>
       }
     >
-      <HomeContent highlights={highlights} />
+      <HomeContent />
     </Suspense>
   );
 }
