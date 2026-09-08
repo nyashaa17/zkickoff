@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Breadcrumbs from '@/components/breadcrumbs';
+import { SITE_CONFIG } from '@/lib/site-config';
 
 export default function DMCAPage() {
   return (
@@ -80,7 +81,7 @@ export default function DMCAPage() {
           <section className="space-y-2">
             <h2 className="text-sm font-display font-bold text-neutral-900">6. Contact for DMCA Notices</h2>
             <p>
-              To file a DMCA takedown notice or a counter-notice, please send all relevant electronic document submissions explaining the claim through our official <a href="https://t.me/Eratech_zw" target="_blank" rel="noopener noreferrer" className="text-zim-green font-bold hover:underline">Telegram Support Chat (https://t.me/Eratech_zw)</a> or via our <a href="/contact" className="text-zim-green font-bold hover:underline">Contact page</a>.
+              To file a DMCA takedown notice or a counter-notice, please send all relevant electronic document submissions explaining the claim through our official email at <a href={SITE_CONFIG.supportEmailHref} className="text-zim-green font-bold hover:underline">{SITE_CONFIG.supportEmail}</a> or via our <a href="/contact" className="text-zim-green font-bold hover:underline">Contact page</a>.
             </p>
           </section>
 

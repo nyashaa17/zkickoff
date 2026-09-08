@@ -2,7 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Send, MessageCircle } from 'lucide-react';
+import { Mail, MessageCircle } from 'lucide-react';
+import { SITE_CONFIG } from '@/lib/site-config';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -24,14 +25,12 @@ export default function Footer() {
             </Link>
             <div className="flex items-center gap-3 sm:border-l sm:border-neutral-200 sm:pl-4">
               <a
-                href="https://t.me/Eratech_zw"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-1.5 text-black hover:text-[#0088cc] hover:bg-[#0088cc]/5 rounded-lg transition-all flex items-center justify-center"
-                aria-label="Telegram Channel"
-                title="Telegram Channel"
+                href={SITE_CONFIG.supportEmailHref}
+                className="p-1.5 text-black hover:text-zim-green hover:bg-zim-green/5 rounded-lg transition-all flex items-center justify-center"
+                aria-label="Email Support"
+                title="Email Support"
               >
-                <Send className="w-5 h-5" />
+                <Mail className="w-5 h-5" />
               </a>
               <a
                 href="https://whatsapp.com/channel/0029VbCawa77YSd8W5QIHA41"

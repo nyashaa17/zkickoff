@@ -2,7 +2,8 @@
 
 import React from 'react';
 import Breadcrumbs from '@/components/breadcrumbs';
-import { Clock, Send, AlertCircle } from 'lucide-react';
+import { Clock, Mail, AlertCircle } from 'lucide-react';
+import { SITE_CONFIG } from '@/lib/site-config';
 
 export default function ContactPage() {
 
@@ -24,35 +25,35 @@ export default function ContactPage() {
         </div>
 
         <div className="space-y-6">
-          {/* Primary Telegram Card */}
+          {/* Primary Email Support Card */}
           <div className="border border-neutral-200/70 rounded-2xl p-6 md:p-8 bg-neutral-50/50 text-center space-y-4 hover:border-neutral-300 transition-all">
-            <div className="w-14 h-14 bg-[#0088cc]/10 text-[#0088cc] rounded-full flex items-center justify-center mx-auto shadow-xs">
-              <Send className="w-7 h-7 transform rotate-45 -translate-x-0.5 translate-y-0.5" />
+            <div className="w-14 h-14 bg-zim-green/10 text-zim-green rounded-full flex items-center justify-center mx-auto shadow-xs">
+              <Mail className="w-7 h-7" />
             </div>
             
             <div className="space-y-1">
               <h3 className="text-base md:text-lg font-display font-black text-neutral-900">
-                Official Telegram Support
+                Official Email Support
               </h3>
               <p className="text-xs text-neutral-500 max-w-sm mx-auto">
-                Our team is active and answers inquiries on Telegram. Click the button below to message our support desk instantly.
+                Our team is active and answers inquiries via email. Click the button below to message our support desk directly.
               </p>
             </div>
 
             <div className="pt-2">
               <a 
-                href="https://t.me/Eratech_zw" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-[#0088cc] hover:bg-[#0088cb]/95 text-white text-xs font-black px-6 py-3.5 rounded-xl shadow-md md:shadow-lg transition-transform hover:-translate-y-0.5 cursor-pointer"
+                href={SITE_CONFIG.supportEmailHref}
+                className="inline-flex items-center gap-2 bg-zim-green hover:bg-zim-green/90 text-white text-xs font-black px-6 py-3.5 rounded-xl shadow-md md:shadow-lg transition-transform hover:-translate-y-0.5 cursor-pointer"
               >
-                <Send className="w-3.5 h-3.5" />
-                Open Telegram Chat
+                <Mail className="w-3.5 h-3.5" />
+                Send an Email
               </a>
             </div>
             
-            <div className="text-[10px] text-neutral-400 font-mono">
-              Link: https://t.me/Eratech_zw
+            <div className="text-[11px] text-neutral-500 font-mono">
+              <a href={SITE_CONFIG.supportEmailHref} className="hover:text-zim-green hover:underline">
+                {SITE_CONFIG.supportEmail}
+              </a>
             </div>
           </div>
 
