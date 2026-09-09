@@ -403,14 +403,8 @@ function HomeContent() {
       {/* Hero section */}
       <section
         id="hero"
-        className="w-full p-6 md:p-10 mb-8 md:mb-12 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6"
+        className="w-full py-2 md:py-4 mb-8 md:mb-12 bg-transparent flex flex-col md:flex-row md:items-center justify-between gap-6"
       >
-        {/* Visual modern grid overlay background */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#f1f5f9_1px,transparent_1px),linear-gradient(to_bottom,#f1f5f9_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-30 pointer-events-none" />
-
-        {/* Decorative dynamic shape representing Zimbabwe warriors shield flare */}
-        <div className="absolute -right-12 -top-12 w-64 h-64 bg-brand-green/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -left-12 -bottom-12 w-64 h-64 bg-[#D62828]/5 rounded-full blur-3xl pointer-events-none" />
 
         <div className="space-y-4 max-w-2xl relative z-10 text-center md:text-left">
           <h1 className="font-display font-extrabold text-3xl md:text-5xl tracking-tight text-neutral-950 leading-tight">
