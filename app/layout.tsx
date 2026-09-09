@@ -49,10 +49,14 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon-96x96.png', type: 'image/png', sizes: '96x96' },
       { url: '/ZKickoff_icon.svg', type: 'image/svg+xml' },
       { url: '/ZKickoff_icon-512x512.png', type: 'image/png', sizes: '512x512' },
     ],
     apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180' },
       { url: '/ZKickoff_icon-512x512.png', sizes: '512x512' },
     ],
   },
@@ -62,8 +66,10 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
     <html lang="en" className={`${inter.variable} ${poppins.variable}`} suppressHydrationWarning>
       <head>
-        <link rel="icon" type="image/svg+xml" href="/ZKickoff_icon.svg" />
-        <link rel="apple-touch-icon" href="/ZKickoff_icon-512x512.png" />
+        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
