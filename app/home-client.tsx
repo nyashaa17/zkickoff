@@ -409,13 +409,13 @@ function HomeContent() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#f1f5f9_1px,transparent_1px),linear-gradient(to_bottom,#f1f5f9_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-30 pointer-events-none" />
 
         {/* Decorative dynamic shape representing Zimbabwe warriors shield flare */}
-        <div className="absolute -right-12 -top-12 w-64 h-64 bg-black/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -right-12 -top-12 w-64 h-64 bg-brand-green/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -left-12 -bottom-12 w-64 h-64 bg-[#D62828]/5 rounded-full blur-3xl pointer-events-none" />
 
         <div className="space-y-4 max-w-2xl relative z-10 text-center md:text-left">
           <h1 className="font-display font-extrabold text-3xl md:text-5xl tracking-tight text-neutral-950 leading-tight">
             Watch Live Football <br className="hidden md:inline" /> Matches{" "}
-            <span className="text-zim-green underline decoration-zim-yellow decoration-3">
+            <span className="text-neutral-950 underline decoration-brand-green decoration-4 underline-offset-4 decoration-skip-ink-none">
               Free
             </span>
           </h1>
@@ -432,9 +432,9 @@ function HomeContent() {
                   .getElementById("matches-feed")
                   ?.scrollIntoView({ behavior: "smooth" });
               }}
-              className="w-full sm:w-auto cursor-pointer px-5 py-3 bg-zim-green hover:bg-opacity-95 text-white font-display text-xs font-semibold rounded-xl shadow-xs hover:shadow-lg hover:shadow-zim-green/10 flex items-center justify-center gap-2 transition-all"
+              className="w-full sm:w-auto cursor-pointer px-5 py-3 bg-brand-green hover:bg-brand-green-hover text-neutral-950 font-display text-xs font-black rounded-xl shadow-md shadow-brand-green/20 hover:shadow-lg hover:shadow-brand-green/30 flex items-center justify-center gap-2 transition-all"
             >
-              <Play className="w-3.5 h-3.5 fill-white" />
+              <Play className="w-3.5 h-3.5 fill-neutral-950 text-neutral-950" />
               Watch Live Streams ({liveCount})
             </button>
             <button
@@ -444,7 +444,7 @@ function HomeContent() {
                   .getElementById("matches-feed")
                   ?.scrollIntoView({ behavior: "smooth" });
               }}
-              className="w-full sm:w-auto cursor-pointer px-5 py-3 bg-white border border-neutral-200 text-neutral-700 hover:text-neutral-900 hover:border-neutral-300 font-display text-xs font-semibold rounded-xl flex items-center justify-center gap-2 transition-all"
+              className="w-full sm:w-auto cursor-pointer px-5 py-3 bg-white border border-neutral-200 text-neutral-700 hover:text-neutral-950 hover:border-neutral-300 font-display text-xs font-semibold rounded-xl flex items-center justify-center gap-2 transition-all"
             >
               <Calendar className="w-3.5 h-3.5" />
               View Matches Today ({todayCount})
@@ -453,18 +453,18 @@ function HomeContent() {
         </div>
 
         {/* Brand visual showcase */}
-        <div className="hidden md:flex flex-col items-center justify-center bg-neutral-50 border border-neutral-100 p-6 rounded-2xl w-full max-w-[280px] shrink-0 text-center relative z-10 card-glow">
+        <div className="hidden md:flex flex-col items-center justify-center bg-white border border-neutral-200/80 p-6 rounded-2xl w-full max-w-[280px] shrink-0 text-center relative z-10 card-glow border-t-2 border-t-brand-green shadow-xs">
           <p className="text-[10px] font-mono font-bold text-neutral-400 uppercase tracking-widest mb-1">
             NETWORK STATUS
           </p>
-          <div className="flex items-center gap-1.5 text-zim-green font-display font-bold text-xs">
+          <div className="flex items-center gap-2 text-neutral-900 font-display font-bold text-xs">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-zim-green opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-zim-green"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-green opacity-80"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-green"></span>
             </span>
             HD STREAMS ONLINE
           </div>
-          <div className="w-full h-[1px] bg-neutral-200 my-4" />
+          <div className="w-full h-[1px] bg-neutral-100 my-4" />
           <p className="text-neutral-500 text-xs leading-relaxed">
             Data compression protocol active to reduce bandwidth usage on mobile
             bundles.
@@ -479,8 +479,10 @@ function HomeContent() {
           {/* Filtering and headings header */}
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-3">
-              <h2 className="font-display font-bold text-xl md:text-2xl text-neutral-950 flex items-center gap-2">
-                <Tv className="w-5 h-5 text-zim-green" />
+              <h2 className="font-display font-extrabold text-xl md:text-2xl text-neutral-950 flex items-center gap-2.5">
+                <span className="w-7 h-7 rounded-lg bg-neutral-950 text-brand-green flex items-center justify-center shadow-xs shrink-0">
+                  <Tv className="w-4 h-4 text-brand-green" />
+                </span>
                 Leagues
               </h2>
 
@@ -495,7 +497,7 @@ function HomeContent() {
                       onClick={() => setActiveCategory(league)}
                       className={`shrink-0 cursor-pointer px-3 py-1.5 text-[10px] md:text-xs font-bold rounded-lg font-display tracking-wide transition-all flex items-center gap-1.5 ${
                         activeCategory === league
-                          ? "bg-zim-black text-white shadow-xs"
+                          ? "bg-brand-green text-neutral-950 border border-brand-green shadow-xs font-extrabold"
                           : "bg-white hover:bg-neutral-100 text-neutral-600 border border-neutral-200"
                       }`}
                     >
@@ -520,17 +522,19 @@ function HomeContent() {
             <div className="flex flex-col gap-2 mt-1">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 text-neutral-800">
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="w-4 h-4 text-zim-green" />
-                    <span className="font-display font-bold text-xs uppercase tracking-wider text-neutral-700">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-md bg-neutral-950 text-brand-green flex items-center justify-center shadow-2xs shrink-0">
+                      <Calendar className="w-3.5 h-3.5 text-brand-green" />
+                    </span>
+                    <span className="font-display font-bold text-xs uppercase tracking-wider text-neutral-800">
                       Browse Match Calendar
                     </span>
                   </div>
 
                   {/* Modern Custom-Styled Calendar Date Picker */}
                   <div className="relative flex items-center">
-                    <label id="date-picker-label" className="cursor-pointer flex items-center gap-1 px-3 py-1 text-[11px] font-bold text-zim-green bg-zim-green/5 border border-zim-green/20 rounded-xl hover:bg-zim-green/10 transition-all select-none">
-                      <Calendar className="w-3 h-3 text-zim-green" />
+                    <label id="date-picker-label" className="cursor-pointer flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold text-neutral-950 bg-brand-green/15 border border-brand-green/40 rounded-xl hover:bg-brand-green/25 transition-all select-none">
+                      <Calendar className="w-3.5 h-3.5 text-neutral-950" />
                       <span>{datePickerLabel}</span>
                       <input
                         id="date-picker-input"
@@ -583,19 +587,19 @@ function HomeContent() {
                         data-is-today={d.isToday ? "true" : "false"}
                         className={`snap-center shrink-0 flex flex-col items-center justify-center min-w-[70px] h-[78px] rounded-2xl transition-all border duration-200 cursor-pointer ${
                           isSelected
-                            ? "bg-zim-green text-white border-zim-green shadow-md shadow-zim-green/20 scale-[1.02] font-semibold"
+                            ? "bg-brand-green text-neutral-950 border-brand-green shadow-md shadow-brand-green/20 scale-[1.02] font-bold"
                             : d.isToday
-                              ? "bg-zim-green/5 text-zim-green border-zim-green/30 hover:bg-zim-green/10"
+                              ? "bg-brand-green/10 text-neutral-950 border-brand-green/40 hover:bg-brand-green/20 font-bold"
                               : "bg-white hover:bg-neutral-50 text-neutral-600 border-neutral-200/80 hover:border-neutral-300"
                         }`}
                       >
-                        <span className="text-[10px] font-bold uppercase tracking-wider opacity-85">
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${isSelected || d.isToday ? "text-neutral-950" : "opacity-85"}`}>
                           {d.isToday ? "Today" : d.dayName}
                         </span>
-                        <span className="text-base font-display font-black leading-none my-1">
+                        <span className={`text-base font-display font-black leading-none my-1 ${isSelected || d.isToday ? "text-neutral-950" : ""}`}>
                           {d.dateNumber}
                         </span>
-                        <span className="text-[9px] font-semibold uppercase tracking-wider opacity-60">
+                        <span className={`text-[9px] font-semibold uppercase tracking-wider ${isSelected ? "text-neutral-900" : d.isToday ? "text-neutral-700" : "opacity-60"}`}>
                           {d.monthName}
                         </span>
                       </button>
@@ -612,7 +616,7 @@ function HomeContent() {
                   onClick={() => setActiveTab("LIVE")}
                   className={`flex-1 min-w-[max-content] px-3 py-3 text-[10px] md:text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     activeTab === "LIVE"
-                      ? "bg-neutral-50 text-zim-red shadow-xs border border-neutral-200"
+                      ? "bg-neutral-900 text-white shadow-xs border border-neutral-900"
                       : "text-neutral-500 hover:text-neutral-800"
                   }`}
                 >
@@ -627,11 +631,11 @@ function HomeContent() {
                   onClick={() => setActiveTab("TODAY")}
                   className={`flex-1 min-w-[max-content] px-3 py-3 text-[10px] md:text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     activeTab === "TODAY"
-                      ? "bg-neutral-50 text-zim-green shadow-xs border border-neutral-200"
+                      ? "bg-brand-green text-neutral-950 shadow-xs border border-brand-green font-extrabold"
                       : "text-neutral-500 hover:text-neutral-800"
                   }`}
                 >
-                  <Flame className="w-3.5 h-3.5 text-zim-yellow" />
+                  <Flame className={`w-3.5 h-3.5 ${activeTab === "TODAY" ? "text-neutral-950 fill-neutral-950/20" : "text-zim-yellow"}`} />
                   TODAY ({todayCount})
                 </button>
 
@@ -639,7 +643,7 @@ function HomeContent() {
                   onClick={() => setActiveTab("FINISHED")}
                   className={`flex-1 min-w-[max-content] px-3 py-3 text-[10px] md:text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     activeTab === "FINISHED"
-                      ? "bg-neutral-50 text-neutral-800 shadow-xs border border-neutral-200"
+                      ? "bg-neutral-900 text-white shadow-xs border border-neutral-900"
                       : "text-neutral-500 hover:text-neutral-800"
                   }`}
                 >
@@ -684,7 +688,7 @@ function HomeContent() {
                         // Grouped by league on Today's tab
                         visibleGroupedMatches.map((group) => (
                           <div key={group.leagueName} className="space-y-3">
-                            <div className="flex items-center gap-2 px-1 py-1">
+                            <div className="flex items-center gap-2 px-1 py-1 border-l-3 border-brand-green pl-2.5">
                               {group.leagueLogoUrl ? (
                                 <Image
                                   src={group.leagueLogoUrl}
@@ -699,10 +703,10 @@ function HomeContent() {
                                   {group.leagueName.charAt(0)}
                                 </div>
                               )}
-                              <h3 className="font-display font-bold text-xs md:text-sm text-neutral-800 tracking-tight uppercase">
+                              <h3 className="font-display font-bold text-xs md:text-sm text-neutral-900 tracking-tight uppercase">
                                 {group.leagueName}
                               </h3>
-                              <span className="text-[10px] font-mono font-bold bg-neutral-100 text-neutral-500 px-2 py-0.5 rounded-full border border-neutral-200/50">
+                              <span className="text-[10px] font-mono font-bold bg-brand-green/15 text-neutral-950 px-2 py-0.5 rounded-full border border-brand-green/30">
                                 {group.matches.length}
                               </span>
                             </div>
@@ -757,7 +761,7 @@ function HomeContent() {
                       {activeCategory !== "ALL" && (
                         <button
                           onClick={() => setActiveCategory("ALL")}
-                          className="mt-2 text-xs font-display font-semibold text-zim-green hover:underline cursor-pointer"
+                          className="mt-2 text-xs font-display font-bold text-neutral-900 hover:text-black underline decoration-brand-green decoration-2 underline-offset-2 cursor-pointer"
                         >
                           Reset filters to view all matches
                         </button>
@@ -777,8 +781,10 @@ function HomeContent() {
           {/* Sidebar Tabs: League Table & Player Stats */}
           <div className="bg-white border border-neutral-200/60 rounded-3xl p-5 shadow-xs">
             <div className="flex border-b border-neutral-100 pb-2 mb-4 justify-between items-center">
-              <h3 className="font-display font-bold text-sm text-neutral-950 flex items-center gap-1.5">
-                <ListOrdered className="w-4 h-4 text-zim-green" />
+              <h3 className="font-display font-bold text-sm text-neutral-950 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-md bg-neutral-950 text-brand-green flex items-center justify-center shadow-2xs shrink-0">
+                  <ListOrdered className="w-3.5 h-3.5 text-brand-green" />
+                </span>
                 Schedules & Stats
               </h3>
 
@@ -869,12 +875,12 @@ function HomeContent() {
                                 {team.form.map((f: string, idx: number) => (
                                   <span
                                     key={idx}
-                                    className={`w-4 h-4 rounded text-[9px] font-bold inline-flex items-center justify-center font-mono text-white ${
+                                    className={`w-4 h-4 rounded text-[9px] font-black inline-flex items-center justify-center font-mono ${
                                       f === "W"
-                                        ? "bg-black"
+                                        ? "bg-brand-green text-neutral-950"
                                         : f === "D"
                                           ? "bg-[#FFD100] text-neutral-800"
-                                          : "bg-[#D62828]"
+                                          : "bg-[#D62828] text-white"
                                     }`}
                                   >
                                     {f}
@@ -887,13 +893,13 @@ function HomeContent() {
                       </tbody>
                     </table>
 
-                    <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between text-[11px] text-black font-semibold">
+                    <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between text-[11px] text-neutral-800 font-semibold">
                       <span>Major League Standings</span>
                       <Link
-                        href="/"
-                        className="hover:underline flex items-center gap-0.5"
+                        href="/league"
+                        className="hover:text-brand-green-dark hover:underline flex items-center gap-0.5"
                       >
-                        View Match Feeds &rsaquo;
+                        View Official Tables &rsaquo;
                       </Link>
                     </div>
                   </>

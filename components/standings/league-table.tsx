@@ -30,9 +30,11 @@ export function LeagueTable({
       <div className="space-y-8">
         {Object.entries(groups).map(([groupName, groupRows]) => (
           <div key={groupName} className="bg-white rounded-2xl border border-neutral-200/80 shadow-xs overflow-hidden">
-            <div className="bg-neutral-50/80 px-5 py-3.5 border-b border-neutral-200/80 flex items-center justify-between">
+            <div className="bg-neutral-50/80 px-5 py-3.5 border-b border-neutral-200/80 flex items-center justify-between border-l-3 border-brand-green">
               <h3 className="font-display font-extrabold text-sm text-neutral-900 flex items-center gap-2">
-                <Trophy className="w-4 h-4 text-[#009739]" />
+                <span className="w-5 h-5 rounded-md bg-neutral-950 text-brand-green flex items-center justify-center shadow-2xs shrink-0">
+                  <Trophy className="w-3 h-3 text-brand-green" />
+                </span>
                 <span>{groupName}</span>
               </h3>
               <span className="text-[11px] font-mono text-neutral-500">
@@ -58,7 +60,7 @@ export function LeagueTable({
     return (
       <div className="bg-white rounded-2xl border border-neutral-200/80 p-8 md:p-12 text-center space-y-4 shadow-xs">
         <div className="w-14 h-14 bg-neutral-50 rounded-2xl flex items-center justify-center mx-auto border border-neutral-200 text-neutral-400">
-          <Trophy className="w-7 h-7 text-[#009739]" />
+          <Trophy className="w-7 h-7 text-neutral-800" />
         </div>
         <div className="space-y-1.5 max-w-md mx-auto">
           <h3 className="font-display font-extrabold text-neutral-900 text-base">
@@ -85,7 +87,7 @@ export function LeagueTable({
           onClick={() => setShowAdvancedXG(!showAdvancedXG)}
           className={`cursor-pointer px-3 py-1.5 rounded-lg text-xs font-display font-bold flex items-center gap-1.5 transition-all border ${
             showAdvancedXG
-              ? 'bg-[#009739] text-white border-[#009739] shadow-xs'
+              ? 'bg-brand-green text-neutral-950 border-brand-green shadow-xs'
               : 'bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-50'
           }`}
         >

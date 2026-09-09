@@ -93,7 +93,7 @@ export default async function LeagueStandingsPage({ params }: PageProps) {
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-[10px] uppercase tracking-wider text-[#009739] bg-[#009739]/10 px-2 py-0.5 rounded">
+                  <span className="font-mono font-bold text-[10px] uppercase tracking-wider text-neutral-950 bg-brand-green/20 border border-brand-green/40 px-2 py-0.5 rounded">
                     {league.country}
                   </span>
                   <span className="font-mono text-[10px] text-neutral-400">
@@ -109,7 +109,7 @@ export default async function LeagueStandingsPage({ params }: PageProps) {
             {/* Quick stats or status pill */}
             <div className="flex items-center gap-3">
               <div className="bg-neutral-50 px-3.5 py-2 rounded-xl border border-neutral-200/60 text-xs flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#009739] animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-brand-green animate-pulse" />
                 <span className="font-mono font-bold text-neutral-700">Auto-Updated Table</span>
               </div>
             </div>
@@ -129,7 +129,7 @@ export default async function LeagueStandingsPage({ params }: PageProps) {
                     href={`/league/${l.slug}`}
                     className={`px-3 py-1.5 rounded-lg text-xs font-display font-bold flex items-center gap-1.5 transition-all ${
                       isActive
-                        ? 'bg-neutral-900 text-white shadow-3xs'
+                        ? 'bg-brand-green text-neutral-950 border border-brand-green shadow-sm font-extrabold'
                         : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 hover:text-neutral-900'
                     }`}
                   >

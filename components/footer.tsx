@@ -30,7 +30,7 @@ export default function Footer() {
             <div className="flex items-center gap-3 sm:border-l sm:border-neutral-800 sm:pl-4">
               <a
                 href={SITE_CONFIG.supportEmailHref}
-                className="p-1.5 text-white hover:text-[#39FF00] hover:bg-white/10 rounded-lg transition-all flex items-center justify-center"
+                className="p-1.5 text-white hover:text-brand-green hover:bg-white/10 rounded-lg transition-all flex items-center justify-center"
                 aria-label="Email Support"
                 title="Email Support"
               >
@@ -51,37 +51,37 @@ export default function Footer() {
 
           {/* Flat Links List */}
           <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold text-white">
-            <Link href="/" className="hover:text-[#39FF00] transition-colors">
+            <Link href="/" className="hover:text-brand-green transition-colors">
               Home
             </Link>
-            <Link href="/live" className="hover:text-[#39FF00] transition-colors">
+            <Link href="/live" className="hover:text-brand-green transition-colors">
               Today&apos;s Matches
             </Link>
-            <Link href="/?tab=UPCOMING" className="hover:text-[#39FF00] transition-colors">
+            <Link href="/?tab=UPCOMING" className="hover:text-brand-green transition-colors">
               Upcoming Matches
             </Link>
-            <Link href="/league" className="hover:text-[#39FF00] transition-colors">
+            <Link href="/league" className="hover:text-brand-green transition-colors">
               League Tables
             </Link>
-            <Link href="/worldcup" className="hover:text-[#39FF00] transition-colors">
+            <Link href="/worldcup" className="hover:text-brand-green transition-colors">
               World Cup
             </Link>
-            <Link href="/about" className="hover:text-[#39FF00] transition-colors">
+            <Link href="/about" className="hover:text-brand-green transition-colors">
               About us
             </Link>
-            <Link href="/contact" className="hover:text-[#39FF00] transition-colors">
+            <Link href="/contact" className="hover:text-brand-green transition-colors">
               Contact us
             </Link>
-            <Link href="/privacy" className="hover:text-[#39FF00] transition-colors">
+            <Link href="/privacy" className="hover:text-brand-green transition-colors">
               Privacy Policy
             </Link>
-            <Link href="/terms" className="hover:text-[#39FF00] transition-colors">
+            <Link href="/terms" className="hover:text-brand-green transition-colors">
               Terms &amp; Conditions
             </Link>
-            <Link href="/dmca" className="hover:text-[#39FF00] transition-colors">
+            <Link href="/dmca" className="hover:text-brand-green transition-colors">
               DMCA Policy
             </Link>
-            <Link href="/sitemap.xml" className="hover:text-[#39FF00] transition-colors">
+            <Link href="/sitemap.xml" className="hover:text-brand-green transition-colors">
               Sitemap
             </Link>
           </div>

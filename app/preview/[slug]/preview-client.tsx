@@ -427,7 +427,7 @@ export default function MatchPreviewClient({
                   {/* STREAM PLAYER LAUNCHER CALLOUT */}
                   <div className="bg-neutral-50/50 border border-neutral-100 rounded-2xl p-4 md:p-5 shadow-xs space-y-4">
                     <h3 className="font-display font-extrabold text-sm text-neutral-950 pb-2 border-b border-neutral-100 flex items-center gap-1.5">
-                      <Tv className="w-4 h-4 text-[#009739]" />
+                      <Tv className="w-4 h-4 text-neutral-900" />
                       Live Stream Links
                     </h3>
 
@@ -437,21 +437,21 @@ export default function MatchPreviewClient({
                           <button
                             key={srv.id}
                             onClick={(e) => handlePlayClick(e, srv.id)}
-                            className="w-full group cursor-pointer py-3.5 px-4 bg-[#009739] text-white hover:bg-opacity-95 rounded-xl font-display text-xs font-extrabold flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-500/10 hover:shadow-lg hover:shadow-emerald-500/20 mb-2"
+                            className="w-full group cursor-pointer py-3.5 px-4 bg-brand-green text-neutral-950 hover:bg-brand-green-hover rounded-xl font-display text-xs font-black flex items-center justify-center gap-2 transition-all shadow-md shadow-brand-green/20 hover:shadow-lg hover:shadow-brand-green/30 mb-2"
                           >
-                            <Tv className="w-4 h-4 fill-white/10" />
+                            <Tv className="w-4 h-4 fill-neutral-950/20 text-neutral-950" />
                             <span>▶️ Play {srv.name.replace(' (HD)', '').replace(' (FHD)', '') || `Server ${idx + 1}`}</span>
-                            <ChevronRight className="w-3.5 h-3.5 text-white group-hover:translate-x-0.5 transition-transform" />
+                            <ChevronRight className="w-3.5 h-3.5 text-neutral-950 group-hover:translate-x-0.5 transition-transform" />
                           </button>
                         ))
                       ) : (
                         <button 
                           onClick={(e) => handlePlayClick(e)}
-                          className="w-full group cursor-pointer py-3.5 px-4 bg-[#009739] text-white hover:bg-opacity-95 rounded-xl font-display text-xs font-extrabold flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-500/10 hover:shadow-lg hover:shadow-emerald-500/20"
+                          className="w-full group cursor-pointer py-3.5 px-4 bg-brand-green text-neutral-950 hover:bg-brand-green-hover rounded-xl font-display text-xs font-black flex items-center justify-center gap-2 transition-all shadow-md shadow-brand-green/20 hover:shadow-lg hover:shadow-brand-green/30"
                         >
-                          <Tv className="w-4 h-4 fill-white/10" />
+                          <Tv className="w-4 h-4 fill-neutral-950/20 text-neutral-950" />
                           <span>▶️ PlayMatch Live</span>
-                          <ChevronRight className="w-3.5 h-3.5 text-white group-hover:translate-x-0.5 transition-transform" />
+                          <ChevronRight className="w-3.5 h-3.5 text-neutral-950 group-hover:translate-x-0.5 transition-transform" />
                         </button>
                       )}
                     </div>

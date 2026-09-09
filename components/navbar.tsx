@@ -78,17 +78,17 @@ export default function Navbar() {
           {/* Desktop navigation and Hamburger Trigger */}
           <div className="flex items-center gap-6">
             <nav className="hidden md:flex items-center gap-6 text-sm font-display font-bold text-neutral-300">
-              <Link href="/" className="hover:text-white transition-colors py-1">
+              <Link href="/" className="hover:text-brand-green transition-colors py-1">
                 Home
               </Link>
-              <Link href="/live" className="hover:text-white transition-colors py-1 flex items-center gap-1.5">
+              <Link href="/live" className="hover:text-brand-green transition-colors py-1 flex items-center gap-1.5">
                 <span className="relative flex h-1.5 w-1.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-zim-red opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-zim-red"></span>
                 </span>
                 Live Streaming
               </Link>
-              <Link href="/league" className="hover:text-white transition-colors py-1">
+              <Link href="/league" className="hover:text-brand-green transition-colors py-1">
                 Standings
               </Link>
             </nav>
@@ -96,7 +96,7 @@ export default function Navbar() {
             {/* Unified Hamburger Menu Button */}
             <button
               onClick={() => setIsDrawerOpen(true)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 hover:border-neutral-700 rounded-xl transition-all font-display font-bold text-xs text-neutral-200 hover:text-white cursor-pointer"
+              className="flex items-center gap-2 px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 hover:border-brand-green/40 rounded-xl transition-all font-display font-bold text-xs text-neutral-200 hover:text-brand-green cursor-pointer"
             >
               <Menu className="w-5 h-5 text-neutral-300" />
               <span className="hidden sm:inline">Menu</span>
@@ -132,7 +132,7 @@ export default function Navbar() {
                 <Link
                   href="/"
                   onClick={() => setIsDrawerOpen(false)}
-                  className="flex items-center gap-4 px-4 py-3.5 bg-neutral-900 text-white rounded-xl font-medium text-[15px] shadow-[0_1px_2px_rgba(0,0,0,0.01)]"
+                  className="flex items-center gap-4 px-4 py-3.5 bg-neutral-950 text-brand-green border border-neutral-800 rounded-xl font-bold text-[15px] shadow-sm"
                 >
                   <Home className="w-[1.1rem] h-[1.1rem] stroke-[2.5]" />
                   <span>Matches</span>
@@ -141,9 +141,9 @@ export default function Navbar() {
                 <Link
                   href="/league"
                   onClick={() => setIsDrawerOpen(false)}
-                  className="flex items-center gap-4 px-4 py-3.5 text-slate-600 hover:bg-neutral-50 rounded-xl font-medium text-[15px] transition-colors"
+                  className="flex items-center gap-4 px-4 py-3.5 text-slate-700 hover:bg-neutral-50 rounded-xl font-medium text-[15px] transition-colors group"
                 >
-                  <Trophy className="w-5 h-5 stroke-[2] text-[#009739]" />
+                  <Trophy className="w-5 h-5 stroke-[2] text-neutral-800 group-hover:text-brand-green" />
                   <span>League Tables</span>
                 </Link>
 

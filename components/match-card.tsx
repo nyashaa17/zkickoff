@@ -172,7 +172,8 @@ const MatchCountdown = React.memo(function MatchCountdown({ match }: { match: Ma
   return (
     <div className="flex items-center gap-1.5 text-[10px]">
       <span className="text-neutral-400">Starts in:</span>
-      <span className="font-mono font-bold text-neutral-700 bg-neutral-100 px-1.5 py-0.5 rounded-md border border-neutral-200/50 tabular-nums">
+      <span className="font-mono font-bold text-neutral-950 bg-brand-green/15 border border-brand-green/35 px-1.5 py-0.5 rounded-md tabular-nums flex items-center gap-1">
+        <span className="w-1.5 h-1.5 rounded-full bg-brand-green animate-pulse inline-block shrink-0"></span>
         {timeLeft || '00:00'}
       </span>
     </div>
@@ -219,7 +220,7 @@ export default function MatchCard({ match }: MatchCardProps) {
       className="group"
     >
       <Link href={`/preview/${match.slug}`} className="block">
-        <div className="bg-white border border-neutral-200 rounded-2xl p-4 flex flex-col gap-3 transition-colors hover:border-neutral-300 shadow-sm">
+        <div className="bg-white border border-neutral-200 rounded-2xl p-4 flex flex-col gap-3 transition-colors hover:border-brand-green/50 shadow-sm">
           
           {/* Top Line: League Name & Countdown Timer */}
           <div className="flex items-center justify-between text-[11px] text-neutral-500 font-sans pb-2 border-b border-neutral-100 border-dashed">
@@ -255,6 +256,8 @@ export default function MatchCard({ match }: MatchCardProps) {
                   ? 'border-red-100 text-zim-red bg-red-50' 
                   : match.status === 'FINISHED'
                   ? 'border-neutral-200 text-neutral-600 bg-neutral-100'
+                  : isToday
+                  ? 'border-brand-green/40 text-neutral-950 bg-brand-green/15 font-bold'
                   : 'border-neutral-200 text-neutral-600 bg-neutral-50'
               }`}>
                 {isLive ? 'LIVE' : match.status === 'FINISHED' ? 'ENDED' : isToday ? 'TODAY' : match.dateString?.split(' ')[0] || 'TBD'}
