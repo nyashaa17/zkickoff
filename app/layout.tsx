@@ -51,11 +51,9 @@ export const metadata: Metadata = {
     icon: [
       { url: '/ZKickoff_icon.svg', type: 'image/svg+xml' },
       { url: '/ZKickoff_icon-512x512.png', type: 'image/png', sizes: '512x512' },
-      { url: '/favicon-96x96.png', type: 'image/png', sizes: '96x96' },
-      { url: '/favicon.ico', sizes: 'any' },
     ],
     apple: [
-      { url: '/apple-touch-icon.png', sizes: '180x180' },
+      { url: '/ZKickoff_icon-512x512.png', sizes: '512x512' },
     ],
   },
 };
@@ -65,7 +63,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
     <html lang="en" className={`${inter.variable} ${poppins.variable}`} suppressHydrationWarning>
       <head>
         <link rel="icon" type="image/svg+xml" href="/ZKickoff_icon.svg" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" href="/ZKickoff_icon-512x512.png" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -118,7 +116,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
                 "name": "ZimKickOff",
                 "logo": {
                   "@type": "ImageObject",
-                  "url": "https://zimkickoff.co.zw/apple-touch-icon.png"
+                  "url": "https://zimkickoff.co.zw/ZKickoff_icon-512x512.png"
                 }
               },
               "brand": {

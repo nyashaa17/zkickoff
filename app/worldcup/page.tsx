@@ -45,7 +45,7 @@ export default async function WorldCupPage({ searchParams }: { searchParams: Pro
       "name": "ZimKickOff",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://zimkickoff.co.zw/apple-touch-icon.png"
+        "url": "https://zimkickoff.co.zw/ZKickoff_icon-512x512.png"
       }
     }
   };

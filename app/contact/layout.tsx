@@ -28,7 +28,7 @@ export default function ContactLayout({ children }: { children: React.ReactNode 
       "email": SITE_CONFIG.supportEmail,
       "logo": {
         "@type": "ImageObject",
-        "url": `${SITE_CONFIG.baseUrl}/apple-touch-icon.png`
+        "url": `${SITE_CONFIG.baseUrl}/ZKickoff_icon-512x512.png`
       }
     }
   };

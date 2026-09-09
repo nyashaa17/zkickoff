@@ -61,7 +61,7 @@ export default async function HomePage() {
       "name": "ZimKickOff",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://zimkickoff.co.zw/apple-touch-icon.png"
+        "url": "https://zimkickoff.co.zw/ZKickoff_icon-512x512.png"
       }
     },
     "potentialAction": {

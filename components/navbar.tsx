@@ -60,7 +60,7 @@ export default function Navbar() {
 
   return (
     <div className="relative">
-      <header className="w-full bg-white md:bg-white/95 border-b border-neutral-100 shadow-xs md:backdrop-blur-md [transform:translate3d(0,0,0)] [will-change:transform]">
+      <header className="w-full bg-black md:bg-black/95 border-b border-neutral-800 shadow-xs md:backdrop-blur-md [transform:translate3d(0,0,0)] [will-change:transform]">
         <div className="w-full max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between gap-4">
           {/* Logo */}
           <Link href="/" className="flex items-center shrink-0 select-none" aria-label="ZKickoff">
@@ -77,18 +77,18 @@ export default function Navbar() {
 
           {/* Desktop navigation and Hamburger Trigger */}
           <div className="flex items-center gap-6">
-            <nav className="hidden md:flex items-center gap-6 text-sm font-display font-bold text-neutral-600">
-              <Link href="/" className="hover:text-zim-green transition-colors py-1">
+            <nav className="hidden md:flex items-center gap-6 text-sm font-display font-bold text-neutral-300">
+              <Link href="/" className="hover:text-white transition-colors py-1">
                 Home
               </Link>
-              <Link href="/live" className="hover:text-zim-green transition-colors py-1 flex items-center gap-1.5">
+              <Link href="/live" className="hover:text-white transition-colors py-1 flex items-center gap-1.5">
                 <span className="relative flex h-1.5 w-1.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-zim-red opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-zim-red"></span>
                 </span>
                 Live Streaming
               </Link>
-              <Link href="/league" className="hover:text-zim-green transition-colors py-1">
+              <Link href="/league" className="hover:text-white transition-colors py-1">
                 Standings
               </Link>
             </nav>
@@ -96,9 +96,9 @@ export default function Navbar() {
             {/* Unified Hamburger Menu Button */}
             <button
               onClick={() => setIsDrawerOpen(true)}
-              className="flex items-center gap-2 px-3 py-1.5 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200/60 hover:border-neutral-300 rounded-xl transition-all font-display font-bold text-xs text-neutral-700 cursor-pointer"
+              className="flex items-center gap-2 px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 hover:border-neutral-700 rounded-xl transition-all font-display font-bold text-xs text-neutral-200 hover:text-white cursor-pointer"
             >
-              <Menu className="w-5 h-5 text-neutral-600" />
+              <Menu className="w-5 h-5 text-neutral-300" />
               <span className="hidden sm:inline">Menu</span>
             </button>
           </div>

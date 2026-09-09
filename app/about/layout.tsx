@@ -26,7 +26,7 @@ export default function AboutLayout({ children }: { children: React.ReactNode })
       "name": "ZimKickOff",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://zimkickoff.co.zw/apple-touch-icon.png"
+        "url": "https://zimkickoff.co.zw/ZKickoff_icon-512x512.png"
       }
     }
   };
