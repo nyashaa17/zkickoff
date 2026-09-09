@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import { Search, Play, Tv, Calendar, X, Menu, Clock, SlidersHorizontal, ChevronRight, Trophy, Sparkles, Home, Shield, FileText, Info, Mail, Newspaper } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Match } from '@/lib/matches-data';
-import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function Navbar() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -76,8 +75,8 @@ export default function Navbar() {
             />
           </Link>
 
-          {/* Desktop navigation, Theme Toggle, and Hamburger Trigger */}
-          <div className="flex items-center gap-3 md:gap-6">
+          {/* Desktop navigation and Hamburger Trigger */}
+          <div className="flex items-center gap-6">
             <nav className="hidden md:flex items-center gap-6 text-sm font-display font-bold text-neutral-300">
               <Link href="/" className="hover:text-brand-green transition-colors py-1">
                 Home
@@ -93,9 +92,6 @@ export default function Navbar() {
                 Standings
               </Link>
             </nav>
-
-            {/* Dark Mode Toggle */}
-            <ThemeToggle />
 
             {/* Unified Hamburger Menu Button */}
             <button
@@ -129,10 +125,10 @@ export default function Navbar() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.98 }}
               transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-              className="absolute top-[64px] right-4 md:right-6 w-[calc(100%-32px)] md:w-[320px] bg-white dark:bg-[#141417] z-50 shadow-xl rounded-xl flex flex-col overflow-hidden border border-neutral-100 dark:border-neutral-800"
+              className="absolute top-[64px] right-4 md:right-6 w-[calc(100%-32px)] md:w-[320px] bg-white z-50 shadow-xl rounded-xl flex flex-col overflow-hidden border border-neutral-100"
             >
               {/* Dynamic Scrollable Content */}
-              <div className="flex-1 overflow-y-auto px-2 py-3 space-y-1 bg-white dark:bg-[#141417] max-h-[calc(100vh-100px)]">
+              <div className="flex-1 overflow-y-auto px-2 py-3 space-y-1 bg-white max-h-[calc(100vh-100px)]">
                 <Link
                   href="/"
                   onClick={() => setIsDrawerOpen(false)}
@@ -145,16 +141,16 @@ export default function Navbar() {
                 <Link
                   href="/league"
                   onClick={() => setIsDrawerOpen(false)}
-                  className="flex items-center gap-4 px-4 py-3.5 text-slate-700 dark:text-neutral-200 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-xl font-medium text-[15px] transition-colors group"
+                  className="flex items-center gap-4 px-4 py-3.5 text-slate-700 hover:bg-neutral-50 rounded-xl font-medium text-[15px] transition-colors group"
                 >
-                  <Trophy className="w-5 h-5 stroke-[2] text-neutral-800 dark:text-neutral-200 group-hover:text-brand-green" />
+                  <Trophy className="w-5 h-5 stroke-[2] text-neutral-800 group-hover:text-brand-green" />
                   <span>League Tables</span>
                 </Link>
 
                 <Link
                   href="/"
                   onClick={() => setIsDrawerOpen(false)}
-                  className="flex items-center gap-4 px-4 py-3.5 text-slate-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-xl font-medium text-[15px] transition-colors"
+                  className="flex items-center gap-4 px-4 py-3.5 text-slate-600 hover:bg-neutral-50 rounded-xl font-medium text-[15px] transition-colors"
                 >
                   <Newspaper className="w-5 h-5 stroke-[2]" />
                   <span>Articles</span>
@@ -163,7 +159,7 @@ export default function Navbar() {
                 <Link
                   href="/contact"
                   onClick={() => setIsDrawerOpen(false)}
-                  className="flex items-center gap-4 px-4 py-3.5 text-slate-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-xl font-medium text-[15px] transition-colors"
+                  className="flex items-center gap-4 px-4 py-3.5 text-slate-600 hover:bg-neutral-50 rounded-xl font-medium text-[15px] transition-colors"
                 >
                   <Mail className="w-5 h-5 stroke-[2]" />
                   <span>Contact us</span>
@@ -172,7 +168,7 @@ export default function Navbar() {
                 <Link
                   href="/stream"
                   onClick={() => setIsDrawerOpen(false)}
-                  className="flex items-center gap-4 px-4 py-3.5 text-slate-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-xl font-medium text-[15px] transition-colors"
+                  className="flex items-center gap-4 px-4 py-3.5 text-slate-600 hover:bg-neutral-50 rounded-xl font-medium text-[15px] transition-colors"
                 >
                   <Tv className="w-5 h-5 stroke-[2]" />
                   <span>PL Streams</span>
@@ -181,20 +177,20 @@ export default function Navbar() {
                 <Link
                   href="/worldcup"
                   onClick={() => setIsDrawerOpen(false)}
-                  className="flex items-center gap-4 px-4 py-3.5 text-slate-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-xl font-medium text-[15px] transition-colors"
+                  className="flex items-center gap-4 px-4 py-3.5 text-slate-600 hover:bg-neutral-50 rounded-xl font-medium text-[15px] transition-colors"
                 >
                   <Trophy className="w-5 h-5 stroke-[2]" />
                   <span>World Cup 2026</span>
                 </Link>
 
                 <div className="py-2 px-1">
-                  <div className="h-px bg-neutral-100 dark:bg-neutral-800 w-full" />
+                  <div className="h-px bg-neutral-100 w-full" />
                 </div>
 
                 <Link
                   href="/privacy"
                   onClick={() => setIsDrawerOpen(false)}
-                  className="flex items-center gap-4 px-4 py-3.5 text-slate-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-xl font-medium text-[15px] transition-colors"
+                  className="flex items-center gap-4 px-4 py-3.5 text-slate-600 hover:bg-neutral-50 rounded-xl font-medium text-[15px] transition-colors"
                 >
                   <Shield className="w-5 h-5 stroke-[2]" />
                   <span>Privacy Policy</span>
@@ -203,7 +199,7 @@ export default function Navbar() {
                 <Link
                   href="/terms"
                   onClick={() => setIsDrawerOpen(false)}
-                  className="flex items-center gap-4 px-4 py-3.5 text-slate-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-xl font-medium text-[15px] transition-colors"
+                  className="flex items-center gap-4 px-4 py-3.5 text-slate-600 hover:bg-neutral-50 rounded-xl font-medium text-[15px] transition-colors"
                 >
                   <FileText className="w-5 h-5 stroke-[2]" />
                   <span>Terms & Conditions</span>

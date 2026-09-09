@@ -39,31 +39,31 @@ export default function LivePage() {
       <Breadcrumbs items={[{ label: 'Live Broadcasts' }]} className="mb-6" />
       
       {/* Header section with live transmission pulse */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-neutral-200/50 dark:border-neutral-800 pb-6 mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-neutral-200/50 pb-6 mb-8">
         <div className="space-y-1.5 text-center md:text-left">
-          <div className="inline-flex items-center gap-1.5 bg-red-50 dark:bg-red-950/40 text-zim-red px-2.5 py-1 rounded-full text-xs font-bold border border-red-100 dark:border-red-900/50 uppercase tracking-widest scale-95 md:scale-100">
+          <div className="inline-flex items-center gap-1.5 bg-red-50 text-zim-red px-2.5 py-1 rounded-full text-xs font-bold border border-red-100 uppercase tracking-widest scale-95 md:scale-100">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-zim-red opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-zim-red animate-pulse"></span>
             </span>
             STREAM TRANSMITTING
           </div>
-          <h1 className="font-display font-extrabold text-2xl md:text-4xl tracking-tight text-neutral-900 dark:text-white mt-2">
+          <h1 className="font-display font-extrabold text-2xl md:text-4xl tracking-tight text-neutral-900 mt-2">
             Active Live Broadcasts
           </h1>
-          <p className="text-neutral-500 dark:text-neutral-400 font-medium text-xs md:text-sm max-w-xl">
+          <p className="text-neutral-500 font-medium text-xs md:text-sm max-w-xl">
             Never miss a goal. Access buffer-free streams optimized specifically for Zimbabwe network configurations. Fast loading, no subscriptions.
           </p>
         </div>
 
         {/* Status widget box */}
-        <div className="bg-white dark:bg-[#141417] border border-neutral-200/60 dark:border-neutral-800 p-4 rounded-2xl flex items-center gap-3 w-full md:w-auto shrink-0 shadow-3xs">
-          <div className="w-10 h-10 rounded-full bg-neutral-950 dark:bg-neutral-800 text-brand-green flex items-center justify-center shrink-0 shadow-xs">
+        <div className="bg-white border border-neutral-200/60 p-4 rounded-2xl flex items-center gap-3 w-full md:w-auto shrink-0 shadow-3xs">
+          <div className="w-10 h-10 rounded-full bg-neutral-950 text-brand-green flex items-center justify-center shrink-0 shadow-xs">
             <Wifi className="w-5 h-5 animate-bounce" />
           </div>
           <div className="text-left font-sans">
-            <p className="text-[10px] font-mono text-neutral-400 dark:text-neutral-500 uppercase tracking-wider font-bold">Zim Server Ping</p>
-            <p className="text-xs font-bold text-neutral-800 dark:text-neutral-200">12ms • Status Excellent</p>
+            <p className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider font-bold">Zim Server Ping</p>
+            <p className="text-xs font-bold text-neutral-800">12ms • Status Excellent</p>
           </div>
         </div>
       </div>
@@ -95,14 +95,14 @@ export default function LivePage() {
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
-                    className="bg-white dark:bg-[#141417] border border-neutral-200/60 dark:border-neutral-800 rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-4 my-4 shadow-3xs"
+                    className="bg-white border border-neutral-200/60 rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-4 my-4 shadow-3xs"
                   >
-                    <div className="w-14 h-14 rounded-full bg-[#FFFDF4] dark:bg-amber-950/30 border border-[#FFE1B5] dark:border-amber-900/50 flex items-center justify-center text-zim-yellow">
+                    <div className="w-14 h-14 rounded-full bg-[#FFFDF4] border border-[#FFE1B5] flex items-center justify-center text-zim-yellow">
                       <AlertCircle className="w-7 h-7" />
                     </div>
                     <div className="space-y-1.5 max-w-md mx-auto">
-                      <h3 className="font-display font-extrabold text-neutral-900 dark:text-white text-lg tracking-tight">No Matches Live Streaming Right Now</h3>
-                      <p className="text-neutral-500 dark:text-neutral-400 text-xs leading-relaxed">
+                      <h3 className="font-display font-extrabold text-neutral-900 text-lg tracking-tight">No Matches Live Streaming Right Now</h3>
+                      <p className="text-neutral-500 text-xs leading-relaxed">
                         There are currently no active football kickoffs broadcasting. Standard ZPSL kickoffs take place at 15:00 local harbor time. Please review scheduled fixtures for today.
                       </p>
                     </div>
@@ -112,8 +112,8 @@ export default function LivePage() {
                         <Home className="w-4 h-4" />
                         View Live Schedules
                       </Link>
-                      <Link href="/" className="px-5 py-2.5 bg-white dark:bg-[#18181b] border border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 hover:text-neutral-950 dark:hover:text-white rounded-xl text-xs font-display font-semibold flex items-center justify-center gap-1.5 transition-all">
-                        <Calendar className="w-4 h-4 text-neutral-400 dark:text-neutral-500" />
+                      <Link href="/" className="px-5 py-2.5 bg-white border border-neutral-200 text-neutral-700 hover:text-neutral-950 rounded-xl text-xs font-display font-semibold flex items-center justify-center gap-1.5 transition-all">
+                        <Calendar className="w-4 h-4 text-neutral-400" />
                         Local Matches Today
                       </Link>
                     </div>
@@ -128,25 +128,25 @@ export default function LivePage() {
 
         {/* Right Column: Information & Sponsorship side channels */}
         <div className="space-y-6">
-          <div className="bg-white dark:bg-[#141417] border border-neutral-200/60 dark:border-neutral-800 rounded-3xl p-5 shadow-xs space-y-4">
-            <h3 className="font-display font-bold text-sm text-neutral-950 dark:text-white pb-2 border-b border-neutral-100 dark:border-neutral-800 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-md bg-neutral-950 dark:bg-neutral-800 text-brand-green flex items-center justify-center shadow-2xs shrink-0">
+          <div className="bg-white border border-neutral-200/60 rounded-3xl p-5 shadow-xs space-y-4">
+            <h3 className="font-display font-bold text-sm text-neutral-950 pb-2 border-b border-neutral-100 flex items-center gap-2">
+              <span className="w-6 h-6 rounded-md bg-neutral-950 text-brand-green flex items-center justify-center shadow-2xs shrink-0">
                 <TrendingUp className="w-3.5 h-3.5 text-brand-green" />
               </span>
               Latest Football Trends
             </h3>
 
             <div className="space-y-4 text-xs">
-              <div className="p-3 bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-neutral-800 rounded-xl space-y-1">
-                <span className="text-[10px] uppercase font-mono font-bold text-neutral-950 dark:text-white bg-brand-green/20 border border-brand-green/30 px-1.5 py-0.5 rounded">ZPSL Update</span>
-                <p className="font-semibold text-neutral-800 dark:text-neutral-200 leading-relaxed">
+              <div className="p-3 bg-neutral-50 border border-neutral-100 rounded-xl space-y-1">
+                <span className="text-[10px] uppercase font-mono font-bold text-neutral-950 bg-brand-green/20 border border-brand-green/30 px-1.5 py-0.5 rounded">ZPSL Update</span>
+                <p className="font-semibold text-neutral-800 leading-relaxed">
                   Dynamos vs Highlanders Harare tickets are reported sold out ahead of the weekend derby.
                 </p>
               </div>
 
-              <div className="p-3 bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-100 dark:border-neutral-800 rounded-xl space-y-1">
-                <span className="text-[10px] uppercase font-mono font-bold text-blue-600 dark:text-blue-400">AFCON Qualifiers</span>
-                <p className="font-semibold text-neutral-800 dark:text-neutral-200 leading-relaxed">
+              <div className="p-3 bg-neutral-50 border border-neutral-100 rounded-xl space-y-1">
+                <span className="text-[10px] uppercase font-mono font-bold text-blue-600">AFCON Qualifiers</span>
+                <p className="font-semibold text-neutral-800 leading-relaxed">
                   Warriors captain registers full fitness ahead of Bafana Bafana showdown at Orlando stadium.
                 </p>
               </div>
@@ -155,8 +155,8 @@ export default function LivePage() {
 
           {/* Ad sidebar code */}
           {/* Technology stack attribution guidelines */}
-          <div className="p-5 border border-dashed border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 rounded-3xl space-y-2 text-neutral-500 dark:text-neutral-400 text-xs">
-            <h4 className="font-display font-bold text-neutral-900 dark:text-neutral-200 text-[10px] uppercase tracking-widest flex items-center gap-1.5">
+          <div className="p-5 border border-dashed border-neutral-200 bg-neutral-50 rounded-3xl space-y-2 text-neutral-500 text-xs">
+            <h4 className="font-display font-bold text-neutral-900 text-[10px] uppercase tracking-widest flex items-center gap-1.5">
               <Cpu className="w-3.5 h-3.5" />
               Broadcasting Protocols
             </h4>
@@ -169,9 +169,9 @@ export default function LivePage() {
       </div>
       
       {/* SEO Section */}
-      <section className="mt-12 bg-white dark:bg-[#141417] rounded-2xl border border-neutral-200/60 dark:border-neutral-800 p-6 shadow-sm text-center">
-        <h2 className="text-xl font-extrabold text-neutral-900 dark:text-white mb-3">Live Streaming & Match Coverage</h2>
-        <div className="space-y-4 text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed max-w-3xl mx-auto">
+      <section className="mt-12 bg-white rounded-2xl border border-neutral-200/60 p-6 shadow-sm text-center">
+        <h2 className="text-xl font-extrabold text-neutral-900 mb-3">Live Streaming & Match Coverage</h2>
+        <div className="space-y-4 text-sm text-neutral-600 leading-relaxed max-w-3xl mx-auto">
           <p>
             Catch all the live action as it unfolds. Our live page aggregates the most anticipated matches happening right now. Watch the Premier League, UEFA Champions League, LaLiga, and the upcoming FIFA World Cup 2026 without any interruptions.
           </p>

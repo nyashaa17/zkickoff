@@ -1,8 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:where(.dark, .dark *));
-
 @theme {
   --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-poppins), system-ui, sans-serif;
@@ -15,35 +13,12 @@
   --color-zim-red: #D62828;
   --color-zim-black: #111111;
   --color-zim-white: #ffffff;
-
-  --color-bg-primary: var(--bg-primary);
-  --color-bg-surface: var(--bg-surface);
-  --color-bg-surface-hover: var(--bg-surface-hover);
-  --color-text-primary: var(--text-primary);
-  --color-text-secondary: var(--text-secondary);
-  --color-border-color: var(--border-color);
 }
 
 :root {
   --brand-green: #39FF00;
   --brand-green-hover: #32e600;
   --brand-green-dark: #05822e;
-
-  --bg-primary: #F9F9FB;
-  --bg-surface: #ffffff;
-  --bg-surface-hover: #f4f4f6;
-  --text-primary: #0a0a0a;
-  --text-secondary: #737373;
-  --border-color: #e5e5e5;
-}
-
-.dark {
-  --bg-primary: #0d0d0f;
-  --bg-surface: #17171a;
-  --bg-surface-hover: #222226;
-  --text-primary: #f5f5f5;
-  --text-secondary: #a1a1aa;
-  --border-color: #27272a;
 }
 
 @layer utilities {

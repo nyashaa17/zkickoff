@@ -163,7 +163,7 @@ const MatchCountdown = React.memo(function MatchCountdown({ match }: { match: Ma
 
   if (isFinished) {
     return (
-      <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500">
+      <span className="text-[10px] font-bold text-neutral-400">
         FINISHED
       </span>
     );
@@ -171,8 +171,8 @@ const MatchCountdown = React.memo(function MatchCountdown({ match }: { match: Ma
 
   return (
     <div className="flex items-center gap-1.5 text-[10px]">
-      <span className="text-neutral-400 dark:text-neutral-500">Starts in:</span>
-      <span className="font-mono font-bold text-neutral-950 dark:text-white bg-brand-green/15 dark:bg-brand-green/20 border border-brand-green/35 dark:border-brand-green/40 px-1.5 py-0.5 rounded-md tabular-nums flex items-center gap-1">
+      <span className="text-neutral-400">Starts in:</span>
+      <span className="font-mono font-bold text-neutral-950 bg-brand-green/15 border border-brand-green/35 px-1.5 py-0.5 rounded-md tabular-nums flex items-center gap-1">
         <span className="w-1.5 h-1.5 rounded-full bg-brand-green animate-pulse inline-block shrink-0"></span>
         {timeLeft || '00:00'}
       </span>
@@ -220,10 +220,10 @@ export default function MatchCard({ match }: MatchCardProps) {
       className="group"
     >
       <Link href={`/preview/${match.slug}`} className="block">
-        <div className="bg-white dark:bg-[#141417] border border-neutral-200 dark:border-neutral-800 rounded-2xl p-4 flex flex-col gap-3 transition-colors hover:border-brand-green/50 dark:hover:border-brand-green/60 shadow-sm">
+        <div className="bg-white border border-neutral-200 rounded-2xl p-4 flex flex-col gap-3 transition-colors hover:border-brand-green/50 shadow-sm">
           
           {/* Top Line: League Name & Countdown Timer */}
-          <div className="flex items-center justify-between text-[11px] text-neutral-500 dark:text-neutral-400 font-sans pb-2 border-b border-neutral-100 dark:border-neutral-800/80 border-dashed">
+          <div className="flex items-center justify-between text-[11px] text-neutral-500 font-sans pb-2 border-b border-neutral-100 border-dashed">
             <div className="flex items-center gap-1.5 font-bold tracking-tight truncate max-w-[65%]">
               {match.leagueLogoUrl ? (
                 <Image 
@@ -235,11 +235,11 @@ export default function MatchCard({ match }: MatchCardProps) {
                   referrerPolicy="no-referrer"
                 />
               ) : (
-                <div className="w-3.5 h-3.5 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center border border-neutral-200 dark:border-neutral-700 text-[8px] font-bold text-neutral-400 shrink-0">
+                <div className="w-3.5 h-3.5 rounded-full bg-neutral-100 flex items-center justify-center border border-neutral-200 text-[8px] font-bold text-neutral-400 shrink-0">
                   {match.competition.charAt(0)}
                 </div>
               )}
-              <span className="truncate text-neutral-700 dark:text-neutral-300 uppercase tracking-wide text-[10px]">{match.competition}</span>
+              <span className="truncate text-neutral-700 uppercase tracking-wide text-[10px]">{match.competition}</span>
             </div>
             
             <MatchCountdown match={match} />
@@ -247,18 +247,18 @@ export default function MatchCard({ match }: MatchCardProps) {
 
           <div className="flex flex-row items-stretch gap-4">
             {/* Left Block: Time / Status Info */}
-            <div className="flex flex-col items-center justify-center min-w-[64px] shrink-0 border-r border-neutral-100 dark:border-neutral-800/80 pr-4 py-1 gap-1.5">
-              <span className={`text-[13px] md:text-sm font-medium tracking-tight ${isLive ? 'text-zim-red animate-pulse font-bold' : 'text-neutral-900 dark:text-neutral-100'}`}>
+            <div className="flex flex-col items-center justify-center min-w-[64px] shrink-0 border-r border-neutral-100 pr-4 py-1 gap-1.5">
+              <span className={`text-[13px] md:text-sm font-medium tracking-tight ${isLive ? 'text-zim-red animate-pulse font-bold' : 'text-neutral-900'}`}>
                 {isLive ? (match.eps === 'HT' ? 'HT' : match.minute ? `${match.minute}'` : match.eps && match.eps !== 'NS' ? match.eps : 'LIVE') : match.status === 'FINISHED' ? (match.eps || 'FT') : match.kickoffTime}
               </span>
               <div className={`px-1.5 py-0.5 text-[10px] font-medium border rounded w-full max-w-[50px] flex items-center justify-center text-center ${
                 isLive 
-                  ? 'border-red-100 dark:border-red-950/50 text-zim-red bg-red-50 dark:bg-red-950/30' 
+                  ? 'border-red-100 text-zim-red bg-red-50' 
                   : match.status === 'FINISHED'
-                  ? 'border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800/80'
+                  ? 'border-neutral-200 text-neutral-600 bg-neutral-100'
                   : isToday
-                  ? 'border-brand-green/40 dark:border-brand-green/40 text-neutral-950 dark:text-brand-green bg-brand-green/15 font-bold'
-                  : 'border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 bg-neutral-50 dark:bg-neutral-800/50'
+                  ? 'border-brand-green/40 text-neutral-950 bg-brand-green/15 font-bold'
+                  : 'border-neutral-200 text-neutral-600 bg-neutral-50'
               }`}>
                 {isLive ? 'LIVE' : match.status === 'FINISHED' ? 'ENDED' : isToday ? 'TODAY' : match.dateString?.split(' ')[0] || 'TBD'}
               </div>
@@ -271,15 +271,15 @@ export default function MatchCard({ match }: MatchCardProps) {
                 <div className="flex items-center gap-3">
                   <TeamLogo 
                     name={match.teams.home.name} 
-                    className="w-6 h-6 md:w-7 md:h-7 shadow-xs border border-neutral-100 dark:border-neutral-800"
+                    className="w-6 h-6 md:w-7 md:h-7 shadow-xs border border-neutral-100"
                     bzzBadge={match.teams.home.bzzBadge}
                     lsBadge={match.teams.home.lsBadge}
                   />
-                  <span className="text-[15px] md:text-base font-semibold text-neutral-800 dark:text-neutral-100">
+                  <span className="text-[15px] md:text-base font-semibold text-neutral-800">
                     {match.teams.home.name}
                   </span>
                 </div>
-                <span className={`text-[15px] md:text-base font-bold tabular-nums ${showScore ? 'text-neutral-900 dark:text-white' : 'text-neutral-300 dark:text-neutral-600'}`}>
+                <span className={`text-[15px] md:text-base font-bold tabular-nums ${showScore ? 'text-neutral-900' : 'text-neutral-300'}`}>
                   {showScore ? homeScore : '-'}
                 </span>
               </div>
@@ -289,15 +289,15 @@ export default function MatchCard({ match }: MatchCardProps) {
                 <div className="flex items-center gap-3">
                   <TeamLogo 
                     name={match.teams.away.name} 
-                    className="w-6 h-6 md:w-7 md:h-7 shadow-xs border border-neutral-100 dark:border-neutral-800"
+                    className="w-6 h-6 md:w-7 md:h-7 shadow-xs border border-neutral-100"
                     bzzBadge={match.teams.away.bzzBadge}
                     lsBadge={match.teams.away.lsBadge}
                   />
-                  <span className="text-[15px] md:text-base font-semibold text-neutral-800 dark:text-neutral-100">
+                  <span className="text-[15px] md:text-base font-semibold text-neutral-800">
                     {match.teams.away.name}
                   </span>
                 </div>
-                <span className={`text-[15px] md:text-base font-bold tabular-nums ${showScore ? 'text-neutral-900 dark:text-white' : 'text-neutral-300 dark:text-neutral-600'}`}>
+                <span className={`text-[15px] md:text-base font-bold tabular-nums ${showScore ? 'text-neutral-900' : 'text-neutral-300'}`}>
                   {showScore ? awayScore : '-'}
                 </span>
               </div>

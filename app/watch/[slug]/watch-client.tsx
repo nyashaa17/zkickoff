@@ -256,14 +256,14 @@ export default function WatchClient({
         Watch {queryMatch.teams.home.name} vs {queryMatch.teams.away.name} Live Stream | ZimKickOff
       </h1>
       {/* Back button and breadcrumbs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 border-b border-neutral-200/40 dark:border-neutral-800 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 border-b border-neutral-200/40 pb-4">
         <Breadcrumbs 
           items={[
             { label: 'Live Broadcasts', href: '/live' },
             { label: `${queryMatch.teams.home.name} vs ${queryMatch.teams.away.name}` }
           ]} 
         />
-        <Link href="/" className="inline-flex items-center gap-2 text-xs font-bold text-[#009739] dark:text-brand-green hover:opacity-85 font-display transition-all py-1.5 px-3 bg-neutral-100/75 dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-xl border border-neutral-200/40 dark:border-neutral-700 shrink-0 self-start sm:self-auto shadow-4xs">
+        <Link href="/" className="inline-flex items-center gap-2 text-xs font-bold text-[#009739] hover:opacity-85 font-display transition-all py-1.5 px-3 bg-neutral-100/75 hover:bg-neutral-100 rounded-xl border border-neutral-200/40 shrink-0 self-start sm:self-auto shadow-4xs">
           <ArrowLeft className="w-3.5 h-3.5" />
           Back to Live Feed
         </Link>
@@ -276,14 +276,14 @@ export default function WatchClient({
         <div className="lg:col-span-2 space-y-6">
           
           {/* Main Streaming Player Terminal */}
-          <div className="bg-white dark:bg-[#141417] border border-neutral-200/70 dark:border-neutral-800 rounded-none md:rounded-3xl overflow-hidden shadow-xs -mx-4 md:mx-0 border-x-0 md:border relative">
+          <div className="bg-white border border-neutral-200/70 rounded-none md:rounded-3xl overflow-hidden shadow-xs -mx-4 md:mx-0 border-x-0 md:border relative">
             
             {/* Video Iframe Embed wrapper */}
             <div className={`aspect-video relative overflow-hidden shadow-inner group transition-all duration-300 ${
-              (queryMatch.status === 'TODAY' || queryMatch.status === 'UPCOMING') ? 'bg-white dark:bg-[#141417]' : 'bg-black'
+              (queryMatch.status === 'TODAY' || queryMatch.status === 'UPCOMING') ? 'bg-white' : 'bg-black'
             }`}>
               {(queryMatch.status === 'TODAY' || queryMatch.status === 'UPCOMING') ? (
-                <div id="not-started-empty-state" className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-white dark:bg-[#141417]">
+                <div id="not-started-empty-state" className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-white">
                   {/* Decorative faint field elements to elevate visual style */}
                   <div className="absolute inset-0 z-0 opacity-5 pointer-events-none">
                     <div className="absolute inset-0 border-[2px] border-neutral-300 rounded-[30%] scale-[0.6] top-[-30%]"></div>
@@ -291,18 +291,18 @@ export default function WatchClient({
                   </div>
                   
                   <div className="relative z-10 flex flex-col items-center max-w-sm">
-                    <div className="w-16 h-16 bg-neutral-50 dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-700 rounded-full flex items-center justify-center mb-5 shadow-2xs relative">
-                      <div className="absolute inset-0 rounded-full bg-neutral-100 dark:bg-neutral-700 animate-ping opacity-30"></div>
-                      <Clock className="w-7 h-7 text-[#009739] dark:text-brand-green animate-pulse relative z-10" />
+                    <div className="w-16 h-16 bg-neutral-50 border border-neutral-100 rounded-full flex items-center justify-center mb-5 shadow-2xs relative">
+                      <div className="absolute inset-0 rounded-full bg-neutral-100 animate-ping opacity-30"></div>
+                      <Clock className="w-7 h-7 text-[#009739] animate-pulse relative z-10" />
                     </div>
-                    <h3 className="text-neutral-900 dark:text-white font-display font-extrabold text-lg md:text-xl mb-2.5">
+                    <h3 className="text-neutral-900 font-display font-extrabold text-lg md:text-xl mb-2.5">
                       Waiting for broadcast
                     </h3>
-                    <p className="text-neutral-500 dark:text-neutral-400 text-xs md:text-sm leading-relaxed mb-4">
+                    <p className="text-neutral-500 text-xs md:text-sm leading-relaxed mb-4">
                       The stream typically starts 5-10 minutes before kickoff. We&apos;ll connect automatically when it&apos;s live.
                     </p>
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-neutral-100/80 dark:bg-neutral-800 rounded-full text-[10px] font-mono font-extrabold text-[#009739] dark:text-brand-green border border-neutral-200/50 dark:border-neutral-700">
-                      <span className="w-1.5 h-1.5 bg-[#009739] dark:bg-brand-green rounded-full animate-pulse"></span>
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-neutral-100/80 rounded-full text-[10px] font-mono font-extrabold text-[#009739] border border-neutral-200/50">
+                      <span className="w-1.5 h-1.5 bg-[#009739] rounded-full animate-pulse"></span>
                       SCHEDULED START: {queryMatch.kickoffTime}
                     </div>
                   </div>
@@ -395,8 +395,8 @@ export default function WatchClient({
             </div>
 
             {/* Action panel underneath the player */}
-            <div className="p-3 bg-neutral-50 dark:bg-neutral-900 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between gap-4">
-              <p className="text-[10px] font-mono font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-widest hidden sm:block pl-2">
+            <div className="p-3 bg-neutral-50 border-t border-neutral-100 flex items-center justify-between gap-4">
+              <p className="text-[10px] font-mono font-bold text-neutral-500 uppercase tracking-widest hidden sm:block pl-2">
                 ZimKickOff Player
               </p>
               <div className="flex items-center justify-end w-full sm:w-auto gap-2">
@@ -406,9 +406,9 @@ export default function WatchClient({
                 />
                 <button
                   onClick={copyShareLink}
-                  className="cursor-pointer px-3 py-1.5 bg-white dark:bg-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-700 border border-neutral-200 dark:border-neutral-700 text-neutral-750 dark:text-neutral-200 rounded-lg text-xs font-display font-bold flex items-center gap-1.5 transition-colors shadow-4xs"
+                  className="cursor-pointer px-3 py-1.5 bg-white hover:bg-neutral-100 border border-neutral-200 text-neutral-750 rounded-lg text-xs font-display font-bold flex items-center gap-1.5 transition-colors shadow-4xs"
                 >
-                  {copiedLink ? <Check className="w-4 h-4 text-[#009739] dark:text-brand-green" /> : <Share2 className="w-3.5 h-3.5 text-[#009739] dark:text-brand-green" />}
+                  {copiedLink ? <Check className="w-4 h-4 text-[#009739]" /> : <Share2 className="w-3.5 h-3.5 text-[#009739]" />}
                   {copiedLink ? 'Copied!' : 'Share Stream'}
                 </button>
               </div>
@@ -417,23 +417,23 @@ export default function WatchClient({
           </div>
 
           {/* Fallback instruction banner */}
-          <div id="fallback-ui-banner" className="bg-[#FFFDF4] dark:bg-amber-950/20 border border-[#FFE1B5] dark:border-amber-800/40 rounded-2xl p-4 flex items-start gap-3">
+          <div id="fallback-ui-banner" className="bg-[#FFFDF4] border border-[#FFE1B5] rounded-2xl p-4 flex items-start gap-3">
             <VolumeX className="w-5 h-5 text-zim-yellow shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <h4 className="font-display font-bold text-xs text-neutral-900 dark:text-neutral-100">
+              <h4 className="font-display font-bold text-xs text-neutral-900">
                 Stream not loading or no audio?
               </h4>
-              <p className="text-neutral-600 dark:text-neutral-300 text-xs leading-relaxed">
+              <p className="text-neutral-600 text-xs leading-relaxed">
                 Try switching to **Server 2** or **Server 3**. In case the stream requires enabling audio, tap on the speaker icon displayed directly inside of the iframe video player overlays.
               </p>
             </div>
           </div>
 
           {/* Tabbed Interactive Section */}
-          <div className="bg-white dark:bg-[#141417] border border-neutral-200/60 dark:border-neutral-800 rounded-3xl p-5 md:p-6 shadow-xs space-y-6">
+          <div className="bg-white border border-neutral-200/60 rounded-3xl p-5 md:p-6 shadow-xs space-y-6">
             
             {/* Headers card */}
-            <div className="flex flex-col gap-5 border-b border-neutral-100 dark:border-neutral-800 pb-5">
+            <div className="flex flex-col gap-5 border-b border-neutral-100 pb-5">
               <div className="space-y-3">
                 <span className="text-[10px] font-mono font-bold text-neutral-400 uppercase tracking-widest flex items-center gap-1.5 justify-center md:justify-start">
                   {queryMatch.leagueLogoUrl ? (
@@ -447,7 +447,7 @@ export default function WatchClient({
                       onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     />
                   ) : (
-                    <Award className="w-3.5 h-3.5 text-zim-green dark:text-brand-green" />
+                    <Award className="w-3.5 h-3.5 text-zim-green" />
                   )}
                   {queryMatch.competition}
                 </span>
@@ -457,20 +457,20 @@ export default function WatchClient({
                   <div className="flex items-center gap-2.5 md:flex-row flex-col text-center md:text-left md:w-5/12">
                     <TeamLogo 
                       name={queryMatch.teams.home.name} 
-                      className="w-8 h-8 md:w-10 md:h-10 border border-neutral-100 dark:border-neutral-800 shadow-3xs"
+                      className="w-8 h-8 md:w-10 md:h-10 border border-neutral-100 shadow-3xs"
                       bzzBadge={queryMatch.teams.home.bzzBadge}
                       lsBadge={queryMatch.teams.home.lsBadge}
                     />
                     <div>
-                      <span className="text-neutral-900 dark:text-white font-extrabold text-sm md:text-lg block tracking-tight line-clamp-1">{queryMatch.teams.home.name}</span>
-                      <span className="text-[9px] text-[#009739] dark:text-brand-green font-mono font-bold uppercase block md:hidden mt-0.5">HOME TEAM</span>
+                      <span className="text-neutral-900 font-extrabold text-sm md:text-lg block tracking-tight line-clamp-1">{queryMatch.teams.home.name}</span>
+                      <span className="text-[9px] text-[#009739] font-mono font-bold uppercase block md:hidden mt-0.5">HOME TEAM</span>
                     </div>
                   </div>
 
                   {/* Score & VS */}
                   <div className="flex flex-col items-center justify-center shrink-0 md:w-2/12 my-2 sm:my-0">
-                    <div className="bg-neutral-100/95 dark:bg-neutral-800 border border-neutral-200/50 dark:border-neutral-700 text-neutral-900 dark:text-white font-mono text-lg md:text-2xl font-black px-4 py-1.5 rounded-2xl tracking-wider min-w-[80px] text-center shadow-4xs">
-                      {queryMatch.score?.home ?? 0} <span className="text-neutral-300 dark:text-neutral-600 mx-0.5">:</span> {queryMatch.score?.away ?? 0}
+                    <div className="bg-neutral-100/95 border border-neutral-200/50 text-neutral-900 font-mono text-lg md:text-2xl font-black px-4 py-1.5 rounded-2xl tracking-wider min-w-[80px] text-center shadow-4xs">
+                      {queryMatch.score?.home ?? 0} <span className="text-neutral-300 mx-0.5">:</span> {queryMatch.score?.away ?? 0}
                     </div>
                     <span className="text-[9px] font-mono font-bold text-neutral-400 uppercase tracking-widest mt-1">
                       {isLive ? 'LIVE' : 'SCORE'}
@@ -481,12 +481,12 @@ export default function WatchClient({
                   <div className="flex items-center gap-2.5 md:flex-row-reverse flex-col text-center md:text-right md:w-5/12">
                     <TeamLogo 
                       name={queryMatch.teams.away.name} 
-                      className="w-8 h-8 md:w-10 md:h-10 border border-neutral-100 dark:border-neutral-800 shadow-3xs"
+                      className="w-8 h-8 md:w-10 md:h-10 border border-neutral-100 shadow-3xs"
                       bzzBadge={queryMatch.teams.away.bzzBadge}
                       lsBadge={queryMatch.teams.away.lsBadge}
                     />
                     <div>
-                      <span className="text-neutral-900 dark:text-white font-extrabold text-sm md:text-lg block tracking-tight line-clamp-1">{queryMatch.teams.away.name}</span>
+                      <span className="text-neutral-900 font-extrabold text-sm md:text-lg block tracking-tight line-clamp-1">{queryMatch.teams.away.name}</span>
                       <span className="text-[9px] text-neutral-400 font-mono font-bold uppercase block md:hidden mt-0.5">AWAY TEAM</span>
                     </div>
                   </div>
@@ -494,29 +494,29 @@ export default function WatchClient({
               </div>
 
               <div className="flex items-center justify-center md:justify-end gap-2">
-                <div className="flex bg-neutral-100 dark:bg-neutral-800/80 p-0.5 rounded-lg text-[10px] font-bold overflow-x-auto max-w-full">
+                <div className="flex bg-neutral-100 p-0.5 rounded-lg text-[10px] font-bold overflow-x-auto max-w-full">
                   <button
                     onClick={() => setDetailTab('COMMENTARY')}
                     className={`px-2.5 py-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
-                      detailTab === 'COMMENTARY' ? 'bg-white dark:bg-[#141417] text-neutral-900 dark:text-white shadow-3xs' : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                      detailTab === 'COMMENTARY' ? 'bg-white text-neutral-900 shadow-3xs' : 'text-neutral-500 hover:text-neutral-900'
                     }`}
                   >
-                    <MessageSquare className="w-3 h-3 text-zim-green dark:text-brand-green" />
+                    <MessageSquare className="w-3 h-3 text-zim-green" />
                     <span>COMMENTARY</span>
                   </button>
                   <button
                     onClick={() => setDetailTab('TIMELINE')}
                     className={`px-2.5 py-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
-                      detailTab === 'TIMELINE' ? 'bg-white dark:bg-[#141417] text-neutral-900 dark:text-white shadow-3xs' : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                      detailTab === 'TIMELINE' ? 'bg-white text-neutral-900 shadow-3xs' : 'text-neutral-500 hover:text-neutral-900'
                     }`}
                   >
-                    <Clock className="w-3 h-3 text-[#009739] dark:text-brand-green" />
+                    <Clock className="w-3 h-3 text-[#009739]" />
                     <span>INCIDENTS</span>
                   </button>
                   <button
                     onClick={() => setDetailTab('SHOTMAP')}
                     className={`px-2.5 py-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
-                      detailTab === 'SHOTMAP' ? 'bg-white dark:bg-[#141417] text-neutral-900 dark:text-white shadow-3xs' : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                      detailTab === 'SHOTMAP' ? 'bg-white text-neutral-900 shadow-3xs' : 'text-neutral-500 hover:text-neutral-900'
                     }`}
                   >
                     <Target className="w-3 h-3 text-amber-500" />
@@ -525,7 +525,7 @@ export default function WatchClient({
                   <button
                     onClick={() => setDetailTab('DETAILS')}
                     className={`px-2.5 py-1.5 rounded-md transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
-                      detailTab === 'DETAILS' ? 'bg-white dark:bg-[#141417] text-neutral-900 dark:text-white shadow-3xs' : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                      detailTab === 'DETAILS' ? 'bg-white text-neutral-900 shadow-3xs' : 'text-neutral-500 hover:text-neutral-900'
                     }`}
                   >
                     <Info className="w-3 h-3" />
@@ -553,16 +553,16 @@ export default function WatchClient({
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <p className="text-[10px] font-mono font-bold text-neutral-400 uppercase tracking-widest flex items-center gap-1">
-                    <Clock className="w-3 h-3 animate-spin text-zim-green dark:text-brand-green" />
+                    <Clock className="w-3 h-3 animate-spin text-zim-green" />
                     REAL-TIME EVENTS FEED
                   </p>
-                  <span className="bg-green-50 dark:bg-green-950/40 text-zim-green dark:text-brand-green text-[9px] font-bold px-2 py-0.5 rounded border border-green-100 dark:border-green-800/40 flex items-center gap-1 animate-pulse">
-                    <span className="w-1 h-1 bg-zim-green dark:bg-brand-green rounded-full"></span>
+                  <span className="bg-green-50 text-zim-green text-[9px] font-bold px-2 py-0.5 rounded border border-green-100 flex items-center gap-1 animate-pulse">
+                    <span className="w-1 h-1 bg-zim-green rounded-full"></span>
                     POLLING ACTIVE
                   </span>
                 </div>
 
-                <div className="relative border-l border-neutral-100 dark:border-neutral-800 pl-4 ml-2 space-y-5 py-2 max-h-96 overflow-y-auto pr-2 scrollbar-thin">
+                <div className="relative border-l border-neutral-100 pl-4 ml-2 space-y-5 py-2 max-h-96 overflow-y-auto pr-2 scrollbar-thin">
                   {cData?.error ? (
                     <div className="py-8 text-center text-red-500 text-xs font-semibold flex flex-col items-center gap-2">
                       <AlertTriangle className="w-5 h-5 text-red-400" />
@@ -576,9 +576,9 @@ export default function WatchClient({
                       const isRedCard = textLower.includes('red card');
 
                       return (
-                        <div key={index} className="relative group text-xs text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                          <div className={`absolute -left-[21px] top-1.5 w-2 h-2 rounded-full border-2 bg-white dark:bg-[#141417] transition-transform group-hover:scale-125 ${
-                            isGoal ? 'border-zim-yellow bg-zim-yellow animate-bounce' : isYellowCard ? 'border-amber-400 bg-amber-400' : isRedCard ? 'border-red-600 bg-red-600' : 'border-neutral-300 dark:border-neutral-700'
+                        <div key={index} className="relative group text-xs text-neutral-700 leading-relaxed">
+                          <div className={`absolute -left-[21px] top-1.5 w-2 h-2 rounded-full border-2 bg-white transition-transform group-hover:scale-125 ${
+                            isGoal ? 'border-zim-yellow bg-zim-yellow animate-bounce' : isYellowCard ? 'border-amber-400 bg-amber-400' : isRedCard ? 'border-red-600 bg-red-600' : 'border-neutral-300'
                           }`} />
                           
                           <div className="space-y-1">
@@ -587,22 +587,22 @@ export default function WatchClient({
                                 {entry.time}&apos;
                               </span>
                               {isGoal && (
-                                <span className="bg-yellow-50 dark:bg-yellow-950/40 text-yellow-600 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800/40 text-[8px] font-bold px-1 py-0.2 rounded font-sans uppercase">
+                                <span className="bg-yellow-50 text-yellow-600 border border-yellow-200 text-[8px] font-bold px-1 py-0.2 rounded font-sans uppercase">
                                   Goal Event
                                 </span>
                               )}
                               {isYellowCard && (
-                                <span className="bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40 text-[8px] font-bold px-1 py-0.2 rounded font-sans uppercase">
+                                <span className="bg-amber-50 text-amber-600 border border-amber-200 text-[8px] font-bold px-1 py-0.2 rounded font-sans uppercase">
                                   Yellow Card
                                 </span>
                               )}
                               {isRedCard && (
-                                <span className="bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/40 text-[8px] font-bold px-1 py-0.2 rounded font-sans uppercase">
+                                <span className="bg-red-50 text-red-600 border border-red-200 text-[8px] font-bold px-1 py-0.2 rounded font-sans uppercase">
                                   Red Card
                                 </span>
                               )}
                             </div>
-                            <p className="font-medium text-neutral-700 dark:text-neutral-300">{entry.text}</p>
+                            <p className="font-medium text-neutral-700">{entry.text}</p>
                           </div>
                         </div>
                       );
@@ -617,21 +617,21 @@ export default function WatchClient({
             ) : (
               <div className="space-y-6">
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div className="bg-neutral-50 dark:bg-neutral-800/50 p-4 rounded-2xl border border-neutral-100 dark:border-neutral-800 flex items-center gap-3">
+                  <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100 flex items-center gap-3">
                     <MapPin className="w-5 h-5 text-neutral-400 shrink-0" />
                     <div className="space-y-0.5">
                       <p className="text-[10px] font-mono text-neutral-400 uppercase tracking-wide">Stadium Venue</p>
-                      <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 line-clamp-1">
+                      <p className="text-xs font-semibold text-neutral-800 line-clamp-1">
                         {bzzoiroData?.event?.venue?.name || queryMatch.venue}
                       </p>
                     </div>
                   </div>
 
-                  <div className="bg-neutral-50 dark:bg-neutral-800/50 p-4 rounded-2xl border border-neutral-100 dark:border-neutral-800 flex items-center gap-3">
+                  <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100 flex items-center gap-3">
                     <Users className="w-5 h-5 text-neutral-400 shrink-0" />
                     <div className="space-y-0.5">
                       <p className="text-[10px] font-mono text-neutral-400 uppercase tracking-wide">Expected Crowd</p>
-                      <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                      <p className="text-xs font-semibold text-neutral-800">
                         {bzzoiroData?.event?.venue?.capacity 
                           ? `${bzzoiroData.event.venue.capacity.toLocaleString()} cap` 
                           : bzzoiroData?.event?.attendance 
@@ -641,21 +641,21 @@ export default function WatchClient({
                     </div>
                   </div>
 
-                  <div className="col-span-2 md:col-span-1 bg-neutral-50 dark:bg-neutral-800/50 p-4 rounded-2xl border border-neutral-100 dark:border-neutral-800 flex items-center gap-3">
+                  <div className="col-span-2 md:col-span-1 bg-neutral-50 p-4 rounded-2xl border border-neutral-100 flex items-center gap-3">
                     <Info className="w-5 h-5 text-neutral-400 shrink-0" />
                     <div className="space-y-0.5">
                       <p className="text-[10px] font-mono text-neutral-400 uppercase tracking-wide">Category</p>
-                      <p className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">Soccer • {queryMatch.category}</p>
+                      <p className="text-xs font-semibold text-neutral-800">Soccer • {queryMatch.category}</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-4 bg-neutral-50 dark:bg-neutral-800/40 rounded-2xl border border-neutral-100 dark:border-neutral-800 space-y-2">
-                  <h4 className="text-xs font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-zim-green dark:text-brand-green" />
+                <div className="p-4 bg-neutral-50 rounded-2xl border border-neutral-100 space-y-2">
+                  <h4 className="text-xs font-bold text-neutral-900 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-zim-green" />
                     ZimKickOff Smart-Codec Configured
                   </h4>
-                  <p className="text-neutral-500 dark:text-neutral-400 text-[11px] leading-relaxed">
+                  <p className="text-neutral-500 text-[11px] leading-relaxed">
                     This stream uses adaptive HLS/MPEG-DASH stream segments to bypass regional connection drops and deliver smooth 1080p highlights. Switch broadcast pipelines above in case of buffering. No VPN or accounts needed.
                   </p>
                 </div>
@@ -670,10 +670,10 @@ export default function WatchClient({
         <div className="space-y-6">
           
           {/* External Broadcast Servers */}
-          <div className="bg-white dark:bg-[#141417] border border-neutral-200/60 dark:border-neutral-800 rounded-3xl p-5 shadow-xs space-y-4">
-            <h3 className="font-display font-bold text-sm text-neutral-950 dark:text-white pb-2 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
+          <div className="bg-white border border-neutral-200/60 rounded-3xl p-5 shadow-xs space-y-4">
+            <h3 className="font-display font-bold text-sm text-neutral-950 pb-2 border-b border-neutral-100 flex items-center justify-between">
               <span>Broadcast Servers</span>
-              <span className="bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 font-mono text-[9px] font-bold px-1.5 py-0.5 rounded">
+              <span className="bg-neutral-100 text-neutral-600 font-mono text-[9px] font-bold px-1.5 py-0.5 rounded">
                 LINKS
               </span>
             </h3>
@@ -688,7 +688,7 @@ export default function WatchClient({
                   className={`w-full cursor-pointer px-4 py-3 rounded-xl text-xs font-display font-bold transition-all border flex items-center justify-between gap-1.5 ${
                     activeServer === srv.id
                       ? 'bg-brand-green text-neutral-950 border-brand-green shadow-xs'
-                      : 'bg-neutral-50 dark:bg-neutral-800/70 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-200 border-neutral-200/60 dark:border-neutral-700'
+                      : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-700 border-neutral-200/60'
                   }`}
                 >
                   <span className="flex items-center gap-2">
@@ -705,10 +705,10 @@ export default function WatchClient({
           </div>
 
           {/* Related matches list section */}
-          <div className="bg-white dark:bg-[#141417] border border-neutral-200/60 dark:border-neutral-800 rounded-3xl p-5 shadow-xs space-y-4">
-            <h3 className="font-display font-bold text-sm text-neutral-950 dark:text-white pb-2 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
+          <div className="bg-white border border-neutral-200/60 rounded-3xl p-5 shadow-xs space-y-4">
+            <h3 className="font-display font-bold text-sm text-neutral-950 pb-2 border-b border-neutral-100 flex items-center justify-between">
               <span>Related Football Streams</span>
-              <span className="bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 font-mono text-[9px] font-bold px-1.5 py-0.5 rounded">
+              <span className="bg-neutral-100 text-neutral-600 font-mono text-[9px] font-bold px-1.5 py-0.5 rounded">
                 RECOMMENDED
               </span>
             </h3>
@@ -717,22 +717,22 @@ export default function WatchClient({
               {relatedMatches.length > 0 ? (
                 relatedMatches.map((m) => (
                   <Link href={`/preview/${m.slug}`} key={m.id} className="block group">
-                    <div className="p-3 bg-neutral-50 dark:bg-neutral-850 hover:bg-neutral-100/50 dark:hover:bg-neutral-800 border border-neutral-200/50 dark:border-neutral-800 hover:border-neutral-200 dark:hover:border-neutral-700 rounded-xl transition-all flex items-center justify-between gap-3 text-left">
+                    <div className="p-3 bg-neutral-50 hover:bg-neutral-100/50 border border-neutral-200/50 hover:border-neutral-200 rounded-xl transition-all flex items-center justify-between gap-3 text-left">
                       <div className="space-y-1 overflow-hidden">
                         <span className="text-[9px] font-mono text-neutral-400 uppercase tracking-wider block font-bold truncate">
                           {m.competition}
                         </span>
-                        <p className="text-xs font-bold text-neutral-800 dark:text-neutral-200 line-clamp-1 group-hover:text-brand-green-dark dark:group-hover:text-brand-green transition-colors">
+                        <p className="text-xs font-bold text-neutral-800 line-clamp-1 group-hover:text-brand-green-dark transition-colors">
                           {m.teams.home.name} vs {m.teams.away.name}
                         </p>
                       </div>
                       <div className="shrink-0">
                         {m.status === 'LIVE' ? (
-                          <span className="bg-red-50 dark:bg-red-950/40 text-zim-red text-[9px] font-bold px-2 py-0.5 rounded border border-red-100 dark:border-red-900 animate-pulse">
+                          <span className="bg-red-50 text-zim-red text-[9px] font-bold px-2 py-0.5 rounded border border-red-100 animate-pulse">
                             LIVE
                           </span>
                         ) : (
-                          <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-mono font-bold bg-white dark:bg-neutral-800 border border-neutral-200/40 dark:border-neutral-700 px-2 py-0.5 rounded shadow-3xs">
+                          <span className="text-[10px] text-neutral-500 font-mono font-bold bg-white border border-neutral-200/40 px-2 py-0.5 rounded shadow-3xs">
                             {m.kickoffTime}
                           </span>
                         )}
@@ -746,7 +746,7 @@ export default function WatchClient({
             </div>
 
             <div className="pt-2 text-center">
-              <Link href="/" className="text-xs font-semibold text-[#009739] dark:text-brand-green hover:underline">
+              <Link href="/" className="text-xs font-semibold text-[#009739] hover:underline">
                 View all scheduled streams &rsaquo;
               </Link>
             </div>
@@ -760,9 +760,9 @@ export default function WatchClient({
       <PredictionsBanner />
 
       {/* SEO Section */}
-      <section className="mt-12 bg-white dark:bg-[#141417] rounded-2xl border border-neutral-200/60 dark:border-neutral-800 p-6 shadow-sm text-center">
-        <h2 className="text-xl font-extrabold text-neutral-900 dark:text-white mb-3">Watch {queryMatch.teams.home.name} vs {queryMatch.teams.away.name} Live Stream Free</h2>
-        <div className="space-y-4 text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed max-w-3xl mx-auto">
+      <section className="mt-12 bg-white rounded-2xl border border-neutral-200/60 p-6 shadow-sm text-center">
+        <h2 className="text-xl font-extrabold text-neutral-900 mb-3">Watch {queryMatch.teams.home.name} vs {queryMatch.teams.away.name} Live Stream Free</h2>
+        <div className="space-y-4 text-sm text-neutral-600 leading-relaxed max-w-3xl mx-auto">
           <p>
             Watch the {queryMatch.teams.home.name} vs {queryMatch.teams.away.name} live stream free in HD. 
           </p>
