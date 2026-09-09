@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Search, Play, Tv, Calendar, X, Menu, Clock, SlidersHorizontal, ChevronRight, Trophy, Sparkles, Home, Shield, FileText, Info, Mail, Newspaper } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -62,12 +63,16 @@ export default function Navbar() {
       <header className="w-full bg-white md:bg-white/95 border-b border-neutral-100 shadow-xs md:backdrop-blur-md [transform:translate3d(0,0,0)] [will-change:transform]">
         <div className="w-full max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between gap-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-1.5 shrink-0 select-none">
-            <span className="font-display font-extrabold text-base md:text-lg tracking-tight flex items-center">
-              <span className="text-zim-green">Zim</span>
-              <span className="text-zim-black">Kick</span>
-              <span className="text-zim-red">Off</span>
-            </span>
+          <Link href="/" className="flex items-center shrink-0 select-none" aria-label="ZKickoff">
+            <Image
+              src="/ZKickoff_logo.svg"
+              alt="ZKickoff"
+              width={1107}
+              height={224}
+              priority
+              unoptimized
+              className="w-[160px] sm:w-[180px] md:w-[220px] h-auto object-contain aspect-[1107/224]"
+            />
           </Link>
 
           {/* Desktop navigation and Hamburger Trigger */}
