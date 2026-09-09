@@ -39,7 +39,7 @@ export function Shotmap({
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <div className="h-64 bg-neutral-100 rounded-2xl animate-pulse"></div>
+        <div className="h-64 bg-neutral-100 dark:bg-neutral-800 rounded-2xl animate-pulse"></div>
       </div>
     );
   }
@@ -67,15 +67,15 @@ export function Shotmap({
   // Empty state handling
   if (!shotmap || shotmap.length === 0) {
     return (
-      <div className="py-12 px-4 text-center space-y-3 bg-neutral-50/70 rounded-2xl border border-neutral-200/50">
-        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto shadow-xs border border-neutral-200 text-neutral-400">
+      <div className="py-12 px-4 text-center space-y-3 bg-neutral-50/70 dark:bg-neutral-800/40 rounded-2xl border border-neutral-200/50 dark:border-neutral-800">
+        <div className="w-12 h-12 bg-white dark:bg-neutral-800 rounded-full flex items-center justify-center mx-auto shadow-xs border border-neutral-200 dark:border-neutral-700 text-neutral-400">
           <Target className="w-6 h-6" />
         </div>
         <div className="space-y-1">
-          <h4 className="font-display font-bold text-neutral-800 text-sm">
+          <h4 className="font-display font-bold text-neutral-800 dark:text-neutral-200 text-sm">
             {isUpcoming ? 'Shotmap Activates at Kickoff' : 'Shotmap Data Not Available'}
           </h4>
-          <p className="text-xs text-neutral-500 max-w-sm mx-auto">
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 max-w-sm mx-auto">
             {isUpcoming
               ? 'Interactive shot locations, xG values, and goal trajectories will update live here as the match progresses.'
               : 'Detailed shot position coordinates are not covered for this competition.'}
@@ -107,25 +107,25 @@ export function Shotmap({
   return (
     <div className="space-y-6">
       {/* Top Header Controls: Team Selector & xG Scorecard */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-100 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-100 dark:border-neutral-800 pb-4">
         <div>
-          <h3 className="font-display font-extrabold text-sm text-neutral-950 uppercase tracking-wider flex items-center gap-2">
-            <Target className="w-4 h-4 text-[#009739]" />
+          <h3 className="font-display font-extrabold text-sm text-neutral-950 dark:text-neutral-100 uppercase tracking-wider flex items-center gap-2">
+            <Target className="w-4 h-4 text-[#009739] dark:text-brand-green" />
             <span>Interactive Pitch Shotmap</span>
           </h3>
-          <p className="text-[11px] text-neutral-500">
+          <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
             Shot locations, expected goals (xG), and outcomes.
           </p>
         </div>
 
         {/* Team filter pills */}
-        <div className="flex bg-neutral-100 p-0.5 rounded-xl text-xs font-bold shrink-0 self-start sm:self-auto">
+        <div className="flex bg-neutral-100 dark:bg-neutral-800 p-0.5 rounded-xl text-xs font-bold shrink-0 self-start sm:self-auto">
           <button
             onClick={() => setSelectedTeam('ALL')}
             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
               selectedTeam === 'ALL'
-                ? 'bg-white text-neutral-900 shadow-3xs'
-                : 'text-neutral-500 hover:text-neutral-900'
+                ? 'bg-white dark:bg-[#141417] text-neutral-900 dark:text-neutral-100 shadow-3xs'
+                : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100'
             }`}
           >
             All ({shotmap.length})
@@ -134,8 +134,8 @@ export function Shotmap({
             onClick={() => setSelectedTeam('HOME')}
             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
               selectedTeam === 'HOME'
-                ? 'bg-white text-[#009739] shadow-3xs'
-                : 'text-neutral-500 hover:text-neutral-900'
+                ? 'bg-white dark:bg-[#141417] text-[#009739] dark:text-brand-green shadow-3xs'
+                : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100'
             }`}
           >
             {homeTeamName.slice(0, 10)} ({homeShots.length})
@@ -144,8 +144,8 @@ export function Shotmap({
             onClick={() => setSelectedTeam('AWAY')}
             className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
               selectedTeam === 'AWAY'
-                ? 'bg-white text-red-600 shadow-3xs'
-                : 'text-neutral-500 hover:text-neutral-900'
+                ? 'bg-white dark:bg-[#141417] text-red-600 dark:text-red-400 shadow-3xs'
+                : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100'
             }`}
           >
             {awayTeamName.slice(0, 10)} ({awayShots.length})
@@ -155,30 +155,30 @@ export function Shotmap({
 
       {/* Quick metrics comparison strip */}
       <div className="grid grid-cols-3 gap-3 text-center">
-        <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200/40 space-y-0.5">
-          <span className="text-[10px] font-mono font-bold text-neutral-400 uppercase">Total xG</span>
-          <div className="flex items-center justify-center gap-2 font-mono font-extrabold text-sm text-neutral-900">
-            <span className="text-[#009739]">{homeXG.toFixed(2)}</span>
-            <span className="text-neutral-300">vs</span>
-            <span className="text-red-600">{awayXG.toFixed(2)}</span>
+        <div className="p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-200/40 dark:border-neutral-800 space-y-0.5">
+          <span className="text-[10px] font-mono font-bold text-neutral-400 dark:text-neutral-500 uppercase">Total xG</span>
+          <div className="flex items-center justify-center gap-2 font-mono font-extrabold text-sm text-neutral-900 dark:text-neutral-100">
+            <span className="text-[#009739] dark:text-brand-green">{homeXG.toFixed(2)}</span>
+            <span className="text-neutral-300 dark:text-neutral-600">vs</span>
+            <span className="text-red-600 dark:text-red-400">{awayXG.toFixed(2)}</span>
           </div>
         </div>
 
-        <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200/40 space-y-0.5">
-          <span className="text-[10px] font-mono font-bold text-neutral-400 uppercase">Shots (Target)</span>
-          <div className="flex items-center justify-center gap-2 font-mono font-extrabold text-sm text-neutral-900">
+        <div className="p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-200/40 dark:border-neutral-800 space-y-0.5">
+          <span className="text-[10px] font-mono font-bold text-neutral-400 dark:text-neutral-500 uppercase">Shots (Target)</span>
+          <div className="flex items-center justify-center gap-2 font-mono font-extrabold text-sm text-neutral-900 dark:text-neutral-100">
             <span>{homeShots.length} ({homeOnTarget})</span>
-            <span className="text-neutral-300">vs</span>
+            <span className="text-neutral-300 dark:text-neutral-600">vs</span>
             <span>{awayShots.length} ({awayOnTarget})</span>
           </div>
         </div>
 
-        <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200/40 space-y-0.5">
-          <span className="text-[10px] font-mono font-bold text-neutral-400 uppercase">Goals</span>
-          <div className="flex items-center justify-center gap-2 font-mono font-extrabold text-sm text-neutral-900">
-            <span className="text-[#009739]">{homeGoals}</span>
-            <span className="text-neutral-300">-</span>
-            <span className="text-red-600">{awayGoals}</span>
+        <div className="p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-200/40 dark:border-neutral-800 space-y-0.5">
+          <span className="text-[10px] font-mono font-bold text-neutral-400 dark:text-neutral-500 uppercase">Goals</span>
+          <div className="flex items-center justify-center gap-2 font-mono font-extrabold text-sm text-neutral-900 dark:text-neutral-100">
+            <span className="text-[#009739] dark:text-brand-green">{homeGoals}</span>
+            <span className="text-neutral-300 dark:text-neutral-600">-</span>
+            <span className="text-red-600 dark:text-red-400">{awayGoals}</span>
           </div>
         </div>
       </div>
@@ -329,27 +329,27 @@ export function Shotmap({
       </div>
 
       {/* Legend & Guidance Footer */}
-      <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-neutral-50 rounded-xl border border-neutral-200/40 text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-neutral-50 dark:bg-neutral-800/50 rounded-xl border border-neutral-200/40 dark:border-neutral-800 text-xs">
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-full bg-[#009739] border border-black/20 flex items-center justify-center text-[7px] text-white">★</span>
-            <span className="text-neutral-700 font-medium">Goal</span>
+            <span className="text-neutral-700 dark:text-neutral-300 font-medium">Goal</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-[#2563eb]" />
-            <span className="text-neutral-700 font-medium">Saved</span>
+            <span className="text-neutral-700 dark:text-neutral-300 font-medium">Saved</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]" />
-            <span className="text-neutral-700 font-medium">Blocked</span>
+            <span className="text-neutral-700 dark:text-neutral-300 font-medium">Blocked</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-[#94a3b8]" />
-            <span className="text-neutral-700 font-medium">Off Target</span>
+            <span className="text-neutral-700 dark:text-neutral-300 font-medium">Off Target</span>
           </div>
         </div>
 
-        <div className="text-[11px] text-neutral-500 font-mono">
+        <div className="text-[11px] text-neutral-500 dark:text-neutral-400 font-mono">
           Circle size proportional to xG probability
         </div>
       </div>

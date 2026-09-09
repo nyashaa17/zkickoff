@@ -10,10 +10,10 @@ export function PredictionsBanner() {
   if (!isBannerVisible) return null;
 
   return (
-    <div className="fixed bottom-[160px] left-4 right-4 md:left-6 md:w-[340px] md:bottom-6 z-[60] bg-white border border-neutral-200 shadow-2xl rounded-2xl p-4 animate-in slide-in-from-bottom-5 fade-in duration-300">
+    <div className="fixed bottom-[160px] left-4 right-4 md:left-6 md:w-[340px] md:bottom-6 z-[60] bg-white dark:bg-[#141417] border border-neutral-200 dark:border-neutral-800 shadow-2xl rounded-2xl p-4 animate-in slide-in-from-bottom-5 fade-in duration-300">
       <button 
         onClick={() => setIsBannerVisible(false)}
-        className="absolute top-2.5 right-2.5 p-1.5 rounded-full text-neutral-400 hover:text-neutral-800 hover:bg-neutral-100 transition-colors cursor-pointer"
+        className="absolute top-2.5 right-2.5 p-1.5 rounded-full text-neutral-400 dark:text-neutral-500 hover:text-neutral-800 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
       >
         <X className="w-4 h-4" />
       </button>
@@ -23,9 +23,9 @@ export function PredictionsBanner() {
           <Sparkles className="w-6 h-6 text-neutral-950" />
         </div>
         <div className="pr-2">
-          <span className="text-[9px] font-mono font-black text-neutral-950 bg-brand-green/20 border border-brand-green/40 px-1.5 py-0.5 rounded uppercase tracking-wider mb-1 inline-block">Recommended</span>
-          <p className="text-sm font-black text-neutral-900 leading-tight mb-1.5">Free Football Predictions</p>
-          <p className="text-xs text-neutral-500 leading-relaxed max-w-[200px]">
+          <span className="text-[9px] font-mono font-black text-neutral-950 dark:text-white bg-brand-green/20 border border-brand-green/40 px-1.5 py-0.5 rounded uppercase tracking-wider mb-1 inline-block">Recommended</span>
+          <p className="text-sm font-black text-neutral-900 dark:text-white leading-tight mb-1.5">Free Football Predictions</p>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed max-w-[200px]">
             Check out Foretips.co.zw for the best accurate football predictions and insights today.
           </p>
           <Link 

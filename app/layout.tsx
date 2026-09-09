@@ -62,6 +62,24 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
     <html lang="en" className={`${inter.variable} ${poppins.variable}`} suppressHydrationWarning>
       <head>
+        <script
+          id="theme-initializer"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var stored = localStorage.getItem('theme');
+                  var isDark = stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                  if (isDark) {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                  }
+                } catch (e) {}
+              })();
+            `
+          }}
+        />
         <link rel="icon" type="image/svg+xml" href="/ZKickoff_icon.svg" />
         <link rel="apple-touch-icon" href="/ZKickoff_icon-512x512.png" />
         <script
@@ -143,7 +161,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
         </Script>
         <meta name="monetag" content="15fd02df8bbf6f0f2db83bb49f023835" />
       </head>
-      <body className="font-sans bg-[#F9F9FB] text-neutral-900 selection:bg-[#009739] selection:text-white antialiased min-h-screen flex flex-col" suppressHydrationWarning>
+      <body className="font-sans bg-[#F9F9FB] dark:bg-[#0d0d0f] text-neutral-900 dark:text-neutral-100 selection:bg-brand-green selection:text-neutral-950 antialiased min-h-screen flex flex-col transition-colors duration-150" suppressHydrationWarning>
         <Script id="monetag-script" strategy="lazyOnload">
           {`(function(s){s.dataset.zone='11055207',s.src='https://al5sm.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`}
         </Script>

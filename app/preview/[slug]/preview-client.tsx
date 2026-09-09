@@ -219,7 +219,7 @@ export default function MatchPreviewClient({
       </h1>
       
       {/* Top Header Navigation Panel */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 border-b border-neutral-200/40 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 border-b border-neutral-200/40 dark:border-neutral-800 pb-4">
         <Breadcrumbs 
           items={[
             { label: 'Live Broadcasts', href: '/live' },
@@ -228,7 +228,7 @@ export default function MatchPreviewClient({
         />
         <Link 
           href="/" 
-          className="inline-flex items-center gap-2 text-xs font-bold text-[#009739] hover:opacity-85 font-display transition-all py-1.5 px-3 bg-white hover:bg-neutral-50 rounded-xl border border-neutral-200/50 shrink-0 self-start sm:self-auto shadow-4xs"
+          className="inline-flex items-center gap-2 text-xs font-bold text-[#009739] dark:text-brand-green hover:opacity-85 font-display transition-all py-1.5 px-3 bg-white dark:bg-[#141417] hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-xl border border-neutral-200/50 dark:border-neutral-800 shrink-0 self-start sm:self-auto shadow-4xs"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           Back to Live Feed
@@ -236,10 +236,10 @@ export default function MatchPreviewClient({
       </div>
 
       {/* MATCH PREVIEW HEADER BLOCK */}
-      <div className="w-full bg-white border border-neutral-200/80 rounded-2xl overflow-hidden shadow-xs mb-6 relative">
+      <div className="w-full bg-white dark:bg-[#141417] border border-neutral-200/80 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-xs mb-6 relative">
         {/* World Cup / Competition indicator top strip */}
-        <div className="w-full bg-neutral-50 border-b border-neutral-100 px-5 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-2.5 text-xs font-bold text-neutral-700 font-sans">
+        <div className="w-full bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-100 dark:border-neutral-800 px-5 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-2.5 text-xs font-bold text-neutral-700 dark:text-neutral-300 font-sans">
             {queryMatch.leagueLogoUrl ? (
               <div className="relative w-4.5 h-4.5">
                 <Image 
@@ -262,7 +262,7 @@ export default function MatchPreviewClient({
           <div className="flex items-center gap-2 relative">
             <button 
               onClick={handleShare}
-              className="cursor-pointer p-1.5 hover:bg-neutral-200/60 rounded-full text-neutral-400 hover:text-neutral-600 transition-colors relative group"
+              className="cursor-pointer p-1.5 hover:bg-neutral-200/60 dark:hover:bg-neutral-800 rounded-full text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors relative group"
               title="Share"
             >
               <Share2 className="w-4 h-4" />
@@ -280,7 +280,7 @@ export default function MatchPreviewClient({
           
           {/* Home Team */}
           <div className="flex flex-col items-center justify-center gap-2.5">
-            <div className="w-16 h-16 md:w-20 md:h-20 bg-neutral-50 rounded-2xl flex items-center justify-center p-3 border border-neutral-200/60 shadow-5xs hover:scale-102 transition-transform">
+            <div className="w-16 h-16 md:w-20 md:h-20 bg-neutral-50 dark:bg-neutral-800 rounded-2xl flex items-center justify-center p-3 border border-neutral-200/60 dark:border-neutral-700 shadow-5xs hover:scale-102 transition-transform">
               <TeamLogo 
                 name={queryMatch.teams.home.name} 
                 className="w-full h-full object-contain"
@@ -289,11 +289,11 @@ export default function MatchPreviewClient({
               />
             </div>
             <div className="space-y-0.5">
-              <h2 className="text-sm md:text-lg font-extrabold text-neutral-900 tracking-tight">
+              <h2 className="text-sm md:text-lg font-extrabold text-neutral-900 dark:text-white tracking-tight">
                 {queryMatch.teams.home.name}
               </h2>
               {queryMatch.category === 'ZPSL' && (
-                <span className="text-[10px] font-mono text-[#009739] font-bold bg-[#009739]/10 px-2 py-0.5 rounded">
+                <span className="text-[10px] font-mono text-[#009739] dark:text-brand-green font-bold bg-[#009739]/10 dark:bg-brand-green/20 px-2 py-0.5 rounded">
                   ZSL League
                 </span>
               )}
@@ -311,37 +311,37 @@ export default function MatchPreviewClient({
                   </span>
                   <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest font-mono">LIVE</span>
                 </div>
-                <div className="text-2xl md:text-4xl font-black font-mono tracking-tight text-neutral-950 flex items-center gap-2.5">
+                <div className="text-2xl md:text-4xl font-black font-mono tracking-tight text-neutral-950 dark:text-white flex items-center gap-2.5">
                   <span>{queryMatch.score?.home ?? 0}</span>
-                  <span className="text-neutral-300 animate-pulse">:</span>
+                  <span className="text-neutral-300 dark:text-neutral-600 animate-pulse">:</span>
                   <span>{queryMatch.score?.away ?? 0}</span>
                 </div>
                 {queryMatch.minute && (
-                  <span className="text-[10px] font-bold text-neutral-500 font-mono bg-neutral-100 px-2 py-0.5 rounded-full border border-neutral-200/50">
+                  <span className="text-[10px] font-bold text-neutral-500 dark:text-neutral-400 font-mono bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-full border border-neutral-200/50 dark:border-neutral-700">
                     {queryMatch.minute}&apos;
                   </span>
                 )}
               </div>
             ) : isFinished ? (
               <div className="space-y-1">
-                <span className="text-[9px] font-mono font-bold text-neutral-400 uppercase tracking-widest bg-neutral-100 px-2 py-0.5 rounded">FINISHED</span>
-                <div className="text-2xl md:text-4xl font-black font-mono tracking-tight text-neutral-950 flex items-center gap-2">
+                <span className="text-[9px] font-mono font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded">FINISHED</span>
+                <div className="text-2xl md:text-4xl font-black font-mono tracking-tight text-neutral-950 dark:text-white flex items-center gap-2">
                   <span>{queryMatch.score?.home ?? 0}</span>
-                  <span className="text-neutral-300">:</span>
+                  <span className="text-neutral-300 dark:text-neutral-600">:</span>
                   <span>{queryMatch.score?.away ?? 0}</span>
                 </div>
-                <span className="text-[10px] font-bold text-neutral-400 block font-mono">FT</span>
+                <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 block font-mono">FT</span>
               </div>
             ) : (
               <div className="space-y-1.5">
-                <div className="text-[10px] font-mono font-extrabold text-neutral-500 bg-neutral-100/80 border border-neutral-200/40 px-2.5 py-0.5 rounded-full uppercase tracking-wider inline-block">
+                <div className="text-[10px] font-mono font-extrabold text-neutral-500 dark:text-neutral-300 bg-neutral-100/80 dark:bg-neutral-800 border border-neutral-200/40 dark:border-neutral-700 px-2.5 py-0.5 rounded-full uppercase tracking-wider inline-block">
                   {queryMatch.dateString}
                 </div>
-                <div className="text-xl md:text-3xl font-extrabold text-neutral-900 tracking-tight font-display py-0.5">
+                <div className="text-xl md:text-3xl font-extrabold text-neutral-900 dark:text-white tracking-tight font-display py-0.5">
                   —
                 </div>
-                <div className="text-[11px] font-mono font-bold text-neutral-500 flex items-center gap-1 justify-center">
-                  <Clock className="w-3 h-3 text-neutral-400" />
+                <div className="text-[11px] font-mono font-bold text-neutral-500 dark:text-neutral-400 flex items-center gap-1 justify-center">
+                  <Clock className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
                   <span>{queryMatch.kickoffTime}</span>
                 </div>
               </div>
@@ -350,7 +350,7 @@ export default function MatchPreviewClient({
 
           {/* Away Team */}
           <div className="flex flex-col items-center justify-center gap-2.5">
-            <div className="w-16 h-16 md:w-20 md:h-20 bg-neutral-50 rounded-2xl flex items-center justify-center p-3 border border-neutral-200/60 shadow-5xs hover:scale-102 transition-transform">
+            <div className="w-16 h-16 md:w-20 md:h-20 bg-neutral-50 dark:bg-neutral-800 rounded-2xl flex items-center justify-center p-3 border border-neutral-200/60 dark:border-neutral-700 shadow-5xs hover:scale-102 transition-transform">
               <TeamLogo 
                 name={queryMatch.teams.away.name} 
                 className="w-full h-full object-contain"
@@ -359,11 +359,11 @@ export default function MatchPreviewClient({
               />
             </div>
             <div className="space-y-0.5">
-              <h2 className="text-sm md:text-lg font-extrabold text-neutral-900 tracking-tight">
+              <h2 className="text-sm md:text-lg font-extrabold text-neutral-900 dark:text-white tracking-tight">
                 {queryMatch.teams.away.name}
               </h2>
               {queryMatch.category === 'ZPSL' && (
-                <span className="text-[10px] font-mono text-[#009739] font-bold bg-[#009739]/10 px-2 py-0.5 rounded">
+                <span className="text-[10px] font-mono text-[#009739] dark:text-brand-green font-bold bg-[#009739]/10 dark:bg-brand-green/20 px-2 py-0.5 rounded">
                   ZSL League
                 </span>
               )}
@@ -373,7 +373,7 @@ export default function MatchPreviewClient({
         </div>
 
         {/* SUB-NAVIGATION TAB LIST */}
-        <div className="w-full border-t border-neutral-200/70 overflow-x-auto scrollbar-none bg-white [transform:translate3d(0,0,0)] [will-change:transform]">
+        <div className="w-full border-t border-neutral-200/70 dark:border-neutral-800 overflow-x-auto scrollbar-none bg-white dark:bg-[#141417] [transform:translate3d(0,0,0)] [will-change:transform]">
           <div className="flex px-3 gap-1 min-w-max">
             {[
               { id: 'SUMMARY', label: 'FACTS' },
@@ -389,7 +389,7 @@ export default function MatchPreviewClient({
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
                   className={`cursor-pointer px-4.5 py-4 text-[11px] font-bold tracking-wider relative transition-colors duration-200 ${
-                    isActive ? 'text-red-500' : 'text-neutral-500 hover:text-neutral-900'
+                    isActive ? 'text-red-500' : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
                   }`}
                 >
                   {tab.label}
@@ -417,7 +417,7 @@ export default function MatchPreviewClient({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.15 }}
-              className="bg-white border border-neutral-200/80 rounded-2xl shadow-xs overflow-hidden [transform:translate3d(0,0,0)] [will-change:transform]"
+              className="bg-white dark:bg-[#141417] border border-neutral-200/80 dark:border-neutral-800 rounded-2xl shadow-xs overflow-hidden [transform:translate3d(0,0,0)] [will-change:transform]"
             >
               
               {/* 1. FACTS (SUMMARY) TAB */}
@@ -425,9 +425,9 @@ export default function MatchPreviewClient({
                 <div className="p-5 md:p-6 space-y-6">
                   
                   {/* STREAM PLAYER LAUNCHER CALLOUT */}
-                  <div className="bg-neutral-50/50 border border-neutral-100 rounded-2xl p-4 md:p-5 shadow-xs space-y-4">
-                    <h3 className="font-display font-extrabold text-sm text-neutral-950 pb-2 border-b border-neutral-100 flex items-center gap-1.5">
-                      <Tv className="w-4 h-4 text-neutral-900" />
+                  <div className="bg-neutral-50/50 dark:bg-neutral-900/50 border border-neutral-100 dark:border-neutral-800 rounded-2xl p-4 md:p-5 shadow-xs space-y-4">
+                    <h3 className="font-display font-extrabold text-sm text-neutral-950 dark:text-white pb-2 border-b border-neutral-100 dark:border-neutral-800 flex items-center gap-1.5">
+                      <Tv className="w-4 h-4 text-neutral-900 dark:text-brand-green" />
                       Live Stream Links
                     </h3>
 
@@ -865,28 +865,28 @@ export default function MatchPreviewClient({
         <div className="space-y-6">
           
           {/* VENUE / EVENT DETAILS */}
-          <div className="bg-white border border-neutral-200/60 rounded-2xl p-5 shadow-xs space-y-4">
-            <h3 className="font-display font-extrabold text-xs text-neutral-950 pb-2 border-b border-neutral-100 flex items-center gap-1.5 uppercase tracking-wider">
-              <Info className="w-3.5 h-3.5 text-[#009739]" />
+          <div className="bg-white dark:bg-[#141417] border border-neutral-200/60 dark:border-neutral-800 rounded-2xl p-5 shadow-xs space-y-4">
+            <h3 className="font-display font-extrabold text-xs text-neutral-950 dark:text-white pb-2 border-b border-neutral-100 dark:border-neutral-800 flex items-center gap-1.5 uppercase tracking-wider">
+              <Info className="w-3.5 h-3.5 text-[#009739] dark:text-brand-green" />
               Match Information
             </h3>
 
-            <div className="space-y-3.5 text-xs text-neutral-700">
+            <div className="space-y-3.5 text-xs text-neutral-700 dark:text-neutral-300">
               <div className="flex items-start gap-3">
-                <MapPin className="w-4 h-4 text-neutral-400 shrink-0 mt-0.5" />
+                <MapPin className="w-4 h-4 text-neutral-400 dark:text-neutral-500 shrink-0 mt-0.5" />
                 <div className="space-y-0.5">
-                  <p className="text-[9px] font-mono text-neutral-400 uppercase tracking-wide">Stadium Venue</p>
-                  <p className="font-bold text-neutral-800 leading-tight">
+                  <p className="text-[9px] font-mono text-neutral-400 dark:text-neutral-500 uppercase tracking-wide">Stadium Venue</p>
+                  <p className="font-bold text-neutral-800 dark:text-neutral-200 leading-tight">
                     {bzzoiroData?.event?.venue?.name || queryMatch.venue || 'To be announced'}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
-                <Users className="w-4 h-4 text-neutral-400 shrink-0 mt-0.5" />
+                <Users className="w-4 h-4 text-neutral-400 dark:text-neutral-500 shrink-0 mt-0.5" />
                 <div className="space-y-0.5">
-                  <p className="text-[9px] font-mono text-neutral-400 uppercase tracking-wide">Stadium Capacity</p>
-                  <p className="font-bold text-neutral-800 leading-tight">
+                  <p className="text-[9px] font-mono text-neutral-400 dark:text-neutral-500 uppercase tracking-wide">Stadium Capacity</p>
+                  <p className="font-bold text-neutral-800 dark:text-neutral-200 leading-tight">
                     {bzzoiroData?.event?.venue?.capacity 
                       ? `${bzzoiroData.event.venue.capacity.toLocaleString()} Capacity` 
                       : bzzoiroData?.event?.attendance 
@@ -902,9 +902,9 @@ export default function MatchPreviewClient({
 
           {/* WHERE TO WATCH — TV Channels / Broadcasters */}
           {bzzoiroData?.tvChannels && bzzoiroData.tvChannels.length > 0 && (
-            <div className="bg-white border border-neutral-200/60 rounded-2xl p-5 shadow-xs space-y-4">
-              <h3 className="font-display font-extrabold text-xs text-neutral-950 pb-2 border-b border-neutral-100 flex items-center gap-1.5 uppercase tracking-wider">
-                <Tv className="w-3.5 h-3.5 text-[#009739]" />
+            <div className="bg-white dark:bg-[#141417] border border-neutral-200/60 dark:border-neutral-800 rounded-2xl p-5 shadow-xs space-y-4">
+              <h3 className="font-display font-extrabold text-xs text-neutral-950 dark:text-white pb-2 border-b border-neutral-100 dark:border-neutral-800 flex items-center gap-1.5 uppercase tracking-wider">
+                <Tv className="w-3.5 h-3.5 text-[#009739] dark:text-brand-green" />
                 Where to Watch
               </h3>
 
@@ -923,7 +923,7 @@ export default function MatchPreviewClient({
                   });
 
                   return channels.map((ch: any, idx: number) => (
-                    <div key={idx} className="flex items-center gap-3 p-2.5 bg-neutral-50 rounded-xl border border-neutral-200/30">
+                    <div key={idx} className="flex items-center gap-3 p-2.5 bg-neutral-50 dark:bg-neutral-800/60 rounded-xl border border-neutral-200/30 dark:border-neutral-800">
                       {ch.logo_url || ch.logo ? (
                         <Image
                           src={ch.logo_url || ch.logo}
@@ -935,16 +935,16 @@ export default function MatchPreviewClient({
                           onError={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }}
                         />
                       ) : (
-                        <div className="w-6 h-6 bg-neutral-200 rounded flex items-center justify-center text-[8px] font-bold text-neutral-500 shrink-0">
+                        <div className="w-6 h-6 bg-neutral-200 dark:bg-neutral-700 rounded flex items-center justify-center text-[8px] font-bold text-neutral-500 dark:text-neutral-300 shrink-0">
                           TV
                         </div>
                       )}
                       <div className="overflow-hidden">
-                        <p className="text-xs font-bold text-neutral-800 truncate">
+                        <p className="text-xs font-bold text-neutral-800 dark:text-neutral-200 truncate">
                           {ch.name || ch.channel_name || 'Unknown Channel'}
                         </p>
                         {(ch.country || ch.region) && (
-                          <p className="text-[10px] font-mono text-neutral-400 truncate">
+                          <p className="text-[10px] font-mono text-neutral-400 dark:text-neutral-500 truncate">
                             {ch.country || ch.region}
                           </p>
                         )}
@@ -957,10 +957,10 @@ export default function MatchPreviewClient({
           )}
 
           {/* OTHER SCHEDULED FOOTBALL STREAMS */}
-          <div className="bg-white border border-neutral-200/60 rounded-2xl p-5 shadow-xs space-y-4">
-            <h3 className="font-display font-bold text-xs text-neutral-950 pb-2 border-b border-neutral-100 flex items-center justify-between uppercase tracking-wider">
+          <div className="bg-white dark:bg-[#141417] border border-neutral-200/60 dark:border-neutral-800 rounded-2xl p-5 shadow-xs space-y-4">
+            <h3 className="font-display font-bold text-xs text-neutral-950 dark:text-white pb-2 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between uppercase tracking-wider">
               <span>More Football Streams</span>
-              <span className="bg-neutral-100 text-neutral-600 font-mono text-[8px] font-bold px-1.5 py-0.5 rounded">
+              <span className="bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 font-mono text-[8px] font-bold px-1.5 py-0.5 rounded">
                 LIVE & SCHED
               </span>
             </h3>
@@ -969,11 +969,11 @@ export default function MatchPreviewClient({
               {relatedStreams.length > 0 ? (
                 relatedStreams.map((m) => (
                   <Link href={`/preview/${m.slug}`} key={m.id} className="block group">
-                    <div className="p-2.5 bg-neutral-50 hover:bg-neutral-100/50 border border-neutral-200/50 hover:border-neutral-200 rounded-xl transition-all flex items-center justify-between gap-3 text-left">
+                    <div className="p-2.5 bg-neutral-50 dark:bg-neutral-800/60 hover:bg-neutral-100/50 dark:hover:bg-neutral-800 border border-neutral-200/50 dark:border-neutral-800 hover:border-neutral-200 rounded-xl transition-all flex items-center justify-between gap-3 text-left">
                       <div className="flex items-center gap-2.5 overflow-hidden">
                         {/* Team Logos */}
                         <div className="flex -space-x-1.5 shrink-0">
-                          <div className="w-5 h-5 bg-white rounded-full p-0.5 border border-neutral-200/80 flex items-center justify-center shadow-5xs">
+                          <div className="w-5 h-5 bg-white dark:bg-neutral-800 rounded-full p-0.5 border border-neutral-200/80 dark:border-neutral-700 flex items-center justify-center shadow-5xs">
                             <TeamLogo 
                               name={m.teams.home.name} 
                               className="w-full h-full object-contain"
@@ -981,7 +981,7 @@ export default function MatchPreviewClient({
                               lsBadge={m.teams.home.lsBadge}
                             />
                           </div>
-                          <div className="w-5 h-5 bg-white rounded-full p-0.5 border border-neutral-200/80 flex items-center justify-center shadow-5xs">
+                          <div className="w-5 h-5 bg-white dark:bg-neutral-800 rounded-full p-0.5 border border-neutral-200/80 dark:border-neutral-700 flex items-center justify-center shadow-5xs">
                             <TeamLogo 
                               name={m.teams.away.name} 
                               className="w-full h-full object-contain"
@@ -992,21 +992,21 @@ export default function MatchPreviewClient({
                         </div>
 
                         <div className="space-y-0.5 overflow-hidden">
-                          <span className="text-[8px] font-mono text-neutral-400 uppercase tracking-wider block font-bold truncate">
+                          <span className="text-[8px] font-mono text-neutral-400 dark:text-neutral-500 uppercase tracking-wider block font-bold truncate">
                             {m.competition}
                           </span>
-                          <p className="text-xs font-bold text-neutral-850 line-clamp-1 group-hover:text-[#009739] transition-colors">
+                          <p className="text-xs font-bold text-neutral-850 dark:text-neutral-200 line-clamp-1 group-hover:text-[#009739] dark:group-hover:text-brand-green transition-colors">
                             {m.teams.home.name} vs {m.teams.away.name}
                           </p>
                         </div>
                       </div>
                       <div className="shrink-0">
                         {m.status === 'LIVE' ? (
-                          <span className="bg-red-50 text-red-600 text-[8px] font-bold px-1.5 py-0.5 rounded border border-red-100 animate-pulse">
+                          <span className="bg-red-50 dark:bg-red-950/40 text-red-600 text-[8px] font-bold px-1.5 py-0.5 rounded border border-red-100 dark:border-red-900/50 animate-pulse">
                             LIVE
                           </span>
                         ) : (
-                          <span className="text-[9px] text-neutral-500 font-mono font-bold bg-white border border-neutral-200/40 px-1.5 py-0.5 rounded shadow-5xs">
+                          <span className="text-[9px] text-neutral-500 dark:text-neutral-300 font-mono font-bold bg-white dark:bg-neutral-800 border border-neutral-200/40 dark:border-neutral-700 px-1.5 py-0.5 rounded shadow-5xs">
                             {m.kickoffTime}
                           </span>
                         )}
@@ -1015,12 +1015,12 @@ export default function MatchPreviewClient({
                   </Link>
                 ))
               ) : (
-                <p className="text-neutral-400 text-xs text-center py-4">No other schedules active.</p>
+                <p className="text-neutral-400 dark:text-neutral-500 text-xs text-center py-4">No other schedules active.</p>
               )}
             </div>
 
             <div className="pt-1 text-center">
-              <Link href="/" className="text-xs font-semibold text-[#009739] hover:underline">
+              <Link href="/" className="text-xs font-semibold text-[#009739] dark:text-brand-green hover:underline">
                 View entire broadcast feeds &rsaquo;
               </Link>
             </div>
@@ -1031,9 +1031,9 @@ export default function MatchPreviewClient({
       </div>
 
       {/* SEO Section */}
-      <section className="mt-12 bg-white rounded-2xl border border-neutral-200/60 p-6 shadow-sm text-center">
-        <h2 className="text-xl font-extrabold text-neutral-900 mb-3">Watch {queryMatch.teams.home.name} vs {queryMatch.teams.away.name} Live Stream</h2>
-        <div className="space-y-4 text-sm text-neutral-600 leading-relaxed max-w-3xl mx-auto">
+      <section className="mt-12 bg-white dark:bg-[#141417] rounded-2xl border border-neutral-200/60 dark:border-neutral-800 p-6 shadow-sm text-center">
+        <h2 className="text-xl font-extrabold text-neutral-900 dark:text-white mb-3">Watch {queryMatch.teams.home.name} vs {queryMatch.teams.away.name} Live Stream</h2>
+        <div className="space-y-4 text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed max-w-3xl mx-auto">
           <p>
             Read the full match preview, check lineups, betting odds, and stats for the upcoming {queryMatch.teams.home.name} vs {queryMatch.teams.away.name} fixture. 
           </p>
@@ -1043,7 +1043,7 @@ export default function MatchPreviewClient({
           <p>
             <Link
               href={`/watch/${slug}`}
-              className="inline-flex items-center gap-1.5 text-[#009739] font-bold hover:underline"
+              className="inline-flex items-center gap-1.5 text-[#009739] dark:text-brand-green font-bold hover:underline"
             >
               Watch {queryMatch.teams.home.name} vs {queryMatch.teams.away.name} Live →
             </Link>
