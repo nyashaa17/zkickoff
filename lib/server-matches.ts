@@ -42,7 +42,7 @@ export async function fetchMatchesForDate(
       data.Stages.forEach((stage) => {
         if (stage.Events) {
           stage.Events.forEach((event) => {
-            matches.push(parseRawEventToMatch(event, stage.Snm, stage.Cnm, dateLabel));
+            matches.push(parseRawEventToMatch(event, stage.Snm, stage.Cnm, dateLabel, stage));
           });
         }
       });

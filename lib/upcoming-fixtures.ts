@@ -40,7 +40,7 @@ async function fetchFixturesForDate(
         if (stage.Events) {
           stage.Events.forEach((event) => {
             matches.push(
-              parseRawEventToMatch(event, stage.Snm, stage.Cnm, dateLabel),
+              parseRawEventToMatch(event, stage.Snm, stage.Cnm, dateLabel, stage),
             );
           });
         }

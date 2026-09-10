@@ -17,9 +17,10 @@ import {
   Network,
   ListOrdered,
   AlertCircle,
+  Trophy,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { Match } from "@/lib/matches-data";
+import { Match, LeagueGroup, groupMatchesByLeague } from "@/lib/matches-data";
 import MatchCard from "@/components/match-card";
 import { MatchGridSkeleton } from "@/components/skeleton-loader";
 import {
@@ -322,22 +323,8 @@ function HomeContent() {
     return ["ALL", ...sorted];
   }, [tabMatches, majorLeagues]);
 
-  const groupedTodayMatches = React.useMemo(() => {
-    const groups: Record<
-      string,
-      { leagueName: string; leagueLogoUrl?: string; matches: Match[] }
-    > = {};
-    filteredMatches.forEach((m: Match) => {
-      if (!groups[m.competition]) {
-        groups[m.competition] = {
-          leagueName: m.competition,
-          leagueLogoUrl: m.leagueLogoUrl,
-          matches: [],
-        };
-      }
-      groups[m.competition].matches.push(m);
-    });
-    return Object.values(groups);
+  const groupedMatches = React.useMemo<LeagueGroup[]>(() => {
+    return groupMatchesByLeague(filteredMatches);
   }, [filteredMatches]);
 
   // Progressive rendering: Load initial batch of ~45 matches / top leagues, load more on scroll
@@ -354,10 +341,10 @@ function HomeContent() {
   // Sliced grouped matches based on render limit
   const { visibleGroupedMatches, totalFilteredCount, hasMoreToRender } = React.useMemo(() => {
     let count = 0;
-    const groups: typeof groupedTodayMatches = [];
+    const groups: LeagueGroup[] = [];
     let hasMore = false;
 
-    for (const group of groupedTodayMatches) {
+    for (const group of groupedMatches) {
       if (count < renderLimit) {
         groups.push(group);
         count += group.matches.length;
@@ -371,11 +358,7 @@ function HomeContent() {
       totalFilteredCount: filteredMatches.length,
       hasMoreToRender: hasMore || filteredMatches.length > renderLimit,
     };
-  }, [groupedTodayMatches, filteredMatches.length, renderLimit]);
-
-  const visibleFlatMatches = React.useMemo(() => {
-    return filteredMatches.slice(0, renderLimit);
-  }, [filteredMatches, renderLimit]);
+  }, [groupedMatches, filteredMatches.length, renderLimit]);
 
   // IntersectionObserver to automatically load more matches as user scrolls near bottom
   useEffect(() => {
@@ -678,47 +661,64 @@ function HomeContent() {
                     </div>
                   ) : filteredMatches.length > 0 ? (
                     <>
-                      {activeTab === "TODAY" || selectedDateFilter !== null ? (
-                        // Grouped by league on Today's tab
-                        visibleGroupedMatches.map((group) => (
-                          <div key={group.leagueName} className="space-y-3">
-                            <div className="flex items-center gap-2 px-1 py-1">
+                      {visibleGroupedMatches.map((group) => (
+                        <div key={group.leagueId} className="space-y-3">
+                          {/* League group header row */}
+                          <div className="flex items-center justify-between gap-3 px-3 py-2 bg-neutral-50/80 hover:bg-neutral-100/60 rounded-xl border border-neutral-200/60 shadow-3xs transition-colors">
+                            <div className="flex items-center gap-2.5 min-w-0">
                               {group.leagueLogoUrl ? (
                                 <Image
                                   src={group.leagueLogoUrl}
                                   alt={group.leagueName}
-                                  width={16}
-                                  height={16}
-                                  className="object-contain shrink-0"
+                                  width={20}
+                                  height={20}
+                                  className="w-5 h-5 object-contain shrink-0"
                                   referrerPolicy="no-referrer"
                                 />
                               ) : (
-                                <div className="w-4 h-4 rounded-full bg-neutral-150 flex items-center justify-center border border-neutral-300 text-[8px] font-bold text-neutral-500 shrink-0">
+                                <div className="w-5 h-5 rounded-full bg-neutral-200/80 flex items-center justify-center border border-neutral-300/60 text-[9px] font-bold text-neutral-600 shrink-0 uppercase">
                                   {group.leagueName.charAt(0)}
                                 </div>
                               )}
-                              <h3 className="font-display font-bold text-xs md:text-sm text-neutral-800 tracking-tight uppercase">
-                                {group.leagueName}
-                              </h3>
-                              <span className="text-[10px] font-mono font-bold bg-neutral-100 text-neutral-500 px-2 py-0.5 rounded-full border border-neutral-200/50">
-                                {group.matches.length}
-                              </span>
+                              <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                                {group.region && (
+                                  <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-neutral-400 shrink-0">
+                                    {group.region}
+                                  </span>
+                                )}
+                                {group.region && (
+                                  <span className="text-neutral-300 text-xs select-none">•</span>
+                                )}
+                                <h3 className="font-display font-bold text-xs md:text-sm text-neutral-900 tracking-tight truncate">
+                                  {group.leagueName}
+                                </h3>
+                                <span className="text-[10px] font-mono font-bold bg-neutral-200/60 text-neutral-600 px-1.5 py-0.5 rounded-full">
+                                  {group.matches.length}
+                                </span>
+                              </div>
                             </div>
-                            <div className="space-y-3">
-                              {group.matches.map((match: Match) => (
-                                <MatchCard key={match.id} match={match} />
-                              ))}
-                            </div>
+
+                            {/* Table pill button aligned right */}
+                            {group.tableUrl ? (
+                              <Link
+                                href={group.tableUrl}
+                                className="inline-flex items-center gap-1.5 px-3 py-1 bg-white hover:bg-neutral-50 text-neutral-700 hover:text-neutral-950 font-display text-xs font-semibold rounded-full border border-neutral-200 shadow-3xs transition-all shrink-0 hover:border-neutral-300"
+                                title={`View ${group.leagueName} Table`}
+                              >
+                                <Trophy className="w-3 h-3 text-amber-500" />
+                                <span>Table</span>
+                              </Link>
+                            ) : null}
                           </div>
-                        ))
-                      ) : (
-                        // Normal flat list for other tabs
-                        <div className="space-y-3">
-                          {visibleFlatMatches.map((match: Match) => (
-                            <MatchCard key={match.id} match={match} />
-                          ))}
+
+                          {/* Matches in this league */}
+                          <div className="space-y-3">
+                            {group.matches.map((match: Match) => (
+                              <MatchCard key={match.id} match={match} />
+                            ))}
+                          </div>
                         </div>
-                      )}
+                      ))}
 
                       {/* Progressive load more sentinel & trigger */}
                       {hasMoreToRender && (

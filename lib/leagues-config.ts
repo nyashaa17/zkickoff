@@ -298,3 +298,109 @@ export function getZoneForRule(league: LeagueConfig, position: number): LeagueZo
   if (!league.zones) return undefined;
   return league.zones.find(z => position >= z.range[0] && position <= z.range[1]);
 }
+
+/**
+ * Match a raw competition name and optional country/region to a registered LeagueConfig.
+ * Guards against false positives across different leagues with identical names (e.g. Algerian Ligue 1 vs French Ligue 1).
+ */
+export function findLeagueConfig(name: string, region?: string): LeagueConfig | undefined {
+  if (!name) return undefined;
+  const n = name.toLowerCase().trim();
+  const r = (region || '').toLowerCase().trim();
+
+  // Handle ambiguous names with country context first
+  if (n === 'serie a' && (r.includes('brazil') || r.includes('brasil'))) {
+    return getLeagueBySlug('brasileirao');
+  }
+
+  const exact = LEAGUES_REGISTRY.find(
+    l => n === l.slug || n === l.name.toLowerCase() || n === l.shortName.toLowerCase()
+  );
+  if (exact) {
+    if (r && exact.country && !r.includes(exact.country.toLowerCase()) && !exact.country.toLowerCase().includes(r)) {
+      if (['france', 'england', 'spain', 'italy', 'germany', 'portugal', 'scotland', 'netherlands', 'brazil', 'saudi arabia', 'usa'].includes(exact.country.toLowerCase())) {
+        return undefined;
+      }
+    }
+    return exact;
+  }
+
+  if (n.includes('premier league') || n.includes('epl')) {
+    if (n.includes('english') || r.includes('england') || r === 'europe' || (!r && !n.includes('egypt') && !n.includes('zimbabwe') && !n.includes('south africa') && !n.includes('bahrain') && !n.includes('russia') && !n.includes('ukraine') && !n.includes('scot'))) {
+      return getLeagueBySlug('premier-league');
+    }
+  }
+  if (n.includes('la liga') || n.includes('laliga') || n.includes('primera division')) {
+    if (!r || r.includes('spain') || r === 'europe') {
+      return getLeagueBySlug('la-liga');
+    }
+  }
+  if (n.includes('serie a')) {
+    if (r.includes('brazil') || n.includes('brazil') || n.includes('brasileir')) {
+      return getLeagueBySlug('brasileirao');
+    }
+    if (!r || r.includes('italy') || r === 'europe') {
+      return getLeagueBySlug('serie-a');
+    }
+  }
+  if (n.includes('bundesliga')) {
+    if (!r || r.includes('germany') || r === 'europe') {
+      return getLeagueBySlug('bundesliga');
+    }
+  }
+  if (n.includes('ligue 1')) {
+    if (r.includes('france') || n.includes('french') || (!r && !n.includes('algeria') && !n.includes('tunisia'))) {
+      return getLeagueBySlug('ligue-1');
+    }
+  }
+  if (n.includes('champions league') || n.includes('ucl')) {
+    if (n.includes('caf') || r.includes('africa')) {
+      return getLeagueBySlug('caf-champions-league');
+    }
+    if (!r || r.includes('europe') || r.includes('uefa') || r === 'champions league') {
+      return getLeagueBySlug('champions-league');
+    }
+  }
+  if (n.includes('europa league') || n.includes('uel')) {
+    return getLeagueBySlug('europa-league');
+  }
+  if (n.includes('championship')) {
+    if (!r || r.includes('england') || n.includes('efl')) {
+      return getLeagueBySlug('championship');
+    }
+  }
+  if (n.includes('saudi') || n.includes('roshn')) {
+    return getLeagueBySlug('saudi-pro-league');
+  }
+  if (n.includes('mls') || n.includes('major league soccer')) {
+    return getLeagueBySlug('mls');
+  }
+  if (n.includes('brasileir') || n.includes('brasileirao')) {
+    return getLeagueBySlug('brasileirao');
+  }
+  if (n.includes('eredivisie')) {
+    return getLeagueBySlug('eredivisie');
+  }
+  if (n.includes('primeira liga') || n.includes('liga portugal')) {
+    return getLeagueBySlug('liga-portugal');
+  }
+  if (n.includes('scottish premiership') || (n.includes('premiership') && r.includes('scotland'))) {
+    return getLeagueBySlug('scottish-premiership');
+  }
+  if (n.includes('caf champions') || n.includes('caf cl')) {
+    return getLeagueBySlug('caf-champions-league');
+  }
+
+  return undefined;
+}
+
+export function findLeagueSlug(name: string, region?: string): string | null {
+  const config = findLeagueConfig(name, region);
+  return config ? config.slug : null;
+}
+
+export function getLeagueTableUrl(leagueName: string, region?: string): string | null {
+  const slug = findLeagueSlug(leagueName, region);
+  return slug ? `/league/${slug}` : null;
+}
+

@@ -1,5 +1,6 @@
 // TypeScript helpers and integrations for the TotalSportsLive API
 import { Match, Team } from './matches-data';
+import { findLeagueConfig } from './leagues-config';
 
 // Helper to generate a URL-friendly slug
 export function slugify(text: string): string {
@@ -81,9 +82,21 @@ export interface ListEventRaw {
 }
 
 export interface ListStageRaw {
+  Sid?: string;
   Snm: string; // Stage name (League)
-  CompN?: string; // Alt competition name
+  Scd?: string;
   Cnm: string; // Country name
+  CnmT?: string;
+  Csnm?: string;
+  Ccd?: string;
+  CompId?: string;
+  CompCnmt?: string;
+  CompN?: string; // Alt competition name
+  CompUrlName?: string;
+  CompD?: string;
+  Scu?: number;
+  badgeUrl?: string;
+  firstColor?: string;
   Events?: ListEventRaw[];
 }
 
@@ -91,7 +104,13 @@ export interface LivescoreResponseRaw {
   Stages: ListStageRaw[];
 }
 
-export function parseRawEventToMatch(event: ListEventRaw, stageName: string, countryName: string, dateStringOption = 'Today'): Match {
+export function parseRawEventToMatch(
+  event: ListEventRaw,
+  stageName: string,
+  countryName: string,
+  dateStringOption = 'Today',
+  stage?: ListStageRaw
+): Match {
   const homeRaw = event.T1?.[0];
   const awayRaw = event.T2?.[0];
 
@@ -154,9 +173,59 @@ export function parseRawEventToMatch(event: ListEventRaw, stageName: string, cou
     }
   }
 
+  // Resolve competition name: prefer CompN when Snm is a tournament round/group
+  const isGenericRound = /^(League Stage|Group [A-Z0-9]|Quarter-Finals|Semi-Finals|Final|Round of \d+|Knockout Stage|Preliminary Round)/i.test(stageName || '');
+  const comp = (isGenericRound && stage?.CompN) ? stage.CompN : (stageName || stage?.CompN || 'Football League');
+  const cLower = comp.toLowerCase().trim();
+  const country = (countryName || stage?.Cnm || '').trim();
+  const countryLower = country.toLowerCase();
+
+  let competitionName = comp;
+  if (cLower === 'premier league' || cLower === 'england: premier league' || cLower === 'england premier league') {
+    if (!country || countryLower.includes('england')) {
+      competitionName = 'English Premier League';
+    } else if (countryLower.includes('south africa')) {
+      competitionName = 'South African Premier League';
+    } else if (countryLower.includes('zimbabwe')) {
+      competitionName = 'Zimbabwe Premier Soccer League';
+    } else if (countryLower.includes('egypt')) {
+      competitionName = 'Egyptian Premier League';
+    } else if (countryLower.includes('russia')) {
+      competitionName = 'Russian Premier League';
+    } else if (countryLower.includes('scotland')) {
+      competitionName = 'Scottish Premier League';
+    } else if (countryLower.includes('ukraine')) {
+      competitionName = 'Ukrainian Premier League';
+    } else {
+      competitionName = `${country} Premier League`;
+    }
+  }
+
+  // Resolve region label
+  const resolvedRegion = (() => {
+    if (country && country !== comp) {
+      return country;
+    }
+    if (stage?.Cnm && stage.Cnm !== comp) {
+      return stage.Cnm;
+    }
+    if (stage?.CompCnmt) {
+      return stage.CompCnmt.charAt(0).toUpperCase() + stage.CompCnmt.slice(1);
+    }
+    return country || 'International';
+  })();
+
+  const leagueConfig = findLeagueConfig(competitionName, resolvedRegion);
+  const leagueSlug = leagueConfig?.slug || null;
+  const leagueId = leagueConfig
+    ? String(leagueConfig.id)
+    : (stage?.CompId ? String(stage.CompId) : slugify(competitionName));
+  const region = leagueConfig?.country || resolvedRegion;
+  const leagueLogoUrl = leagueConfig ? `https://sports.bzzoiro.com/img/league/${leagueConfig.id}` : undefined;
+
   // Guess category
   let category: 'ZPSL' | 'INTERNATIONAL' | 'AFRICA' = 'INTERNATIONAL';
-  const compLower = (stageName + ' ' + (countryName || '')).toLowerCase();
+  const compLower = (competitionName + ' ' + (country || '')).toLowerCase();
   if (compLower.includes('zimbabwe') || compLower.includes('zpsl') || compLower.includes('premier soccer league')) {
     category = 'ZPSL';
   } else if (compLower.includes('africa') || compLower.includes('caf') || compLower.includes('cosafa')) {
@@ -187,27 +256,11 @@ export function parseRawEventToMatch(event: ListEventRaw, stageName: string, cou
     status,
     minute: event.Ela && !isNaN(parseInt(event.Ela, 10)) ? parseInt(event.Ela, 10) : undefined,
     eps: event.Eps,
-    competition: (() => {
-      const comp = stageName || 'Football League';
-      const cLower = comp.toLowerCase().trim();
-      const country = (countryName || '').trim();
-      const countryLower = country.toLowerCase();
-
-      // If it is a generic Premier League stage name, check the country to give it a descriptive name
-      if (cLower === 'premier league' || cLower === 'england: premier league' || cLower === 'england premier league') {
-        if (!country || countryLower.includes('england')) {
-          return 'English Premier League';
-        }
-        if (countryLower === 'south africa') return 'South African Premier League';
-        if (countryLower.includes('zimbabwe')) return 'Zimbabwe Premier Soccer League';
-        if (countryLower === 'egypt') return 'Egyptian Premier League';
-        if (countryLower === 'russia') return 'Russian Premier League';
-        if (countryLower === 'scotland') return 'Scottish Premier League';
-        if (countryLower === 'ukraine') return 'Ukrainian Premier League';
-        return `${country} Premier League`;
-      }
-      return comp;
-    })(),
+    competition: competitionName,
+    leagueId,
+    region,
+    leagueSlug,
+    leagueLogoUrl,
     kickoffTime,
     dateString: dateStringOption,
     esd: event.Esd ? String(event.Esd) : undefined,
