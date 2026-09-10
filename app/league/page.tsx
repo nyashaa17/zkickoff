@@ -41,7 +41,7 @@ export default function LeaguesHubPage() {
         <div className="bg-white rounded-2xl border border-neutral-200/80 p-6 md:p-8 shadow-xs relative overflow-hidden">
           <div className="max-w-2xl space-y-2">
             <div className="flex items-center gap-2">
-              <span className="font-mono font-bold text-[10px] uppercase tracking-wider text-neutral-950 bg-brand-green/20 border border-brand-green/40 px-2 py-0.5 rounded">
+              <span className="font-mono font-bold text-[10px] uppercase tracking-wider text-[#009739] bg-[#009739]/10 px-2 py-0.5 rounded">
                 Live Tables Hub
               </span>
               <span className="font-mono text-[10px] text-neutral-400">
@@ -60,10 +60,8 @@ export default function LeaguesHubPage() {
         {/* Featured Top Competitions Grid */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-display font-extrabold text-base text-neutral-950 flex items-center gap-2 border-l-3 border-brand-green pl-2.5">
-              <span className="w-6 h-6 rounded-md bg-neutral-950 text-brand-green flex items-center justify-center shadow-2xs shrink-0">
-                <Trophy className="w-3.5 h-3.5 text-brand-green" />
-              </span>
+            <h2 className="font-display font-extrabold text-base text-neutral-950 flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-[#009739]" />
               <span>Featured Competitions</span>
             </h2>
             <span className="text-[11px] font-mono text-neutral-400">
@@ -76,7 +74,7 @@ export default function LeaguesHubPage() {
               <Link
                 key={league.slug}
                 href={`/league/${league.slug}`}
-                className="group bg-white p-5 rounded-2xl border border-neutral-200/80 hover:border-brand-green/50 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-4"
+                className="group bg-white p-5 rounded-2xl border border-neutral-200/80 hover:border-neutral-300 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
@@ -84,7 +82,7 @@ export default function LeaguesHubPage() {
                       {league.flag}
                     </div>
                     <div>
-                      <h3 className="font-display font-bold text-neutral-900 group-hover:text-neutral-950 transition-colors text-sm">
+                      <h3 className="font-display font-bold text-neutral-900 group-hover:text-[#009739] transition-colors text-sm">
                         {league.name}
                       </h3>
                       <p className="text-[11px] font-mono text-neutral-500">
@@ -100,7 +98,7 @@ export default function LeaguesHubPage() {
 
                 <div className="pt-3 border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-500 font-medium">
                   <span>View Official Table</span>
-                  <span className="font-mono text-[10px] text-neutral-950 bg-brand-green/20 border border-brand-green/40 px-1.5 py-0.5 rounded font-bold">2026/27</span>
+                  <span className="font-mono text-[10px] text-[#009739] font-bold">2026/27</span>
                 </div>
               </Link>
             ))}
@@ -110,10 +108,8 @@ export default function LeaguesHubPage() {
         {/* Additional Global Competitions */}
         {otherLeagues.length > 0 && (
           <div className="space-y-4 pt-4 border-t border-neutral-200/60">
-            <h2 className="font-display font-extrabold text-base text-neutral-950 flex items-center gap-2 border-l-3 border-brand-green pl-2.5">
-              <span className="w-6 h-6 rounded-md bg-neutral-950 text-brand-green flex items-center justify-center shadow-2xs shrink-0">
-                <Globe className="w-3.5 h-3.5 text-brand-green" />
-              </span>
+            <h2 className="font-display font-extrabold text-base text-neutral-950 flex items-center gap-2">
+              <Globe className="w-4 h-4 text-neutral-600" />
               <span>More Global Competitions</span>
             </h2>
 
@@ -122,12 +118,12 @@ export default function LeaguesHubPage() {
                 <Link
                   key={league.slug}
                   href={`/league/${league.slug}`}
-                  className="group bg-white p-4 rounded-xl border border-neutral-200/70 hover:border-brand-green/50 shadow-5xs hover:shadow-xs transition-all flex items-center justify-between gap-3"
+                  className="group bg-white p-4 rounded-xl border border-neutral-200/70 hover:border-neutral-300 shadow-5xs hover:shadow-xs transition-all flex items-center justify-between gap-3"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span className="text-xl shrink-0">{league.flag}</span>
                     <div className="min-w-0">
-                      <h4 className="font-display font-bold text-xs text-neutral-900 truncate group-hover:text-neutral-950 transition-colors">
+                      <h4 className="font-display font-bold text-xs text-neutral-900 truncate group-hover:text-[#009739] transition-colors">
                         {league.name}
                       </h4>
                       <p className="text-[10px] font-mono text-neutral-400 truncate">

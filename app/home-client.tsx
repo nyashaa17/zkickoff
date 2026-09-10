@@ -581,19 +581,19 @@ function HomeContent() {
                         data-is-today={d.isToday ? "true" : "false"}
                         className={`snap-center shrink-0 flex flex-col items-center justify-center min-w-[70px] h-[78px] rounded-2xl transition-all border duration-200 cursor-pointer ${
                           isSelected
-                            ? "bg-brand-green text-neutral-950 border-brand-green shadow-md shadow-brand-green/20 scale-[1.02] font-bold"
+                            ? "bg-black text-white border-black shadow-md scale-[1.02] font-bold"
                             : d.isToday
-                              ? "bg-brand-green/10 text-neutral-950 border-brand-green/40 hover:bg-brand-green/20 font-bold"
+                              ? "bg-neutral-100 text-black border-neutral-300 font-bold"
                               : "bg-white hover:bg-neutral-50 text-neutral-600 border-neutral-200/80 hover:border-neutral-300"
                         }`}
                       >
-                        <span className={`text-[10px] font-bold uppercase tracking-wider ${isSelected || d.isToday ? "text-neutral-950" : "opacity-85"}`}>
+                        <span className="text-[10px] font-bold uppercase tracking-wider opacity-85">
                           {d.isToday ? "Today" : d.dayName}
                         </span>
-                        <span className={`text-base font-display font-black leading-none my-1 ${isSelected || d.isToday ? "text-neutral-950" : ""}`}>
+                        <span className="text-base font-display font-black leading-none my-1">
                           {d.dateNumber}
                         </span>
-                        <span className={`text-[9px] font-semibold uppercase tracking-wider ${isSelected ? "text-neutral-900" : d.isToday ? "text-neutral-700" : "opacity-60"}`}>
+                        <span className="text-[9px] font-semibold uppercase tracking-wider opacity-60">
                           {d.monthName}
                         </span>
                       </button>
@@ -610,7 +610,7 @@ function HomeContent() {
                   onClick={() => setActiveTab("LIVE")}
                   className={`flex-1 min-w-[max-content] px-3 py-3 text-[10px] md:text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     activeTab === "LIVE"
-                      ? "bg-neutral-900 text-white shadow-xs border border-neutral-900"
+                      ? "bg-neutral-50 text-zim-red shadow-xs border border-neutral-200"
                       : "text-neutral-500 hover:text-neutral-800"
                   }`}
                 >
@@ -625,11 +625,11 @@ function HomeContent() {
                   onClick={() => setActiveTab("TODAY")}
                   className={`flex-1 min-w-[max-content] px-3 py-3 text-[10px] md:text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     activeTab === "TODAY"
-                      ? "bg-brand-green text-neutral-950 shadow-xs border border-brand-green font-extrabold"
+                      ? "bg-neutral-50 text-zim-green shadow-xs border border-neutral-200"
                       : "text-neutral-500 hover:text-neutral-800"
                   }`}
                 >
-                  <Flame className={`w-3.5 h-3.5 ${activeTab === "TODAY" ? "text-neutral-950 fill-neutral-950/20" : "text-zim-yellow"}`} />
+                  <Flame className="w-3.5 h-3.5 text-zim-yellow" />
                   TODAY ({todayCount})
                 </button>
 
@@ -637,7 +637,7 @@ function HomeContent() {
                   onClick={() => setActiveTab("FINISHED")}
                   className={`flex-1 min-w-[max-content] px-3 py-3 text-[10px] md:text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     activeTab === "FINISHED"
-                      ? "bg-neutral-900 text-white shadow-xs border border-neutral-900"
+                      ? "bg-neutral-50 text-neutral-800 shadow-xs border border-neutral-200"
                       : "text-neutral-500 hover:text-neutral-800"
                   }`}
                 >
@@ -682,7 +682,7 @@ function HomeContent() {
                         // Grouped by league on Today's tab
                         visibleGroupedMatches.map((group) => (
                           <div key={group.leagueName} className="space-y-3">
-                            <div className="flex items-center gap-2 px-1 py-1 border-l-3 border-brand-green pl-2.5">
+                            <div className="flex items-center gap-2 px-1 py-1">
                               {group.leagueLogoUrl ? (
                                 <Image
                                   src={group.leagueLogoUrl}
@@ -697,10 +697,10 @@ function HomeContent() {
                                   {group.leagueName.charAt(0)}
                                 </div>
                               )}
-                              <h3 className="font-display font-bold text-xs md:text-sm text-neutral-900 tracking-tight uppercase">
+                              <h3 className="font-display font-bold text-xs md:text-sm text-neutral-800 tracking-tight uppercase">
                                 {group.leagueName}
                               </h3>
-                              <span className="text-[10px] font-mono font-bold bg-brand-green/15 text-neutral-950 px-2 py-0.5 rounded-full border border-brand-green/30">
+                              <span className="text-[10px] font-mono font-bold bg-neutral-100 text-neutral-500 px-2 py-0.5 rounded-full border border-neutral-200/50">
                                 {group.matches.length}
                               </span>
                             </div>
@@ -755,7 +755,7 @@ function HomeContent() {
                       {activeCategory !== "ALL" && (
                         <button
                           onClick={() => setActiveCategory("ALL")}
-                          className="mt-2 text-xs font-display font-bold text-neutral-900 hover:text-black underline decoration-brand-green decoration-2 underline-offset-2 cursor-pointer"
+                          className="mt-2 text-xs font-display font-semibold text-zim-green hover:underline cursor-pointer"
                         >
                           Reset filters to view all matches
                         </button>
@@ -775,10 +775,8 @@ function HomeContent() {
           {/* Sidebar Tabs: League Table & Player Stats */}
           <div className="bg-white border border-neutral-200/60 rounded-3xl p-5 shadow-xs">
             <div className="flex border-b border-neutral-100 pb-2 mb-4 justify-between items-center">
-              <h3 className="font-display font-bold text-sm text-neutral-950 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-md bg-neutral-950 text-brand-green flex items-center justify-center shadow-2xs shrink-0">
-                  <ListOrdered className="w-3.5 h-3.5 text-brand-green" />
-                </span>
+              <h3 className="font-display font-bold text-sm text-neutral-950 flex items-center gap-1.5">
+                <ListOrdered className="w-4 h-4 text-zim-green" />
                 Schedules & Stats
               </h3>
 
@@ -869,12 +867,12 @@ function HomeContent() {
                                 {team.form.map((f: string, idx: number) => (
                                   <span
                                     key={idx}
-                                    className={`w-4 h-4 rounded text-[9px] font-black inline-flex items-center justify-center font-mono ${
+                                    className={`w-4 h-4 rounded text-[9px] font-bold inline-flex items-center justify-center font-mono text-white ${
                                       f === "W"
-                                        ? "bg-brand-green text-neutral-950"
+                                        ? "bg-black"
                                         : f === "D"
                                           ? "bg-[#FFD100] text-neutral-800"
-                                          : "bg-[#D62828] text-white"
+                                          : "bg-[#D62828]"
                                     }`}
                                   >
                                     {f}
@@ -891,7 +889,7 @@ function HomeContent() {
                       <span>Major League Standings</span>
                       <Link
                         href="/league"
-                        className="hover:text-brand-green-dark hover:underline flex items-center gap-0.5"
+                        className="hover:underline flex items-center gap-0.5"
                       >
                         View Official Tables &rsaquo;
                       </Link>

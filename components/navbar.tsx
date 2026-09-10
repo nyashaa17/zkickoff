@@ -71,7 +71,7 @@ export default function Navbar() {
               height={224}
               priority
               unoptimized
-              className="w-[160px] sm:w-[180px] md:w-[220px] h-auto object-contain aspect-[1107/224]"
+              className="w-[135px] sm:w-[155px] md:w-[175px] h-auto object-contain aspect-[1107/224]"
             />
           </Link>
 

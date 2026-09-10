@@ -8,7 +8,7 @@
   --color-brand-green: #39FF00;
   --color-brand-green-hover: #32e600;
   --color-brand-green-dark: #05822e;
-  --color-zim-green: #39FF00;
+  --color-zim-green: #000000;
   --color-zim-yellow: #FFD100;
   --color-zim-red: #D62828;
   --color-zim-black: #111111;
@@ -57,5 +57,5 @@
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--brand-green);
+  background: #000000;
 }

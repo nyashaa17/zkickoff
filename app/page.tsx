@@ -4,8 +4,9 @@ import HomeClient from './home-client';
 import { getUpcomingFixturesForSeo, UpcomingFixture } from '@/lib/upcoming-fixtures';
 
 export const metadata: Metadata = {
-  title: 'ZimKickOff - Watch Live Football Matches Free',
-  description: 'Watch Free Live Football Streams In HD No Signup Required Stream Premier League UEFA Champions League La Liga And Top Matches Worldwide Instantly',
+  title: 'ZimKickoff - Watch Free Live Football Streams & Scores',
+  description:
+    'Watch live football streams in HD with no signup required. Stream Premier League, Champions League, La Liga, and follow live scores worldwide on ZimKickoff.',
   alternates: {
     canonical: '/',
   },

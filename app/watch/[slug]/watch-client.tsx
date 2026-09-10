@@ -381,9 +381,9 @@ export default function WatchClient({
                           setActiveServer(renderServersList[0].id);
                         }
                       }}
-                      className="w-16 h-16 cursor-pointer bg-brand-green text-neutral-950 hover:bg-brand-green-hover hover:scale-105 active:scale-95 transition-all rounded-full flex items-center justify-center mb-4 backdrop-blur-md shadow-lg shadow-brand-green/30"
+                      className="w-16 h-16 cursor-pointer bg-zim-green text-white hover:scale-105 active:scale-95 transition-all rounded-full flex items-center justify-center mb-4 backdrop-blur-md shadow-lg shadow-zim-green/20"
                     >
-                      <Play className="w-8 h-8 ml-1 fill-neutral-950 text-neutral-950" />
+                      <Play className="w-8 h-8 ml-1" />
                     </button>
                     <h3 className="text-white font-display font-bold text-xl mb-2">Live Broadcast Ready</h3>
                     <p className="text-neutral-300 text-xs mb-4">
@@ -687,7 +687,7 @@ export default function WatchClient({
                   }}
                   className={`w-full cursor-pointer px-4 py-3 rounded-xl text-xs font-display font-bold transition-all border flex items-center justify-between gap-1.5 ${
                     activeServer === srv.id
-                      ? 'bg-brand-green text-neutral-950 border-brand-green shadow-xs'
+                      ? 'bg-zim-green text-white border-zim-green shadow-xs shadow-zim-green/10'
                       : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-700 border-neutral-200/60'
                   }`}
                 >
@@ -695,7 +695,7 @@ export default function WatchClient({
                     <Tv className="w-4 h-4 opacity-80" />
                     {srv.name.replace(' (HD)', '').replace(' (FHD)', '') || `Server ${idx + 1}`}
                   </span>
-                  {activeServer === srv.id && <Check className="w-4 h-4 text-neutral-950" />}
+                  {activeServer === srv.id && <Check className="w-4 h-4 text-white" />}
                 </button>
               ))}
               {renderServersList.length === 0 && (
@@ -722,7 +722,7 @@ export default function WatchClient({
                         <span className="text-[9px] font-mono text-neutral-400 uppercase tracking-wider block font-bold truncate">
                           {m.competition}
                         </span>
-                        <p className="text-xs font-bold text-neutral-800 line-clamp-1 group-hover:text-brand-green-dark transition-colors">
+                        <p className="text-xs font-bold text-neutral-800 line-clamp-1 group-hover:text-zim-green transition-colors">
                           {m.teams.home.name} vs {m.teams.away.name}
                         </p>
                       </div>

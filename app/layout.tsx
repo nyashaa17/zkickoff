@@ -23,29 +23,48 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: 'ZimKickOff - Watch Live Football Matches Free',
-  description: 'Watch Free Live Football Streams In HD No Signup Required Stream Premier League UEFA Champions League La Liga And Top Matches Worldwide Instantly',
-  keywords: 'ZimKickOff, Live Football Zimbabwe, free soccer stream, football live streams, Zimbabwe soccer, Koora live, كورة لايف, Yalla shoot, يلاشوت, Live stream, Football stream',
+  title: 'ZimKickoff - Watch Free Live Football Streams & Scores',
+  description:
+    'Watch live football streams in HD with no signup required. Stream Premier League, Champions League, La Liga, and follow live scores worldwide on ZimKickoff.',
+  keywords: [
+    'ZimKickoff',
+    'Live Football Zimbabwe',
+    'free soccer stream',
+    'football live streams',
+    'Zimbabwe soccer',
+    'live football',
+    'football streams',
+    'live scores',
+  ],
+
   metadataBase: new URL('https://zimkickoff.co.zw'),
+
   openGraph: {
-    title: 'ZimKickOff - Watch Live Football Matches Free',
-    description: 'Watch Free Live Football Streams In HD No Signup Required Stream Premier League UEFA Champions League La Liga And Top Matches Worldwide Instantly',
-    url: 'https://zimkickoff.co.zw',
+    title: 'ZimKickoff - Free Live Football Streaming & Live Scores',
+    description:
+      'Stream Premier League, Champions League & worldwide football in HD. 100% free with no signup or subscription needed.',
+    url: 'https://zimkickoff.co.zw/',
+    siteName: 'ZimKickoff',
+    locale: 'en_ZW',
     type: 'website',
+
     images: [
       {
-        url: '/OpenGraph.png',
+        url: '/opengraph.png',
         width: 1200,
         height: 630,
-        alt: 'ZimKickOff Open Graph Image',
+        type: 'image/png',
+        alt: 'ZimKickoff - Free Live Football Streams & Scores',
       },
     ],
   },
+
   twitter: {
     card: 'summary_large_image',
-    title: 'ZimKickOff - Watch Live Football Matches Free',
-    description: 'Watch Free Live Football Streams In HD No Signup Required Stream Premier League UEFA Champions League La Liga And Top Matches Worldwide Instantly',
-    images: ['/OpenGraph.png'],
+    title: 'ZimKickoff - Free Live Football Streaming & Live Scores',
+    description:
+      'Stream Premier League, Champions League & worldwide matches free in HD. No signup required.',
+    images: ['/opengraph.png'],
   },
   icons: {
     icon: [
