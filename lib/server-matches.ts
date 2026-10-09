@@ -7,7 +7,7 @@ import {
 import { Match } from './matches-data';
 import { getTeamLogoUrl, getLeagueLogoUrl } from './bzzoiro-api';
 
-const BACKEND_BASE = 'https://king.totalsportslive.co.zw/api/livescore';
+const BACKEND_BASE = 'https://king.totalsportslive.xyz/api/livescore';
 
 function getDateLabel(offset: number): string {
   if (offset === -1) return 'Yesterday';

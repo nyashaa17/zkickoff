@@ -14,7 +14,7 @@ import {
 import { Match } from './matches-data';
 
 const UPCOMING_DAYS = 14;
-const BACKEND_BASE = 'https://king.totalsportslive.co.zw/api/livescore';
+const BACKEND_BASE = 'https://king.totalsportslive.xyz/api/livescore';
 
 /**
  * Fetch all fixtures for a single date from the upstream livescore provider.

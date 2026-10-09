@@ -4,8 +4,6 @@ import React, { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { RefreshCw, MessageCircle } from 'lucide-react';
 import { PredictionsBanner } from '@/components/predictions-banner';
-import DOMPurify from 'dompurify';
-
 function IframePlayer() {
   const searchParams = useSearchParams();
   
@@ -31,20 +29,6 @@ function IframePlayer() {
     return /^[a-z0-9]{1,20}$/i.test(param);
   };
   const type = isValidType(rawType) ? rawType : null;
-  const [dashHtml, setDashHtml] = useState<string>('');
-
-  useEffect(() => {
-    if (fixture) {
-      fetch(`https://app.totalsportslive.co.zw/dash-buttons?fixture=${encodeURIComponent(fixture)}`, { mode: 'cors' })
-        .then((res) => res.text())
-        .then((html) => {
-          if (html && html.trim()) {
-            setDashHtml(DOMPurify.sanitize(html));
-          }
-        })
-        .catch((err) => console.error("DASH button load error:", err));
-    }
-  }, [fixture]);
 
   if (!fixture) {
     return (
@@ -63,12 +47,10 @@ function IframePlayer() {
         allow="fullscreen; autoplay; encrypted-media; picture-in-picture"
         loading="eager"
         className="w-full h-[260px] md:h-[400px] border-none bg-[#111] rounded-xl my-4"
-        src={`https://king.totalsportss.online/embed?fixture=${encodeURIComponent(fixture)}&stream=${encodeURIComponent(stream)}${type ? `&type=${encodeURIComponent(type)}` : ''}`}
+        src={`https://vicecap.github.io/Play/embed?fixture=${encodeURIComponent(fixture)}&stream=${encodeURIComponent(stream)}${type ? `&type=${encodeURIComponent(type)}` : ''}`}
       ></iframe>
 
-      {dashHtml && (
-        <div id="dashButtonsContainer" className="my-4" dangerouslySetInnerHTML={{ __html: dashHtml }}></div>
-      )}
+      <div id="matchButtons" className="my-2"></div>
     </>
   );
 }

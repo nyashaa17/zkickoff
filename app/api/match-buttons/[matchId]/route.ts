@@ -14,40 +14,51 @@ export async function GET(
   const teamFallbackFixture = home && away ? `${home} vs ${away}` : null;
 
   try {
-    const res = await fetch(`https://app.totalsportss.online/match-buttons/${matchId}`, {
+    const res = await fetch(`https://app.totalsportss.online/match-buttons/${encodeURIComponent(matchId)}`, {
       next: { revalidate: 15 } // revalidate every 15s for streams
     });
 
     if (!res.ok) {
-      // Clean fallback handling for 404 or other non-ok status codes, avoiding scary error throws
-      const fallbackFixture = teamFallbackFixture || matchId;
-      const fallbackServers = [
-        {
-          id: `srv-fallback-1`,
-          name: `Primary Broadcast Feed (1080p)`,
-          embedUrl: `https://king.totalsportss.online/embed?fixture=${encodeURIComponent(fallbackFixture)}&stream=1`
-        },
-        {
-          id: `srv-fallback-2`,
-          name: `Backup Stream Sync (720p)`,
-          embedUrl: `https://king.totalsportss.online/embed?fixture=${encodeURIComponent(fallbackFixture)}&stream=2`
-        }
-      ];
-
+      // 404 or upstream error: never render 404 HTML as button content
+      // Return empty server list without fabricated fallback streams
       return NextResponse.json({
         matchId,
-        servers: fallbackServers,
-        rawHtml: `<div class="p-4 text-center text-xs text-neutral-400">Stream links rendering via backup sync.</div>`
+        servers: [],
+        rawHtml: ''
       });
     }
 
     const html = await res.text();
 
-    // Extract page title from h3 tag as a robust default stream fixture parameter
+    // Check if match state indicates buttons are unavailable (e.g. scheduled or finished)
+    const stateMatch = html.match(/data-match-state=["']([^"']+)["']/i);
+    if (stateMatch) {
+      try {
+        const decodedState = stateMatch[1]
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/&amp;/g, '&');
+        const parsedState = JSON.parse(decodedState);
+        if (parsedState.available === false) {
+          return NextResponse.json({
+            matchId,
+            servers: [],
+            rawHtml: ''
+          });
+        }
+      } catch (e) {
+        // Fall through to link parsing
+      }
+    }
+
+    // Extract page title from h3 tag or .match-title as a robust default stream fixture parameter
     let pageTitleFixture = '';
     const h3Match = html.match(/<h3[^>]*>([\s\S]*?)<\/h3>/i);
+    const titleMatch = html.match(/<div class=["']match-title["']>([\s\S]*?)<\/div>/i);
     if (h3Match) {
       pageTitleFixture = h3Match[1].replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+    } else if (titleMatch) {
+      pageTitleFixture = titleMatch[1].replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
     }
 
     const fallbackFixture = pageTitleFixture || teamFallbackFixture || matchId;
@@ -67,13 +78,11 @@ export async function GET(
       if (!label) {
         label = `Stream Feed ${count}`;
       } else {
-        // Beautify labels
         label = label.replace(/\s+/g, ' ');
       }
 
       // Filter out links that are just shares or scripts
-      if (url.startsWith('http') && !url.includes('facebook.com') && !url.includes('twitter.com') && !url.includes('whatsapp://')) {
-        // Try to extract fixture and stream from the url if it is a livestream link
+      if (url.startsWith('http') && !url.includes('facebook.com') && !url.includes('twitter.com') && !url.includes('whatsapp.com') && !url.includes('whatsapp://')) {
         let streamStr = count.toString();
         let fixtureStr = fallbackFixture;
 
@@ -88,7 +97,6 @@ export async function GET(
             fixtureStr = parsedFixture;
           }
         } catch (e) {
-          // Fallback parsing query params with regex for non-standard relative or malformed URLs
           const fixtureMatch = url.match(/[?&]fixture=([^&]+)/);
           if (fixtureMatch) {
             fixtureStr = decodeURIComponent(fixtureMatch[1]);
@@ -99,49 +107,28 @@ export async function GET(
           }
         }
         
+        // Use the new player endpoint https://vicecap.github.io/Play/embed
         servers.push({
           id: `srv-${matchId}-${count}`,
           name: `${label} (HD)`,
-          embedUrl: `https://king.totalsportss.online/embed?fixture=${encodeURIComponent(fixtureStr)}&stream=${streamStr}`
+          embedUrl: `https://vicecap.github.io/Play/embed?fixture=${encodeURIComponent(fixtureStr)}&stream=${encodeURIComponent(streamStr)}`
         });
         count++;
       }
     }
 
-    // Fallback: if no valid servers could be parsed but we received raw HTML, 
-    // maybe we can extract raw URL strings from any src or href
-    if (servers.length === 0) {
-      const urlRegex = /https:\/\/app\.totalsportss\.online\/embed\/[^\s"'`>]+/gi;
-      const urlsFound = html.match(urlRegex) || [];
-      const uniqueUrls = Array.from(new Set(urlsFound));
-      
-      uniqueUrls.forEach((url, index) => {
-        servers.push({
-          id: `srv-${matchId}-${index + 1}`,
-          name: `Premium Server ${index + 1} (FHD)`,
-          embedUrl: `https://king.totalsportss.online/embed?fixture=${encodeURIComponent(fallbackFixture)}&stream=${index + 1}`
-        });
-      });
-    }
-
-    // Remove ultimate fallback so that empty servers can dictate showing "No stream links available" banner.
-    
     return NextResponse.json({
       matchId,
       servers,
-      rawHtml: html
+      rawHtml: servers.length > 0 ? html : ''
     });
   } catch (error: any) {
-    console.error('Match Buttons Proxy Error:', error);
+    console.error('Match Buttons Proxy Error:', error?.message || error);
     
-    // Return empty list so "No stream links" banner is shown
-    const fallbackServers: any[] = [];
-
     return NextResponse.json({
       matchId,
-      servers: fallbackServers,
-      rawHtml: `<div class="p-4 text-center text-xs text-neutral-400">Stream links temporarily unavailable.</div>`,
-      error: error.message
+      servers: [],
+      rawHtml: ''
     });
   }
 }

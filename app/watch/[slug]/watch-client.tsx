@@ -677,6 +677,8 @@ export default function WatchClient({
                 LINKS
               </span>
             </h3>
+            {/* Target element for match-buttons embed compatibility */}
+            <div id="matchButtons" data-match-id={matchId} className="hidden"></div>
             <div className="flex flex-col gap-2">
               {renderServersList.map((srv, idx) => (
                 <button

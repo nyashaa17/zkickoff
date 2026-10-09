@@ -38,6 +38,7 @@ interface PlayerStat {
 
 interface StatCategory {
   title: string;
+  isDemo?: boolean;
   players: PlayerStat[];
 }
 
@@ -921,7 +922,9 @@ function HomeContent() {
                     .map((category: StatCategory, catIdx: number) => (
                       <div key={catIdx} className="space-y-3">
                         <p className="text-[10px] font-mono font-bold text-neutral-400 uppercase tracking-widest">
-                          {category.title} — English Premier League
+                          {category.title.includes('Premier League') || category.title.includes('Demo')
+                            ? category.title
+                            : `${category.title} — English Premier League`}
                         </p>
                         <div className="divide-y divide-neutral-100">
                           {category.players
@@ -975,8 +978,12 @@ function HomeContent() {
                       </div>
                     ))
                 ) : (
-                  <div className="text-center py-6 text-neutral-400 text-xs">
-                    No stats available today. Check back during kickoffs!
+                  <div className="text-center py-8 px-4 text-xs space-y-1.5 border border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50">
+                    <AlertCircle className="w-5 h-5 text-neutral-400 mx-auto mb-1" />
+                    <p className="font-semibold text-neutral-700">Player stats currently unavailable</p>
+                    <p className="text-neutral-400 max-w-xs mx-auto text-[11px] leading-relaxed">
+                      Live player statistics are offline while upstream services undergo maintenance. Standings and live match scores remain available.
+                    </p>
                   </div>
                 )}
               </div>
