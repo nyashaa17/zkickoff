@@ -9,7 +9,7 @@ import { revalidatePath } from 'next/cache';
 // Input constraints
 const MAX_SOURCES_COUNT = 20;
 
-export const SourceInputSchema = z.object({
+const SourceInputSchema = z.object({
   name: z.string().trim().min(1, 'Source name is required').max(100, 'Source name too long'),
   stream_type: z.enum(['youtube', 'hls']),
   stream_url: z.string().trim().min(1, 'Stream URL is required').max(1000, 'Stream URL too long'),
@@ -17,7 +17,7 @@ export const SourceInputSchema = z.object({
   display_order: z.number().int().min(0).max(100).default(0),
 });
 
-export const EventCreateSchema = z.object({
+const EventCreateSchema = z.object({
   title: z.string().trim().min(3, 'Title must be at least 3 characters').max(200, 'Title cannot exceed 200 characters'),
   slug: z
     .string()
@@ -52,7 +52,7 @@ export const EventCreateSchema = z.object({
   }
 );
 
-export const EventUpdateSchema = EventCreateSchema.and(
+const EventUpdateSchema = EventCreateSchema.and(
   z.object({
     id: z.string().uuid('Invalid event UUID format'),
     expected_version: z.number().int().min(1, 'Expected version must be >= 1'),

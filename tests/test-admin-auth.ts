@@ -187,6 +187,24 @@ async function main() {
     assert.ok(actionsCode.includes('[\'admin\', \'superadmin\'].includes(adminRecord.role)'), 'Must enforce role check');
   });
 
+  // 11b. Server Actions export contract ('use server' files can only export async functions)
+  await test('Server Actions export contract: app/actions/events.ts only exports async functions and types', () => {
+    const actionsCode = fs.readFileSync(path.join(__dirname, '../app/actions/events.ts'), 'utf8');
+    assert.ok(actionsCode.startsWith("'use server'") || actionsCode.startsWith('"use server"'), "File must begin with 'use server'");
+    
+    // Find all export statements
+    const exportLines = actionsCode.split('\n').filter(line => /^export\s+/.test(line.trim()));
+    for (const line of exportLines) {
+      const trimmed = line.trim();
+      const isAsyncFunction = /^export\s+async\s+function\s+/.test(trimmed);
+      const isType = /^export\s+(?:type|interface)\s+/.test(trimmed);
+      assert.ok(
+        isAsyncFunction || isType,
+        `Invalid Server Action export "${trimmed}". In Next.js, "use server" files can only export async functions.`
+      );
+    }
+  });
+
   // 12. Service role key server-only isolation
   await test('Service role key is strictly isolated to server-only environments', () => {
     const adminCode = fs.readFileSync(path.join(__dirname, '../lib/supabase/admin.ts'), 'utf8');
