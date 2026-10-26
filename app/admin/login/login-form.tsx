@@ -56,7 +56,11 @@ export default function LoginForm() {
       });
 
       if (error) {
-        setErrorMsg(error.message);
+        if (error.status === 429 || error.message?.toLowerCase().includes('rate limit')) {
+          setErrorMsg('Too many sign-in attempts. Please wait a few minutes before trying again.');
+        } else {
+          setErrorMsg('Invalid email or password. Please check your credentials and try again.');
+        }
         setLoading(false);
         return;
       }
@@ -64,7 +68,7 @@ export default function LoginForm() {
       router.push('/admin/events');
       router.refresh();
     } catch (err: any) {
-      setErrorMsg(err.message || 'Login failed. Please check your credentials.');
+      setErrorMsg('Login failed. Please check your credentials and try again.');
       setLoading(false);
     }
   };

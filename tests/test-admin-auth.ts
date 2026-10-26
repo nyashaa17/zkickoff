@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { NextRequest } from 'next/server';
 import { handleAuthCallback, GET as callbackHandler, ALLOWED_OTP_TYPES } from '../app/auth/callback/route';
+import { getTrustedAuthOrigin, getAuthCallbackRedirectUrl, TRUSTED_PRODUCTION_ORIGIN } from '../lib/supabase/auth-url';
 
 console.log('--- Running Admin Authentication & Password Recovery Test Suite ---');
 
@@ -31,31 +32,74 @@ async function main() {
 
   // --- Part 1: Static Code Structure & Invariant Checks ---
 
-  // 1. Forgot password navigation link in login form
-  await test('Login form contains link to /admin/forgot-password', () => {
+  // 1. Sign-in only admin interface without public registration
+  await test('Login page supports sign-in and strictly excludes public registration or sign-up controls', () => {
     const loginFormCode = fs.readFileSync(path.join(__dirname, '../app/admin/login/login-form.tsx'), 'utf8');
+    assert.ok(loginFormCode.includes('signInWithPassword'), 'Must invoke signInWithPassword');
+    assert.ok(!loginFormCode.includes('signUp'), 'Login form must never invoke signUp');
+    assert.ok(!loginFormCode.includes('Create account'), 'Login form must not offer account creation');
+    assert.ok(!loginFormCode.includes('Register'), 'Login form must not offer registration');
     assert.ok(loginFormCode.includes('href="/admin/forgot-password"'), 'Login form must link to forgot password route');
     assert.ok(loginFormCode.includes('Forgot password?'), 'Login form must display "Forgot password?" label');
+
+    // Confirm no alternative registration routes exist in app/admin
+    const adminDirFiles = fs.readdirSync(path.join(__dirname, '../app/admin'));
+    assert.ok(!adminDirFiles.includes('register'), 'No register route allowed');
+    assert.ok(!adminDirFiles.includes('signup'), 'No signup route allowed');
   });
 
-  // 2. Forgot password request flow and trusted redirect
+  // 2. Non-sensitive error messaging on login to prevent user enumeration
+  await test('Login form sanitizes authentication errors to prevent arbitrary email enumeration', () => {
+    const loginFormCode = fs.readFileSync(path.join(__dirname, '../app/admin/login/login-form.tsx'), 'utf8');
+    assert.ok(loginFormCode.includes('Invalid email or password. Please check your credentials and try again.'), 'Must use uniform credential error');
+    assert.ok(loginFormCode.includes('Too many sign-in attempts'), 'Must handle rate limiting gracefully');
+  });
+
+  // 3. Trusted auth origin and redirect URL resolver
+  await test('Trusted auth redirect resolver strictly enforces production origin and rejects localhost in production', () => {
+    assert.equal(TRUSTED_PRODUCTION_ORIGIN, 'https://zimkickoff.co.zw');
+
+    // Test in simulated production environment
+    const origNodeEnv = process.env.NODE_ENV;
+    try {
+      (process.env as any).NODE_ENV = 'production';
+      delete process.env.NEXT_PUBLIC_SITE_URL;
+
+      const origin = getTrustedAuthOrigin();
+      assert.equal(origin, 'https://zimkickoff.co.zw', 'Must default to https://zimkickoff.co.zw in production');
+
+      const redirectUrl = getAuthCallbackRedirectUrl('/admin/reset-password');
+      assert.equal(
+        redirectUrl,
+        'https://zimkickoff.co.zw/auth/callback?next=%2Fadmin%2Freset-password',
+        'Redirect URL must target canonical production callback'
+      );
+      assert.ok(!redirectUrl.includes('localhost'), 'Production redirect URL must NEVER contain localhost');
+    } finally {
+      (process.env as any).NODE_ENV = origNodeEnv;
+    }
+  });
+
+  // 4. Forgot password request flow and trusted redirect
   await test('Forgot password form derives trusted redirect and prevents open-redirect targets', () => {
     const forgotFormCode = fs.readFileSync(path.join(__dirname, '../app/admin/forgot-password/forgot-password-form.tsx'), 'utf8');
-    assert.ok(forgotFormCode.includes('auth/callback?next=/admin/reset-password'), 'Redirect must target internal auth callback');
+    assert.ok(forgotFormCode.includes('getAuthCallbackRedirectUrl'), 'Must resolve redirect via getAuthCallbackRedirectUrl');
     assert.ok(!forgotFormCode.includes('req.query.redirect'), 'Redirect must not be derived from arbitrary query parameters');
+    assert.ok(!forgotFormCode.includes('localhost:3000'), 'Must not hardcode localhost:3000');
     assert.ok(forgotFormCode.includes('resetPasswordForEmail'), 'Must invoke resetPasswordForEmail');
   });
 
-  // 3. User enumeration defense: uniform messaging
+  // 5. User enumeration defense: uniform messaging
   await test('Forgot password form displays identical confirmation notice to mitigate user enumeration', () => {
     const forgotFormCode = fs.readFileSync(path.join(__dirname, '../app/admin/forgot-password/forgot-password-form.tsx'), 'utf8');
     assert.ok(forgotFormCode.includes('If an administrator account exists'), 'Must use timing-safe / non-enumerating confirmation text');
   });
 
-  // 4. Auth callback anti-open-redirect security logic
+  // 6. Auth callback anti-open-redirect security logic
   await test('Auth callback route handler sanitizes redirect destination to internal relative paths', () => {
     const callbackCode = fs.readFileSync(path.join(__dirname, '../app/auth/callback/route.ts'), 'utf8');
     assert.ok(callbackCode.includes('exchangeCodeForSession'), 'Callback must exchange PKCE code for session');
+    assert.ok(callbackCode.includes('getTrustedAuthOrigin'), 'Callback must resolve trusted public origin');
     assert.ok(callbackCode.includes("next.startsWith('/')"), 'Callback must require leading slash');
     assert.ok(callbackCode.includes("!next.startsWith('//')"), 'Callback must reject protocol-relative slashes');
     assert.ok(callbackCode.includes("!next.includes('\\\\')"), 'Callback must reject backslash tricks');
@@ -74,7 +118,7 @@ async function main() {
     assert.equal(sanitizeNext(null), '/admin/reset-password');
   });
 
-  // 5. Password validation rules in reset form
+  // 7. Password validation rules in reset form
   await test('Reset password form enforces minimum 8 characters and confirmation match', () => {
     const resetFormCode = fs.readFileSync(path.join(__dirname, '../app/admin/reset-password/reset-password-form.tsx'), 'utf8');
     assert.ok(resetFormCode.includes('password.length < 8'), 'Must enforce min 8 chars');
@@ -99,15 +143,17 @@ async function main() {
     assert.equal(validatePasswordInputs('validPassword123', 'validPassword123').valid, true);
   });
 
-  // 6. Reset password form handles invalid/expired sessions
-  await test('Reset password form explicitly guards against expired/invalid recovery sessions', () => {
+  // 8. Reset password form handles invalid/expired sessions and hash errors
+  await test('Reset password form explicitly guards against expired/invalid recovery sessions and error params', () => {
     const resetFormCode = fs.readFileSync(path.join(__dirname, '../app/admin/reset-password/reset-password-form.tsx'), 'utf8');
     assert.ok(resetFormCode.includes('PASSWORD_RECOVERY'), 'Must listen for PASSWORD_RECOVERY auth event');
+    assert.ok(resetFormCode.includes('hash.includes(\'error=\')'), 'Must fast-fail on hash error params');
     assert.ok(resetFormCode.includes('Recovery Link Expired or Invalid'), 'Must provide clear fallback state for invalid/expired links');
     assert.ok(resetFormCode.includes('Request New Reset Link'), 'Must provide link to request new reset');
+    assert.ok(resetFormCode.includes('Sign In Now'), 'Must provide direct route to sign in after updating');
   });
 
-  // 7. Logout control in admin interface
+  // 9. Logout control in admin interface
   await test('LogoutButton invokes signOut and redirects to login with notice', () => {
     const logoutCode = fs.readFileSync(path.join(__dirname, '../app/admin/logout-button.tsx'), 'utf8');
     assert.ok(logoutCode.includes('supabase.auth.signOut()'), 'Logout button must call supabase.auth.signOut');
@@ -117,7 +163,7 @@ async function main() {
     assert.ok(adminEventsCode.includes('<LogoutButton />') || adminEventsCode.includes('LogoutButton'), 'Admin events page must include LogoutButton');
   });
 
-  // 8. Session refresh proxy/middleware implementation & matcher
+  // 10. Session refresh proxy/middleware implementation & matcher
   await test('Next.js proxy enforces session refresh via getUser and safe matcher', () => {
     const proxyCode = fs.readFileSync(path.join(__dirname, '../proxy.ts'), 'utf8');
     assert.ok(proxyCode.includes('supabase.auth.getUser()'), 'Proxy must refresh session via getUser()');
@@ -132,7 +178,7 @@ async function main() {
     assert.ok(proxyCode.includes('favicon.ico'), 'Matcher must exclude favicon');
   });
 
-  // 9. Server Actions independent admin authorization enforcement
+  // 11. Server Actions independent admin authorization enforcement
   await test('Server Actions (create, update, delete) enforce verifyAdminAuthorization server-side', () => {
     const actionsCode = fs.readFileSync(path.join(__dirname, '../app/actions/events.ts'), 'utf8');
     assert.ok(actionsCode.includes('const auth = await verifyAdminAuthorization();'), 'Actions must call verifyAdminAuthorization');
@@ -141,7 +187,7 @@ async function main() {
     assert.ok(actionsCode.includes('[\'admin\', \'superadmin\'].includes(adminRecord.role)'), 'Must enforce role check');
   });
 
-  // 10. Service role key server-only isolation
+  // 12. Service role key server-only isolation
   await test('Service role key is strictly isolated to server-only environments', () => {
     const adminCode = fs.readFileSync(path.join(__dirname, '../lib/supabase/admin.ts'), 'utf8');
     assert.ok(adminCode.includes("import 'server-only';"), 'admin.ts must import server-only');
@@ -151,7 +197,7 @@ async function main() {
 
   // --- Part 2: Dynamic Behavior-Oriented Tests ---
 
-  // 11. Valid token_hash with type=invite invokes verifyOtp and redirects to /admin/reset-password
+  // 13. Valid token_hash with type=invite invokes verifyOtp and redirects to /admin/reset-password
   await test('Behavior: Valid token_hash with type=invite invokes verifyOtp and redirects to /admin/reset-password', async () => {
     const req = new NextRequest('https://zimkickoff.co.zw/auth/callback?token_hash=invite_token_123&type=invite');
     let verifyParams: any = null;
@@ -170,7 +216,7 @@ async function main() {
     assert.deepEqual(verifyParams, { type: 'invite', token_hash: 'invite_token_123' });
   });
 
-  // 12. Valid recovery token follows recovery flow to custom safe destination
+  // 14. Valid recovery token follows recovery flow to custom destination
   await test('Behavior: Valid recovery token follows recovery flow to custom destination', async () => {
     const req = new NextRequest('https://zimkickoff.co.zw/auth/callback?token_hash=recovery_token_456&type=recovery&next=/admin/reset-password');
     let verifyParams: any = null;
@@ -189,7 +235,7 @@ async function main() {
     assert.deepEqual(verifyParams, { type: 'recovery', token_hash: 'recovery_token_456' });
   });
 
-  // 13. Valid PKCE code invokes exchangeCodeForSession()
+  // 15. Valid PKCE code invokes exchangeCodeForSession()
   await test('Behavior: Valid PKCE code invokes exchangeCodeForSession() and redirects', async () => {
     const req = new NextRequest('https://zimkickoff.co.zw/auth/callback?code=valid_pkce_auth_code&next=/admin/events');
     let exchangedCode: string | null = null;
@@ -208,7 +254,27 @@ async function main() {
     assert.equal(exchangedCode, 'valid_pkce_auth_code');
   });
 
-  // 14. PKCE callback with missing verifier fails safely and does not crash
+  // 16. Internal container host / untrusted origin falls back safely to trusted production origin
+  await test('Behavior: Internal container IP or untrusted host falls back to trusted production origin', async () => {
+    const origNodeEnv = process.env.NODE_ENV;
+    try {
+      (process.env as any).NODE_ENV = 'production';
+      const req = new NextRequest('http://10.0.1.11:3000/auth/callback?code=valid_code&next=/admin/reset-password');
+      const mockSupabase = {
+        auth: {
+          exchangeCodeForSession: async () => ({ error: null }),
+        },
+      };
+
+      const res = await handleAuthCallback(req, mockSupabase);
+      assert.equal(res.status, 307);
+      assert.equal(res.headers.get('Location'), 'https://zimkickoff.co.zw/admin/reset-password');
+    } finally {
+      (process.env as any).NODE_ENV = origNodeEnv;
+    }
+  });
+
+  // 17. PKCE callback with missing verifier fails safely and does not crash
   await test('Behavior: PKCE callback with missing verifier fails safely and redirects to login with notice', async () => {
     const req = new NextRequest('https://zimkickoff.co.zw/auth/callback?code=orphaned_code');
     const mockSupabase = {
@@ -226,7 +292,7 @@ async function main() {
     assert.equal(res.headers.get('Location'), 'https://zimkickoff.co.zw/admin/login?error=invalid_recovery_link');
   });
 
-  // 15. Missing token_hash or type is rejected when that flow requires both
+  // 18. Missing token_hash or type is rejected when that flow requires both
   await test('Behavior: Missing token_hash or type is rejected when that flow requires both', async () => {
     // Only token_hash provided
     const reqTokenOnly = new NextRequest('https://zimkickoff.co.zw/auth/callback?token_hash=lonely_hash');
@@ -241,7 +307,7 @@ async function main() {
     assert.equal(resTypeOnly.headers.get('Location'), 'https://zimkickoff.co.zw/admin/login?error=invalid_recovery_link');
   });
 
-  // 16. Unsupported OTP types are rejected
+  // 19. Unsupported OTP types are rejected
   await test('Behavior: Unsupported OTP types (signup, magiclink, email_change) are rejected', async () => {
     assert.deepEqual(ALLOWED_OTP_TYPES, ['invite', 'recovery']);
 
@@ -253,7 +319,7 @@ async function main() {
     }
   });
 
-  // 17. Expired or invalid invitation/recovery tokens fail safely
+  // 20. Expired or invalid invitation/recovery tokens fail safely
   await test('Behavior: Expired or invalid invitation/recovery tokens fail safely', async () => {
     const req = new NextRequest('https://zimkickoff.co.zw/auth/callback?token_hash=expired_hash&type=invite');
     const mockSupabase = {
@@ -269,7 +335,7 @@ async function main() {
     assert.equal(res.headers.get('Location'), 'https://zimkickoff.co.zw/admin/login?error=invalid_recovery_link');
   });
 
-  // 18. External, protocol-relative, malformed, and otherwise unsafe next values cannot create an open redirect
+  // 21. External, protocol-relative, malformed, and otherwise unsafe next values cannot create an open redirect
   await test('Behavior: External, protocol-relative, and malformed next values cannot create an open redirect', async () => {
     const maliciousDestinations = [
       'https://evil.com',
@@ -298,7 +364,7 @@ async function main() {
     }
   });
 
-  // 19. Session cookies written during verification survive on the final redirect response
+  // 22. Session cookies written during verification survive on the final redirect response
   await test('Behavior: Session cookies written during verification survive on the final redirect response', async () => {
     const req = new NextRequest('https://zimkickoff.co.zw/auth/callback?token_hash=good_hash&type=invite');
     const mockSupabase = {
@@ -335,7 +401,7 @@ async function main() {
     assert.ok(setCookies.every((c) => c.includes('HttpOnly') && c.includes('Secure')));
   });
 
-  // 20. Password-reset page behavior for available vs unavailable/expired session
+  // 23. Password-reset page behavior for available vs unavailable/expired session
   await test('Behavior: Password-reset session checking logic handles available vs expired sessions', () => {
     // Evaluation helper mirroring ResetPasswordForm state machine
     function evaluateSessionState(
@@ -375,7 +441,7 @@ async function main() {
     assert.equal(evaluateSessionState(false, null, false, true), 'INVALID');
   });
 
-  // 21. Non-allowlisted authenticated users remain unauthorized
+  // 24. Non-allowlisted authenticated users remain unauthorized
   await test('Behavior: Non-allowlisted authenticated users remain unauthorized via authorization guard', () => {
     // Evaluation helper mirroring verifyAdminAuthorization & requireAdminSession
     function evaluateAdminAccess(
@@ -407,7 +473,7 @@ async function main() {
     assert.deepEqual(evaluateAdminAccess(true, { role: 'superadmin' }), { allowed: true });
   });
 
-  // 22. Direct GET route handler invocation fallback
+  // 25. Direct GET route handler invocation fallback
   await test('Behavior: Direct GET route handler execution rejects empty request safely', async () => {
     const req = new NextRequest('https://zimkickoff.co.zw/auth/callback');
     const res = await callbackHandler(req);

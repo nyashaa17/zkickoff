@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Mail, ArrowLeft, ArrowRight, CheckCircle2, AlertCircle, KeyRound } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { getAuthCallbackRedirectUrl } from '@/lib/supabase/auth-url';
 
 export default function ForgotPasswordForm() {
   const [email, setEmail] = useState('');
@@ -21,8 +22,8 @@ export default function ForgotPasswordForm() {
     try {
       const supabase = createClient();
 
-      // Derived strictly from window.location.origin targeting the trusted internal callback
-      const redirectUrl = `${window.location.origin}/auth/callback?next=/admin/reset-password`;
+      // Canonical redirect URL resolved via trusted origin helper
+      const redirectUrl = getAuthCallbackRedirectUrl('/admin/reset-password');
 
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
         redirectTo: redirectUrl,

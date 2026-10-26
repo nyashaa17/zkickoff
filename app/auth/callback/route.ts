@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { type EmailOtpType } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
+import { getTrustedAuthOrigin } from '@/lib/supabase/auth-url';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +22,13 @@ export async function handleAuthCallback(request: NextRequest, customSupabase?: 
   const token_hash = searchParams.get('token_hash');
   const type = searchParams.get('type') as EmailOtpType | null;
   const next = searchParams.get('next') ?? '/admin/reset-password';
+
+  // Resolve trusted public origin to prevent internal IP or host header poisoning
+  const trustedOrigin = getTrustedAuthOrigin();
+  const isTrustedRequestOrigin =
+    origin.includes('zimkickoff.co.zw') ||
+    (process.env.NODE_ENV !== 'production' && (origin.includes('localhost') || origin.includes('127.0.0.1')));
+  const redirectBase = isTrustedRequestOrigin ? origin : trustedOrigin;
 
   // Strict anti-open-redirect guard:
   // Destination must be an internal relative path starting with a single '/'
@@ -42,7 +50,7 @@ export async function handleAuthCallback(request: NextRequest, customSupabase?: 
 
     if (!supabaseUrl || !supabaseAnonKey) {
       console.error('[Auth Callback Error]: Missing Supabase public configuration.');
-      return NextResponse.redirect(`${origin}/admin/login?error=invalid_recovery_link`);
+      return NextResponse.redirect(`${redirectBase}/admin/login?error=invalid_recovery_link`);
     }
 
     let cookieStore: any = null;
@@ -85,7 +93,7 @@ export async function handleAuthCallback(request: NextRequest, customSupabase?: 
   if (token_hash || type) {
     if (!token_hash || !type || !ALLOWED_OTP_TYPES.includes(type)) {
       console.warn('[Auth Callback Security]: Invalid or unsupported token_hash / type combination.');
-      return NextResponse.redirect(`${origin}/admin/login?error=invalid_recovery_link`);
+      return NextResponse.redirect(`${redirectBase}/admin/login?error=invalid_recovery_link`);
     }
 
     try {
@@ -95,7 +103,7 @@ export async function handleAuthCallback(request: NextRequest, customSupabase?: 
       });
 
       if (!error) {
-        return createRedirectResponse(`${origin}${safeNext}`);
+        return createRedirectResponse(`${redirectBase}${safeNext}`);
       }
 
       console.error('[Auth Callback Error]: verifyOtp failed:', error.message);
@@ -103,7 +111,7 @@ export async function handleAuthCallback(request: NextRequest, customSupabase?: 
       console.error('[Auth Callback Error]: Unexpected exception during verifyOtp:', err?.message || err);
     }
 
-    return NextResponse.redirect(`${origin}/admin/login?error=invalid_recovery_link`);
+    return NextResponse.redirect(`${redirectBase}/admin/login?error=invalid_recovery_link`);
   }
 
   // Flow B: PKCE code exchange
@@ -112,7 +120,7 @@ export async function handleAuthCallback(request: NextRequest, customSupabase?: 
       const { error } = await supabase.auth.exchangeCodeForSession(code);
 
       if (!error) {
-        return createRedirectResponse(`${origin}${safeNext}`);
+        return createRedirectResponse(`${redirectBase}${safeNext}`);
       }
 
       console.error('[Auth Callback Error]: exchangeCodeForSession failed:', error.message);
@@ -120,11 +128,11 @@ export async function handleAuthCallback(request: NextRequest, customSupabase?: 
       console.error('[Auth Callback Error]: Unexpected exception during code exchange:', err?.message || err);
     }
 
-    return NextResponse.redirect(`${origin}/admin/login?error=invalid_recovery_link`);
+    return NextResponse.redirect(`${redirectBase}/admin/login?error=invalid_recovery_link`);
   }
 
   // If both code and token_hash are missing, redirect to login with an explicit sanitized error notice
-  return NextResponse.redirect(`${origin}/admin/login?error=invalid_recovery_link`);
+  return NextResponse.redirect(`${redirectBase}/admin/login?error=invalid_recovery_link`);
 }
 
 export async function GET(request: NextRequest) {

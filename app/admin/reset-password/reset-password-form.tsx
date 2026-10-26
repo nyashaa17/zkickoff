@@ -24,6 +24,24 @@ export default function ResetPasswordForm() {
     // Check for an active session or listen for PASSWORD_RECOVERY auth event
     async function checkSession() {
       try {
+        // Fast-fail if URL hash or search params signal an auth error
+        if (typeof window !== 'undefined') {
+          const hash = window.location.hash || '';
+          const search = window.location.search || '';
+          if (
+            hash.includes('error=') ||
+            hash.includes('error_code=') ||
+            search.includes('error=') ||
+            search.includes('error_code=')
+          ) {
+            if (mounted) {
+              setHasValidSession(false);
+              setSessionChecking(false);
+            }
+            return;
+          }
+        }
+
         const { data: { session }, error } = await supabase.auth.getSession();
 
         if (error || !session) {
@@ -182,8 +200,17 @@ export default function ResetPasswordForm() {
             Password Updated
           </h1>
           <p className="text-xs text-neutral-500">
-            Your administrator password has been updated successfully. Redirecting to sign in...
+            Your administrator password has been updated successfully.
           </p>
+        </div>
+        <div className="pt-2">
+          <Link
+            href="/admin/login?notice=password_updated"
+            className="w-full py-2.5 bg-zim-green hover:bg-opacity-95 text-white font-bold text-xs rounded-xl shadow-xs flex items-center justify-center gap-2 transition-all"
+          >
+            Sign In Now
+            <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
       </div>
     );
