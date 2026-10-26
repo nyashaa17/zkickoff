@@ -20,12 +20,24 @@ import MatchCard from '@/components/match-card';
 import { MatchGridSkeleton } from '@/components/skeleton-loader';
 import Breadcrumbs from '@/components/breadcrumbs';
 import { fetchLivescoresDirect } from '@/lib/totalsports-client';
+import { StandaloneEvent } from '@/lib/supabase/events-query';
 
 export default function LivePage() {
   const { data, isLoading: loading, error } = useSWR('livescores-direct', () => fetchLivescoresDirect(), {
     refreshInterval: 25000,
     revalidateOnFocus: true,
   });
+
+  const { data: eventsData, isLoading: eventsLoading } = useSWR('/api/events', async (url) => {
+    const res = await fetch(url);
+    if (!res.ok) return { events: [] };
+    return res.json();
+  }, {
+    refreshInterval: 30000,
+    revalidateOnFocus: true,
+  });
+
+  const standaloneEvents: StandaloneEvent[] = eventsData?.events || [];
 
   let liveMatches: Match[] = [];
   if (data && data.matches) {
@@ -73,6 +85,90 @@ export default function LivePage() {
         
         {/* Left Column: Live Grid Center */}
         <div className="lg:col-span-2 space-y-6">
+
+          {/* Standalone Events Section */}
+          {standaloneEvents.length > 0 && (
+            <div className="space-y-3 mb-6">
+              <div className="flex items-center justify-between">
+                <h2 className="font-display font-bold text-base md:text-lg text-neutral-900 flex items-center gap-2">
+                  <Tv className="w-5 h-5 text-zim-green" />
+                  Special Broadcasts & Events
+                </h2>
+                <span className="text-xs font-semibold px-2.5 py-0.5 bg-neutral-100 text-neutral-600 rounded-full">
+                  {standaloneEvents.length} {standaloneEvents.length === 1 ? 'event' : 'events'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {standaloneEvents.map((evt) => {
+                  const startDate = new Date(evt.start_time);
+                  const formattedTime = startDate.toLocaleTimeString('en-GB', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  });
+                  const formattedDate = startDate.toLocaleDateString('en-GB', {
+                    month: 'short',
+                    day: 'numeric',
+                  });
+
+                  return (
+                    <Link
+                      key={evt.id}
+                      href={`/event/${evt.slug}`}
+                      className="group bg-white border border-neutral-200/80 hover:border-zim-green/60 rounded-2xl p-4 shadow-3xs hover:shadow-xs transition-all flex flex-col justify-between gap-3"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] font-bold font-mono px-2 py-0.5 bg-green-50 text-zim-green rounded-full border border-green-100 uppercase">
+                            {evt.category}
+                          </span>
+                          {evt.broadcast_status === 'live' ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-zim-red bg-red-50 border border-red-100 px-2 py-0.5 rounded-full uppercase">
+                              <span className="relative flex h-1.5 w-1.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-zim-red opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-zim-red"></span>
+                              </span>
+                              LIVE
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-semibold text-neutral-500">
+                              {formattedDate} • {formattedTime}
+                            </span>
+                          )}
+                        </div>
+
+                        <h3 className="font-display font-bold text-sm text-neutral-900 group-hover:text-zim-green transition-colors line-clamp-2">
+                          {evt.title}
+                        </h3>
+
+                        {evt.description && (
+                          <p className="text-neutral-500 text-xs line-clamp-2 leading-relaxed">
+                            {evt.description}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="pt-2 border-t border-neutral-100 flex items-center justify-between text-xs font-semibold text-neutral-700 group-hover:text-zim-green">
+                        <span>Watch Stream</span>
+                        <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Football Matches Section Header */}
+          <div className="flex items-center justify-between pt-2">
+            <h2 className="font-display font-bold text-base md:text-lg text-neutral-900">
+              Active Football Fixtures
+            </h2>
+            <span className="text-xs font-semibold px-2.5 py-0.5 bg-neutral-100 text-neutral-600 rounded-full">
+              {liveMatches.length} live
+            </span>
+          </div>
+
           {loading ? (
             <MatchGridSkeleton count={2} />
           ) : (
