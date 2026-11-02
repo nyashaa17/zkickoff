@@ -56,7 +56,7 @@ export async function fetchStatsDirect(competition = 'premier-league', dateOrCat
 export async function fetchMatchButtonsDirect(matchId: string, homeParam?: string | null, awayParam?: string | null) {
   const teamFallbackFixture = homeParam && awayParam ? `${homeParam} vs ${awayParam}` : null;
   try {
-    const res = await fetch(`https://app.totalsportss.online/match-buttons/${encodeURIComponent(matchId)}`);
+    const res = await fetch(`https://app.totalsportslive.xyz/match-buttons/${encodeURIComponent(matchId)}`);
     if (!res.ok) {
       // 404 or other non-ok response: never render 404 HTML as button content
       return {

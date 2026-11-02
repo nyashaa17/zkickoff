@@ -132,6 +132,39 @@ export default function WatchClient({
     }
   }, [servers, activeServer]);
 
+  // Lifecycle-safe loader for TotalSportsLive match buttons client widget
+  useEffect(() => {
+    if (!matchId || matchId === '0') return;
+
+    // Remove any previously injected script to prevent duplicate execution
+    const existingScript = document.getElementById('tsl-match-buttons-client');
+    if (existingScript) {
+      existingScript.remove();
+    }
+
+    // Clean container before mount
+    const container = document.getElementById('matchButtons');
+    if (container) {
+      container.replaceChildren();
+    }
+
+    const script = document.createElement('script');
+    script.id = 'tsl-match-buttons-client';
+    script.src = 'https://app.totalsportslive.xyz/match-buttons-client.js';
+    script.dataset.target = 'matchButtons';
+    script.dataset.matchId = matchId;
+    script.defer = true;
+    document.body.appendChild(script);
+
+    return () => {
+      script.remove();
+      const target = document.getElementById('matchButtons');
+      if (target) {
+        target.replaceChildren();
+      }
+    };
+  }, [matchId]);
+
   // 3. Fetch Commentary directly
   const { data: cData } = useSWR(`commentary-${matchId}`, () => fetchCommentaryDirect(matchId), {
     refreshInterval: 15000,
@@ -677,8 +710,10 @@ export default function WatchClient({
                 LINKS
               </span>
             </h3>
-            {/* Target element for match-buttons embed compatibility */}
-            <div id="matchButtons" data-match-id={matchId} className="hidden"></div>
+            {/* TotalSportsLive Match Buttons Widget */}
+            <div key={`match-buttons-wrap-${matchId}`} className="w-full">
+              <div id="matchButtons" data-match-id={matchId}></div>
+            </div>
             <div className="flex flex-col gap-2">
               {renderServersList.map((srv, idx) => (
                 <button

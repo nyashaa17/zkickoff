@@ -14,7 +14,7 @@ export async function GET(
   const teamFallbackFixture = home && away ? `${home} vs ${away}` : null;
 
   try {
-    const res = await fetch(`https://app.totalsportss.online/match-buttons/${encodeURIComponent(matchId)}`, {
+    const res = await fetch(`https://app.totalsportslive.xyz/match-buttons/${encodeURIComponent(matchId)}`, {
       next: { revalidate: 15 } // revalidate every 15s for streams
     });
 
