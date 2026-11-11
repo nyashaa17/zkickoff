@@ -8,7 +8,7 @@
     "start": "npx pm2-runtime ecosystem.config.cjs",
     "lint": "eslint .",
     "clean": "next clean",
-    "test": "npx tsx tests/test-stream-url.ts && npx tsx tests/test-football-regression.ts && npx tsx tests/test-admin-auth.ts",
+    "test": "npx tsx tests/test-stream-url.ts && npx tsx tests/test-football-regression.ts && npx tsx tests/test-admin-auth.ts && npx tsx tests/test-developer-api.ts",
     "test:db": "npx tsx tests/test-db-security.ts && npx tsx tests/test-business-invariants.ts && npx tsx tests/test-concurrency.ts",
     "test:all": "npm run test && npm run test:db"
   },

@@ -81,6 +81,9 @@ export default function Footer() {
             <Link href="/dmca" className="hover:text-brand-green transition-colors">
               DMCA Policy
             </Link>
+            <Link href="/developers" className="hover:text-brand-green transition-colors">
+              Developer API
+            </Link>
             <Link href="/sitemap.xml" className="hover:text-brand-green transition-colors">
               Sitemap
             </Link>

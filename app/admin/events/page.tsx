@@ -1,7 +1,7 @@
 import React from 'react';
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { Plus, Tv, Shield } from 'lucide-react';
+import { Plus, Tv, Shield, Key } from 'lucide-react';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { StandaloneEvent } from '@/lib/supabase/events-query';
 import AdminEventsTable from './admin-events-table';
@@ -59,6 +59,24 @@ export default async function AdminEventsPage() {
           </Link>
           <LogoutButton />
         </div>
+      </div>
+
+      {/* Admin Navigation Tabs */}
+      <div className="flex items-center gap-2 border-b border-neutral-200 pb-px">
+        <Link
+          href="/admin/events"
+          className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-zim-green border-b-2 border-zim-green transition-colors"
+        >
+          <Tv className="w-4 h-4" />
+          Standalone Events
+        </Link>
+        <Link
+          href="/admin/api"
+          className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold text-neutral-500 hover:text-neutral-900 border-b-2 border-transparent transition-colors"
+        >
+          <Key className="w-4 h-4" />
+          Developer API
+        </Link>
       </div>
 
       {/* Events Table Component */}
