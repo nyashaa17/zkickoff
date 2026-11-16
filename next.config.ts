@@ -29,6 +29,9 @@ const nextConfig: NextConfig = {
     ],
   },
   output: 'standalone',
+  outputFileTracingIncludes: {
+    '/api/admin/docs/download': ['./docs/developer-api/**/*'],
+  },
   experimental: {
     staleTimes: { dynamic: 30, static: 180 },
     optimizePackageImports: ['lucide-react', 'motion'],

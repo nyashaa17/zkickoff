@@ -16,7 +16,9 @@ import {
   Trash2, 
   RefreshCw,
   Info,
-  Server
+  Server,
+  Download,
+  FileText
 } from 'lucide-react';
 import { 
   SafeApiKey, 
@@ -546,6 +548,77 @@ export default function ApiDashboardClient({
               >
                 Save Settings
               </button>
+            </div>
+          </div>
+
+          {/* Section: Documentation Distribution Packages */}
+          <div className="bg-white border border-neutral-200 rounded-2xl p-6 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-200">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-zim-green" />
+                  <h3 className="text-sm font-bold text-neutral-900">Developer Documentation Distribution</h3>
+                </div>
+                <p className="text-xs text-neutral-500">
+                  Download the official technical specification in your preferred format to distribute privately to approved third-party developers.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+              <a
+                href="/api/admin/docs/download?format=pdf"
+                className="p-4 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 hover:border-neutral-300 rounded-xl flex items-center justify-between transition-all group cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-red-100 text-red-700 flex items-center justify-center font-bold text-xs">
+                    PDF
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-neutral-900 group-hover:text-zim-green transition-colors">
+                      Download PDF
+                    </div>
+                    <div className="text-[11px] text-neutral-500 font-mono">.pdf format (A4 formatted)</div>
+                  </div>
+                </div>
+                <Download className="w-4 h-4 text-neutral-400 group-hover:text-neutral-700 transition-colors" />
+              </a>
+
+              <a
+                href="/api/admin/docs/download?format=md"
+                className="p-4 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 hover:border-neutral-300 rounded-xl flex items-center justify-between transition-all group cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
+                    MD
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-neutral-900 group-hover:text-zim-green transition-colors">
+                      Download Markdown
+                    </div>
+                    <div className="text-[11px] text-neutral-500 font-mono">.md canonical format</div>
+                  </div>
+                </div>
+                <Download className="w-4 h-4 text-neutral-400 group-hover:text-neutral-700 transition-colors" />
+              </a>
+
+              <a
+                href="/api/admin/docs/download?format=txt"
+                className="p-4 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 hover:border-neutral-300 rounded-xl flex items-center justify-between transition-all group cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-neutral-200 text-neutral-700 flex items-center justify-center font-bold text-xs">
+                    TXT
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-neutral-900 group-hover:text-zim-green transition-colors">
+                      Download Plain Text
+                    </div>
+                    <div className="text-[11px] text-neutral-500 font-mono">.txt ASCII format</div>
+                  </div>
+                </div>
+                <Download className="w-4 h-4 text-neutral-400 group-hover:text-neutral-700 transition-colors" />
+              </a>
             </div>
           </div>
 

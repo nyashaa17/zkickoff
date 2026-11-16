@@ -1,4 +1,5 @@
 import 'server-only';
+import { getGlobalCoordinationStore } from '@/lib/api/upstream-coordination';
 
 export type CacheSource = 'HIT' | 'MISS' | 'STALE';
 
@@ -27,6 +28,10 @@ export const CACHE_PROFILES = {
     freshTtlSeconds: 30 * 60, // 30 minutes
     staleWindowSeconds: 120 * 60, // 120 minutes
   },
+  STREAMS: {
+    freshTtlSeconds: 15,
+    staleWindowSeconds: 60,
+  },
 } as const;
 
 interface CacheEntry<T> {
@@ -42,9 +47,21 @@ interface FailureBackoffState {
   lastErrorMessage: string;
 }
 
+const MAX_L1_ENTRIES = 500;
 const memoryCache = new Map<string, CacheEntry<any>>();
 const inFlightPromises = new Map<string, Promise<any>>();
 const upstreamFailures = new Map<string, FailureBackoffState>();
+
+function setL1Cache<T>(key: string, entry: CacheEntry<T>): void {
+  if (memoryCache.size >= MAX_L1_ENTRIES && !memoryCache.has(key)) {
+    // Evict oldest 50 entries to enforce bounded memory usage
+    const keysToEvict = Array.from(memoryCache.keys()).slice(0, 50);
+    for (const k of keysToEvict) {
+      memoryCache.delete(k);
+    }
+  }
+  memoryCache.set(key, entry);
+}
 
 const BACKOFF_SCHEDULE_MS = [30 * 1000, 60 * 1000, 120 * 1000];
 
@@ -54,13 +71,14 @@ function getBackoffDurationMs(consecutiveFailures: number): number {
 }
 
 /**
- * Executes or coalesces upstream data fetches using In-Process Single-Flight and
- * Stale-While-Revalidate caching with negative cache exponential backoff.
+ * Two-Level Cache with SWR & Distributed Single-Flight:
+ * L1 — Process-local memory for sub-millisecond reads.
+ * L2 — Shared PostgreSQL coordination cache across all PM2 workers and instances.
  *
- * NOTE ON MULTI-WORKER ARCHITECTURE:
- * Single-flight coalescing is in-process per PM2 worker. Across the 2 cluster workers,
- * simultaneous misses can result in at most 2 concurrent upstream requests,
- * keeping peak upstream load strictly under 8 requests/minute for live scores.
+ * Execution Hierarchy:
+ * 1. Check L1 memory cache. If fresh, return immediately (< 0.1ms).
+ * 2. On L1 miss, check L2 shared database cache. If valid, populate L1 and return.
+ * 3. On L1 and L2 miss, coordinate upstream fetch, populate L2 and L1.
  */
 export async function getOrFetchWithSWR<T>(
   key: string,
@@ -71,9 +89,10 @@ export async function getOrFetchWithSWR<T>(
   const freshTtlMs = config.freshTtlSeconds * 1000;
   const staleWindowMs = config.staleWindowSeconds * 1000;
 
+  // 1. L1 PROCESS-LOCAL MEMORY CACHE CHECK
   const cached = memoryCache.get(key) as CacheEntry<T> | undefined;
 
-  // 1. FRESH CACHE HIT
+  // 1A. L1 Fresh Hit
   if (cached && now - cached.timestamp <= freshTtlMs) {
     return {
       data: cached.data,
@@ -82,14 +101,13 @@ export async function getOrFetchWithSWR<T>(
     };
   }
 
-  // 2. STALE CACHE HIT (Serve stale immediately, revalidate asynchronously)
+  // 1B. L1 Stale Hit (Serve stale immediately, revalidate asynchronously)
   if (cached && now - cached.timestamp <= freshTtlMs + staleWindowMs) {
     const failure = upstreamFailures.get(key);
     const isBlocked = failure && now < failure.blockedUntil;
 
-    // Trigger background revalidation if not already in-flight and not in exponential backoff
     if (!inFlightPromises.has(key) && !isBlocked) {
-      coalesceFetch(key, fetchFn, freshTtlMs, staleWindowMs).catch((err) => {
+      coalesceFetch(key, fetchFn, freshTtlMs, staleWindowMs, config).catch((err) => {
         console.warn(`[SWR Cache] Background revalidation failed for ${key}:`, err);
       });
     }
@@ -100,6 +118,50 @@ export async function getOrFetchWithSWR<T>(
       cachedAt: cached.timestamp,
       retryAfter: isBlocked ? Math.ceil((failure.blockedUntil - now) / 1000) : undefined,
     };
+  }
+
+  // 2. L2 SHARED DATABASE CACHE CHECK (On L1 Miss)
+  try {
+    const store = getGlobalCoordinationStore();
+    const l2 = await store.getL2Cache<T>(key);
+
+    if (l2) {
+      // Populate L1 from L2
+      setL1Cache(key, {
+        data: l2.payload,
+        timestamp: l2.cachedAt,
+        freshTtlMs,
+        staleWindowMs,
+      });
+
+      if (l2.isFresh) {
+        return {
+          data: l2.payload,
+          source: 'HIT',
+          cachedAt: l2.cachedAt,
+        };
+      }
+
+      if (l2.isStale) {
+        const failure = upstreamFailures.get(key);
+        const isBlocked = failure && now < failure.blockedUntil;
+
+        if (!inFlightPromises.has(key) && !isBlocked) {
+          coalesceFetch(key, fetchFn, freshTtlMs, staleWindowMs, config).catch((err) => {
+            console.warn(`[SWR Cache] Background revalidation from L2 failed for ${key}:`, err);
+          });
+        }
+
+        return {
+          data: l2.payload,
+          source: 'STALE',
+          cachedAt: l2.cachedAt,
+          retryAfter: isBlocked ? Math.ceil((failure.blockedUntil - now) / 1000) : undefined,
+        };
+      }
+    }
+  } catch (l2Err) {
+    console.warn(`[SWR Cache] L2 cache lookup error for ${key}:`, l2Err);
   }
 
   // 3. CACHE MISS / EXPIRED BEYOND STALE WINDOW
@@ -123,7 +185,7 @@ export async function getOrFetchWithSWR<T>(
   }
 
   try {
-    const data = await coalesceFetch(key, fetchFn, freshTtlMs, staleWindowMs);
+    const data = await coalesceFetch(key, fetchFn, freshTtlMs, staleWindowMs, config);
     return {
       data,
       source: 'MISS',
@@ -147,12 +209,14 @@ export async function getOrFetchWithSWR<T>(
 
 /**
  * Coalesces concurrent calls to the same cache key into a single in-flight Promise.
+ * Writes results to both L1 process memory and L2 shared database cache.
  */
 async function coalesceFetch<T>(
   key: string,
   fetchFn: () => Promise<T>,
   freshTtlMs: number,
-  staleWindowMs: number
+  staleWindowMs: number,
+  config?: CacheConfig
 ): Promise<T> {
   const existingPromise = inFlightPromises.get(key);
   if (existingPromise) {
@@ -163,14 +227,18 @@ async function coalesceFetch<T>(
     try {
       const result = await fetchFn();
 
-      // On successful upstream fetch, record cache entry and clear any backoff state
-      memoryCache.set(key, {
+      // On successful upstream fetch, record in L1 process memory
+      setL1Cache(key, {
         data: result,
         timestamp: Date.now(),
         freshTtlMs,
         staleWindowMs,
       });
       upstreamFailures.delete(key);
+
+      // General SWR operations operate in process-local L1 cache with in-flight single-flight
+      // coalescing. Shared L2 catalog cache (api_catalog_cache) is exclusively reserved for entries
+      // coordinated by an authenticated distributed-lock leader (AUDIT-28-01 / Phase 2.29).
 
       return result;
     } catch (err: any) {
@@ -197,10 +265,25 @@ async function coalesceFetch<T>(
 }
 
 /**
+ * Invalidates a specific key across both L1 memory and L2 shared database cache.
+ */
+export async function invalidateCacheKey(key: string): Promise<void> {
+  memoryCache.delete(key);
+  inFlightPromises.delete(key);
+  upstreamFailures.delete(key);
+  try {
+    await getGlobalCoordinationStore().clearL2Cache(key);
+  } catch {
+    // ignore
+  }
+}
+
+/**
  * Clears the SWR cache and in-flight promises (for testing and manual cache purges).
  */
 export function clearApiCache(): void {
   memoryCache.clear();
   inFlightPromises.clear();
   upstreamFailures.clear();
+  getGlobalCoordinationStore().clearL2Cache().catch(() => {});
 }

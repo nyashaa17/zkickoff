@@ -1359,9 +1359,11 @@ async function main() {
     }
   });
 
-  await test('Strict withholding: No stream endpoint exists in Developer API directory', () => {
-    const streamRoutePath = path.join(process.cwd(), 'app/api/v1/matches/[matchId]/streams');
-    assert.equal(fs.existsSync(streamRoutePath), false);
+  await test('Streams endpoint implementation: Route exists and exports GET handler', async () => {
+    const streamRoutePath = path.join(process.cwd(), 'app/api/v1/matches/[matchId]/streams/route.ts');
+    assert.equal(fs.existsSync(streamRoutePath), true);
+    const routeModule = await import('../app/api/v1/matches/[matchId]/streams/route');
+    assert.equal(typeof routeModule.GET, 'function');
   });
 
   console.log('\n--- 8. Migration Precheck & Prerequisites Test ---');

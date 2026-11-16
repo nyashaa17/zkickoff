@@ -4,11 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && cp -rf public .next/standalone/ && cp -rf .next/static .next/standalone/.next/",
+    "build": "next build && cp -rf public .next/standalone/ && cp -rf .next/static .next/standalone/.next/ && cp -rf docs .next/standalone/",
     "start": "npx pm2-runtime ecosystem.config.cjs",
     "lint": "eslint .",
     "clean": "next clean",
-    "test": "npx tsx tests/test-stream-url.ts && npx tsx tests/test-football-regression.ts && npx tsx tests/test-admin-auth.ts && npx tsx tests/test-developer-api.ts",
+    "test": "npx tsx tests/test-stream-url.ts && npx tsx tests/test-football-regression.ts && npx tsx tests/test-admin-auth.ts && npx tsx tests/test-developer-api.ts && npx tsx tests/test-streams-api.ts && npx tsx tests/test-multi-worker-concurrency.ts",
     "test:db": "npx tsx tests/test-db-security.ts && npx tsx tests/test-business-invariants.ts && npx tsx tests/test-concurrency.ts",
     "test:all": "npm run test && npm run test:db"
   },

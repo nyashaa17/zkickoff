@@ -114,6 +114,20 @@ export interface FixturesQueryParams {
   limit?: number;
 }
 
+export interface PublicStreamEntry {
+  id: string;
+  name: string;
+  provider: string;
+  type: 'hls';
+  url: string;
+}
+
+export interface MatchStreamsData {
+  matchId: string;
+  hasStreams: boolean;
+  streams: PublicStreamEntry[];
+}
+
 // -------------------------------------------------------------------------
 // 18-Bin Logarithmic Histogram Specification
 //

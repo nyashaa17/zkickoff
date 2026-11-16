@@ -31,6 +31,7 @@ export async function GET(req: NextRequest) {
           status: 503,
           headers: {
             'Retry-After': '30',
+            'Cache-Control': 'no-store, no-cache, must-revalidate',
           },
         }
       );

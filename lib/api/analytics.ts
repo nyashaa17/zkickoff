@@ -5,9 +5,14 @@ import crypto from 'crypto';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getHistogramBinIndex, createEmptyHistogram } from './types';
 
+export type ApiEndpoint =
+  | '/api/v1/matches/live'
+  | '/api/v1/matches/fixtures'
+  | '/api/v1/matches/:matchId/streams';
+
 export interface RawApiEvent {
   apiKeyId: string;
-  endpoint: '/api/v1/matches/live' | '/api/v1/matches/fixtures';
+  endpoint: ApiEndpoint;
   statusCode: number;
   latencyMs: number;
   timestamp: number;
@@ -84,6 +89,9 @@ function readAndClearDiskSpool(): RawApiEvent[] {
 
 /**
  * Aggregates a list of raw events into hourly 18-bin histogram summaries.
+ * Note: Database table api_usage_hourly and stored procedure ingest_analytics_batch
+ * enforce a check constraint on endpoint ('/api/v1/matches/live', '/api/v1/matches/fixtures').
+ * Telemetry aggregation for the Streams endpoint is deferred until a separately approved migration.
  */
 function aggregateEvents(events: RawApiEvent[]): {
   aggregates: HourlyAggregateItem[];
@@ -92,9 +100,20 @@ function aggregateEvents(events: RawApiEvent[]): {
   const map = new Map<string, HourlyAggregateItem>();
   const activeKeysSet = new Set<string>();
 
+  const DB_SUPPORTED_ENDPOINTS = new Set<string>([
+    '/api/v1/matches/live',
+    '/api/v1/matches/fixtures',
+  ]);
+
   for (const ev of events) {
     if (!ev.apiKeyId) continue;
     activeKeysSet.add(ev.apiKeyId);
+
+    // Skip endpoints not yet supported by database hourly aggregation table/procedure.
+    // Never relabel streams requests to avoid corrupting analytics data.
+    if (!DB_SUPPORTED_ENDPOINTS.has(ev.endpoint)) {
+      continue;
+    }
 
     const statusGroup = getStatusGroup(ev.statusCode);
     const hourTimestamp = new Date(Math.floor(ev.timestamp / 3600000) * 3600000).toISOString();

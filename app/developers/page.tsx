@@ -1,5 +1,7 @@
 import React from 'react';
 import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { requireAdminSession } from '@/lib/supabase/auth-guard';
 import Link from 'next/link';
 import { 
   Code2, 
@@ -11,28 +13,38 @@ import {
   Database, 
   Terminal, 
   AlertCircle,
-  ExternalLink
+  ExternalLink,
+  Tv,
+  Globe
 } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Developer API Documentation | ZimKickOff',
-  description: 'Official REST API documentation for ZimKickOff live scores, match schedules, and football fixtures.',
+  title: 'Developer API Documentation | ZimKickOff Admin Preview',
+  robots: { index: false, follow: false },
 };
 
-export default function DeveloperDocumentationPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function DeveloperDocumentationPage() {
+  try {
+    await requireAdminSession();
+  } catch {
+    notFound();
+  }
+
   return (
     <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-10 space-y-12">
       {/* Hero Header */}
       <div className="space-y-4 border-b border-neutral-200 pb-8">
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-50 text-zim-green border border-green-200 rounded-full text-xs font-bold font-mono">
           <Code2 className="w-4 h-4" />
-          DEVELOPER API v1
+          DEVELOPER API v1 (PRIVATE PREVIEW)
         </div>
         <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-neutral-900 tracking-tight">
           ZimKickOff Developer API
         </h1>
         <p className="text-sm sm:text-base text-neutral-600 max-w-3xl leading-relaxed">
-          High-performance, low-latency REST endpoints for live scores, match fixtures, and historical football results. Designed for developers, sports media platforms, and data integration services.
+          High-performance, low-latency REST endpoints for live scores, match fixtures, and football broadcast streams. Restricted to manually approved private beta developers.
         </p>
 
         <div className="pt-2 flex flex-wrap items-center gap-3 text-xs text-neutral-500 font-mono">
@@ -44,6 +56,9 @@ export default function DeveloperDocumentationPage() {
           </span>
           <span className="px-2.5 py-1 bg-neutral-100 rounded-md border border-neutral-200">
             Auth: Bearer Token
+          </span>
+          <span className="px-2.5 py-1 bg-amber-50 text-amber-800 rounded-md border border-amber-200 font-bold">
+            Cloudflare UA Required
           </span>
         </div>
       </div>
