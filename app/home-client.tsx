@@ -42,7 +42,18 @@ interface StatCategory {
   players: PlayerStat[];
 }
 
-function HomeContent() {
+interface HomeClientProps {
+  initialMatches?: Match[];
+}
+
+function SearchParamsSync({
+  onSync,
+}: {
+  onSync: (
+    category: string | null,
+    tab: "LIVE" | "TODAY" | "UPCOMING" | "FINISHED" | null
+  ) => void;
+}) {
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get("filter");
   const initialTab = searchParams.get("tab") as
@@ -52,10 +63,38 @@ function HomeContent() {
     | "FINISHED"
     | null;
 
+  useEffect(() => {
+    onSync(initialCategory, initialTab);
+  }, [initialCategory, initialTab, onSync]);
+
+  return null;
+}
+
+function resolveDefaultTab(
+  initialMatches: Match[]
+): "LIVE" | "TODAY" | "UPCOMING" | "FINISHED" {
+  if (initialMatches.some((m) => m.status === "TODAY")) return "TODAY";
+  if (initialMatches.some((m) => m.status === "LIVE")) return "LIVE";
+  if (initialMatches.some((m) => m.status === "FINISHED")) return "FINISHED";
+  return "TODAY";
+}
+
+function HomeContent({ initialMatches = [] }: HomeClientProps) {
   const [activeTab, setActiveTab] = useState<
     "LIVE" | "TODAY" | "UPCOMING" | "FINISHED"
-  >(initialTab || "TODAY");
+  >(() => resolveDefaultTab(initialMatches));
   const [activeCategory, setActiveCategory] = useState<string>("ALL");
+
+  const handleSearchParamsSync = React.useCallback(
+    (
+      category: string | null,
+      tab: "LIVE" | "TODAY" | "UPCOMING" | "FINISHED" | null
+    ) => {
+      if (category) setActiveCategory(category);
+      if (tab) setActiveTab(tab);
+    },
+    []
+  );
   const [sidebarTab, setSidebarTab] = useState<"STANDINGS" | "STATS">(
     "STANDINGS",
   );
@@ -182,6 +221,9 @@ function HomeContent() {
       ? ["livescores-direct", "all"]
       : ["livescores-direct", "today"];
 
+  const useInitialFallback =
+    !selectedDateFilter && activeTab !== "UPCOMING" && initialMatches.length > 0;
+
   const {
     data: livescoreData,
     error: livescoreError,
@@ -190,6 +232,8 @@ function HomeContent() {
     swrKey,
     ([, dateStr]) => fetchLivescoresDirect(dateStr),
     {
+      fallbackData: useInitialFallback ? { matches: initialMatches } : undefined,
+      revalidateOnMount: true,
       refreshInterval: 25000,
       revalidateOnFocus: true,
       keepPreviousData: true,
@@ -227,19 +271,12 @@ function HomeContent() {
     },
   );
 
-  // Handle new response shapes: noLeagueSelected, error object, or plain array
+  // Handle new response shapes: noLeagueSelected, unsupportedCompetition, error object, or plain array
   const standings = Array.isArray(standingsData) ? standingsData : (standingsData?.standings || []);
   const noLeagueSelected = standingsData?.noLeagueSelected === true;
+  const unsupportedCompetition = standingsData?.unsupportedCompetition === true;
 
-  // Sync category filter and tab from URL search params if present
-  useEffect(() => {
-    if (initialCategory) {
-      setTimeout(() => setActiveCategory(initialCategory), 0);
-    }
-    if (initialTab) {
-      setTimeout(() => setActiveTab(initialTab), 0);
-    }
-  }, [initialCategory, initialTab]);
+  // URL query param sync is handled by <SearchParamsSync /> inside <Suspense fallback={null}>
 
   const filteredMatches = React.useMemo(() => {
     return matches.filter((match: Match) => {
@@ -384,6 +421,9 @@ function HomeContent() {
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-10">
+      <Suspense fallback={null}>
+        <SearchParamsSync onSync={handleSearchParamsSync} />
+      </Suspense>
       {/* Hero section */}
       <section
         id="hero"
@@ -633,7 +673,7 @@ function HomeContent() {
           </div>
 
           {/* Matches lists stack */}
-          {loading ? (
+          {loading && matches.length === 0 ? (
             <MatchGridSkeleton count={3} />
           ) : (
             <div className="space-y-6">
@@ -901,6 +941,11 @@ function HomeContent() {
                     <p className="font-semibold text-neutral-500">Select a league above</p>
                     <p>Pick a specific league to view its standings table.</p>
                   </div>
+                ) : unsupportedCompetition ? (
+                  <div className="text-center py-6 text-neutral-400 text-xs space-y-1">
+                    <p className="font-semibold text-neutral-500">Standings unavailable</p>
+                    <p>League table data is not yet available for {activeCategory}.</p>
+                  </div>
                 ) : (
                   <div className="text-center py-6 text-neutral-400 text-xs">
                     No standings available at the moment.
@@ -1010,20 +1055,6 @@ function HomeContent() {
   );
 }
 
-export default function HomeClient() {
-  return (
-    <Suspense
-      fallback={
-        <div className="w-full max-w-7xl mx-auto px-4 md:px-6 py-10">
-          <div className="h-10 bg-neutral-200/50 rounded-2xl w-1/4 mb-6 animate-pulse"></div>
-          <div className="space-y-4">
-            <div className="h-32 bg-neutral-200/50 rounded-3xl animate-pulse"></div>
-            <div className="h-32 bg-neutral-200/50 rounded-3xl animate-pulse"></div>
-          </div>
-        </div>
-      }
-    >
-      <HomeContent />
-    </Suspense>
-  );
+export default function HomeClient({ initialMatches = [] }: HomeClientProps) {
+  return <HomeContent initialMatches={initialMatches} />;
 }

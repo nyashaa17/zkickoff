@@ -655,7 +655,7 @@ export default function WatchClient({
                     <div className="space-y-0.5">
                       <p className="text-[10px] font-mono text-neutral-400 uppercase tracking-wide">Stadium Venue</p>
                       <p className="text-xs font-semibold text-neutral-800 line-clamp-1">
-                        {bzzoiroData?.event?.venue?.name || queryMatch.venue}
+                        {bzzoiroData?.event?.venue?.name || queryMatch.venue || 'To be announced'}
                       </p>
                     </div>
                   </div>
@@ -663,13 +663,15 @@ export default function WatchClient({
                   <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-100 flex items-center gap-3">
                     <Users className="w-5 h-5 text-neutral-400 shrink-0" />
                     <div className="space-y-0.5">
-                      <p className="text-[10px] font-mono text-neutral-400 uppercase tracking-wide">Expected Crowd</p>
+                      <p className="text-[10px] font-mono text-neutral-400 uppercase tracking-wide">Stadium Capacity</p>
                       <p className="text-xs font-semibold text-neutral-800">
-                        {bzzoiroData?.event?.venue?.capacity 
-                          ? `${bzzoiroData.event.venue.capacity.toLocaleString()} cap` 
-                          : bzzoiroData?.event?.attendance 
-                            ? `${bzzoiroData.event.attendance.toLocaleString()} cap`
-                            : `${queryMatch.spectators} cap`}
+                        {bzzoiroData?.event?.venue?.capacity
+                          ? `${bzzoiroData.event.venue.capacity.toLocaleString()} cap`
+                          : bzzoiroData?.event?.attendance
+                            ? `${bzzoiroData.event.attendance.toLocaleString()} att`
+                            : queryMatch.spectators
+                              ? `${queryMatch.spectators}`
+                              : 'Unavailable'}
                       </p>
                     </div>
                   </div>

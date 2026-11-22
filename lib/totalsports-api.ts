@@ -265,8 +265,8 @@ export function parseRawEventToMatch(
     dateString: dateStringOption,
     esd: event.Esd ? String(event.Esd) : undefined,
     category,
-    venue: event.Vnm || 'Stadium',
-    spectators: '24,500',
+    venue: event.Vnm || undefined,
+    spectators: undefined,
     servers: [] // Powered dynamically by match buttons API!
   };
 }

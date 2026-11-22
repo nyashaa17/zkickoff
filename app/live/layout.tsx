@@ -3,9 +3,21 @@ import React from 'react';
 
 export const metadata: Metadata = {
   title: 'Live Football Broadcasts & Active Streams | ZimKickOff',
-  description: 'View all ongoing live football streams. Never miss a goal with ZimKickOff live feeds.',
+  description: 'View all ongoing live football streams and active fixtures. Follow real-time match coverage on ZimKickOff.',
   alternates: {
-    canonical: '/live',
+    canonical: 'https://zimkickoff.co.zw/live',
+  },
+  openGraph: {
+    title: 'Live Football Broadcasts & Active Streams | ZimKickOff',
+    description: 'View all ongoing live football streams and active fixtures on ZimKickOff.',
+    url: 'https://zimkickoff.co.zw/live',
+    siteName: 'ZimKickOff',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Live Football Broadcasts & Active Streams | ZimKickOff',
+    description: 'View all ongoing live football streams and active fixtures on ZimKickOff.',
   },
 };
 

@@ -71,11 +71,19 @@ export default function LivePage() {
         {/* Status widget box */}
         <div className="bg-white border border-neutral-200/60 p-4 rounded-2xl flex items-center gap-3 w-full md:w-auto shrink-0 shadow-3xs">
           <div className="w-10 h-10 rounded-full bg-green-50 text-zim-green flex items-center justify-center shrink-0">
-            <Wifi className="w-5 h-5 animate-bounce" />
+            <Wifi className="w-5 h-5" />
           </div>
           <div className="text-left font-sans">
-            <p className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider font-bold">Zim Server Ping</p>
-            <p className="text-xs font-bold text-neutral-800">12ms • Status Excellent</p>
+            <p className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider font-bold">Live Feed Status</p>
+            <p className="text-xs font-bold text-neutral-800">
+              {loading
+                ? 'Checking active fixtures...'
+                : error
+                  ? 'Feed temporarily unavailable'
+                  : liveMatches.length > 0
+                    ? `${liveMatches.length} Live ${liveMatches.length === 1 ? 'Match' : 'Matches'}`
+                    : 'Monitoring Scheduled Fixtures'}
+            </p>
           </div>
         </div>
       </div>
@@ -199,7 +207,7 @@ export default function LivePage() {
                     <div className="space-y-1.5 max-w-md mx-auto">
                       <h3 className="font-display font-extrabold text-neutral-900 text-lg tracking-tight">No Matches Live Streaming Right Now</h3>
                       <p className="text-neutral-500 text-xs leading-relaxed">
-                        There are currently no active football kickoffs broadcasting. Standard ZPSL kickoffs take place at 15:00 local harbor time. Please review scheduled fixtures for today.
+                        There are currently no active football matches broadcasting live. Check today&apos;s scheduled fixtures and league tables while waiting for upcoming kickoffs.
                       </p>
                     </div>
                     {/* Fast links back list */}
@@ -222,28 +230,47 @@ export default function LivePage() {
           {/* Ad positioning */}
         </div>
 
-        {/* Right Column: Information & Sponsorship side channels */}
+        {/* Right Column: Quick Links & Platform Information */}
         <div className="space-y-6">
           <div className="bg-white border border-neutral-200/60 rounded-3xl p-5 shadow-xs space-y-4">
             <h3 className="font-display font-bold text-sm text-neutral-950 pb-2 border-b border-neutral-100 flex items-center gap-1.5">
               <TrendingUp className="w-4 h-4 text-zim-green" />
-              Latest Football Trends
+              Explore Football Coverage
             </h3>
 
-            <div className="space-y-4 text-xs">
-              <div className="p-3 bg-neutral-50 border border-neutral-100 rounded-xl space-y-1">
-                <span className="text-[10px] uppercase font-mono font-bold text-zim-green">ZPSL Update</span>
-                <p className="font-semibold text-neutral-800 leading-relaxed">
-                  Dynamos vs Highlanders Harare tickets are reported sold out ahead of the weekend derby.
-                </p>
-              </div>
+            <div className="space-y-2.5 text-xs">
+              <Link
+                href="/"
+                className="flex items-center justify-between p-3 bg-neutral-50 hover:bg-neutral-100 border border-neutral-100 rounded-xl transition-colors"
+              >
+                <div>
+                  <span className="text-[10px] uppercase font-mono font-bold text-zim-green block">Schedules</span>
+                  <p className="font-semibold text-neutral-800">Today&apos;s Fixtures &amp; Results</p>
+                </div>
+                <ArrowRight className="w-4 h-4 text-neutral-400 shrink-0" />
+              </Link>
 
-              <div className="p-3 bg-neutral-50 border border-neutral-100 rounded-xl space-y-1">
-                <span className="text-[10px] uppercase font-mono font-bold text-blue-600">AFCON Qualifiers</span>
-                <p className="font-semibold text-neutral-800 leading-relaxed">
-                  Warriors captain registers full fitness ahead of Bafana Bafana showdown at Orlando stadium.
-                </p>
-              </div>
+              <Link
+                href="/league"
+                className="flex items-center justify-between p-3 bg-neutral-50 hover:bg-neutral-100 border border-neutral-100 rounded-xl transition-colors"
+              >
+                <div>
+                  <span className="text-[10px] uppercase font-mono font-bold text-blue-600 block">Standings</span>
+                  <p className="font-semibold text-neutral-800">Official League Tables</p>
+                </div>
+                <ArrowRight className="w-4 h-4 text-neutral-400 shrink-0" />
+              </Link>
+
+              <Link
+                href="/highlights"
+                className="flex items-center justify-between p-3 bg-neutral-50 hover:bg-neutral-100 border border-neutral-100 rounded-xl transition-colors"
+              >
+                <div>
+                  <span className="text-[10px] uppercase font-mono font-bold text-neutral-600 block">Video</span>
+                  <p className="font-semibold text-neutral-800">Recent Match Highlights</p>
+                </div>
+                <ArrowRight className="w-4 h-4 text-neutral-400 shrink-0" />
+              </Link>
             </div>
           </div>
 

@@ -2,9 +2,12 @@ import { Metadata } from 'next';
 import StreamGuideContent from '@/components/stream-guide-content';
 
 export const metadata: Metadata = {
-  title: 'How to Watch Premier League on TV in the UK',
-  description: 'How to watch Premier League on TV in the UK, including Sky Sports, TNT Sports, BBC highlights, live streaming options and matchday viewing tips.',
-  keywords: 'how to watch Premier League on TV UK, Premier League live TV, Sky Sports Premier League, TNT Sports Premier League, BBC Match of the Day, Premier League live stream UK',
+  title: 'How to Watch Premier League on TV in the UK | ZimKickOff',
+  description: 'How to watch Premier League on TV in the UK, including Sky Sports, TNT Sports, BBC highlights, live streaming options and matchday viewing tips on ZimKickOff.',
+  keywords: 'how to watch Premier League on TV UK, Premier League live TV, Sky Sports Premier League, TNT Sports Premier League, BBC Match of the Day, ZimKickOff',
+  alternates: {
+    canonical: 'https://zimkickoff.co.zw/stream',
+  },
   robots: {
     index: true,
     follow: true,
@@ -13,11 +16,17 @@ export const metadata: Metadata = {
     'max-video-preview': -1,
   },
   openGraph: {
-    title: 'How to Watch Premier League on TV in the UK',
+    title: 'How to Watch Premier League on TV in the UK | ZimKickOff',
     description: 'A simple guide to watching Premier League football on UK TV, including Sky Sports, TNT Sports, BBC highlights and online streaming options.',
+    url: 'https://zimkickoff.co.zw/stream',
     type: 'article',
-    siteName: 'Total Sports Live',
-  }
+    siteName: 'ZimKickOff',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'How to Watch Premier League on TV in the UK | ZimKickOff',
+    description: 'A guide to watching Premier League football on UK TV, including Sky Sports, TNT Sports, BBC highlights and online streaming options.',
+  },
 };
 
 export default function StreamPage() {
@@ -35,15 +44,19 @@ export default function StreamPage() {
                 "description": "A clear guide to watching Premier League football on UK TV, including Sky Sports, TNT Sports, BBC highlights, streaming options and embedded matchday viewing.",
                 "author": {
                   "@type": "Organization",
-                  "name": "Total Sports Live"
+                  "name": "ZimKickOff"
                 },
                 "publisher": {
                   "@type": "Organization",
-                  "name": "Total Sports Live"
+                  "name": "ZimKickOff",
+                  "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://zimkickoff.co.zw/ZKickoff_icon-512x512.png"
+                  }
                 },
                 "mainEntityOfPage": {
                   "@type": "WebPage",
-                  "@id": "https://totalsportslive.co.zw/"
+                  "@id": "https://zimkickoff.co.zw/stream"
                 }
               },
               {

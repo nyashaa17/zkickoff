@@ -19,13 +19,29 @@ export async function generateMetadata({ params }: EventPageProps): Promise<Meta
     };
   }
 
+  const canonicalUrl = `https://zimkickoff.co.zw/event/${slug}`;
+  const description =
+    event.description ||
+    `Watch ${event.title} live on ZimKickOff. Buffer-free streaming optimized for Zimbabwe.`;
+
   return {
     title: `${event.title} — Live Stream & Broadcast | ZimKickOff`,
-    description: event.description || `Watch ${event.title} live on ZimKickOff. Buffer-free streaming optimized for Zimbabwe.`,
+    description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
       title: `${event.title} | ZimKickOff Live`,
       description: event.description || `Watch ${event.title} live online.`,
+      url: canonicalUrl,
+      siteName: 'ZimKickOff',
       images: event.banner_url ? [{ url: event.banner_url }] : [],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${event.title} | ZimKickOff Live`,
+      description,
+      images: event.banner_url ? [event.banner_url] : undefined,
     },
   };
 }

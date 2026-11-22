@@ -12,6 +12,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
+        disallow: ['/admin/', '/api/', '/developers'],
       },
     ],
     sitemap: 'https://zimkickoff.co.zw/sitemap.xml',

@@ -1,53 +1,89 @@
 import { Metadata } from 'next';
-import Link from 'next/link';
 import HomeClient from './home-client';
-import { getUpcomingFixturesForSeo, UpcomingFixture } from '@/lib/upcoming-fixtures';
+import { fetchMatchesForDate } from '@/lib/server-matches';
+import { getFormattedDateString } from '@/lib/totalsports-api';
+import { Match } from '@/lib/matches-data';
+
+export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: 'ZimKickoff - Watch Free Live Football Streams & Scores',
+  title: 'ZimKickOff — Live Football Scores, Today\'s Fixtures & Streams',
   description:
-    'Watch live football streams in HD with no signup required. Stream Premier League, Champions League, La Liga, and follow live scores worldwide on ZimKickoff.',
+    'Follow live football scores, today\'s match schedules, league standings, and match previews across Premier League, Champions League, La Liga, and global competitions on ZimKickOff.',
   alternates: {
-    canonical: '/',
+    canonical: 'https://zimkickoff.co.zw/',
+  },
+  openGraph: {
+    title: 'ZimKickOff — Live Football Scores, Today\'s Fixtures & Streams',
+    description:
+      'Follow live football scores, today\'s match schedules, league standings, and match previews across top global competitions on ZimKickOff.',
+    url: 'https://zimkickoff.co.zw/',
+    siteName: 'ZimKickOff',
+    locale: 'en_ZW',
+    type: 'website',
+    images: [
+      {
+        url: '/opengraph.png',
+        width: 1200,
+        height: 630,
+        type: 'image/png',
+        alt: 'ZimKickOff — Live Football Scores, Today\'s Fixtures & Streams',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'ZimKickOff — Live Football Scores, Today\'s Fixtures & Streams',
+    description:
+      'Follow live football scores, today\'s match schedules, and league standings on ZimKickOff.',
+    images: ['/opengraph.png'],
   },
 };
 
-/**
- * Server-rendered list of upcoming fixture links.
- * This section is invisible to users (hidden via CSS) but provides
- * Googlebot with crawlable <a href="/preview/..."> links in the
- * initial HTML response, ensuring match pages are discoverable
- * well before kickoff.
- */
-function UpcomingFixturesNav({ fixtures }: { fixtures: UpcomingFixture[] }) {
-  if (!fixtures.length) return null;
+const SSR_MATCH_LIMIT = 30;
+const MAJOR_LEAGUE_HINTS = [
+  'premier league',
+  'la liga',
+  'laliga',
+  'serie a',
+  'bundesliga',
+  'ligue 1',
+  'champions league',
+  'europa league',
+  'zimbabwe',
+  'zpsl',
+];
 
-  return (
-    <nav
-      aria-label="Upcoming football fixtures"
-      className="sr-only"
-    >
-      <h2>Upcoming Matches</h2>
-      <ul>
-        {fixtures.map((f) => (
-          <li key={f.slug}>
-            <Link href={`/preview/${f.slug}`}>
-              {f.homeName} vs {f.awayName} — {f.competition} — {f.kickoffTime}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </nav>
-  );
+function selectInitialSsrMatches(matches: Match[]): Match[] {
+  if (matches.length <= SSR_MATCH_LIMIT) return matches;
+
+  const scoreMatch = (m: Match): number => {
+    let score = 0;
+    if (m.status === 'LIVE') score += 100;
+    else if (m.status === 'TODAY') score += 50;
+    else if (m.status === 'FINISHED') score += 20;
+
+    const compLower = (m.competition || '').toLowerCase();
+    if (MAJOR_LEAGUE_HINTS.some((hint) => compLower.includes(hint))) {
+      score += 40;
+    }
+    return score;
+  };
+
+  return [...matches]
+    .sort((a, b) => scoreMatch(b) - scoreMatch(a))
+    .slice(0, SSR_MATCH_LIMIT);
 }
 
 export default async function HomePage() {
-  // Fetch upcoming fixtures server-side for SEO internal linking
-  let upcomingFixtures: UpcomingFixture[] = [];
+  // Fetch today's matches server-side for lightweight, visible SSR rendering
+  let initialMatches: Match[] = [];
   try {
-    upcomingFixtures = await getUpcomingFixturesForSeo(14);
+    const todayStr = getFormattedDateString(0);
+    const todayMatches = await fetchMatchesForDate(todayStr, 'Today', 60);
+    initialMatches = selectInitialSsrMatches(todayMatches);
   } catch (err) {
-    console.error('[HomePage] Error fetching upcoming fixtures:', err);
+    console.error('[HomePage] Error fetching initial matches:', err);
   }
 
   const websiteSchema = {
@@ -56,7 +92,7 @@ export default async function HomePage() {
     "@id": "https://zimkickoff.co.zw/#website",
     "url": "https://zimkickoff.co.zw/",
     "name": "ZimKickOff",
-    "description": "Watch Free Live Football Streams In HD No Signup Required Stream Premier League UEFA Champions League La Liga And Top Matches Worldwide Instantly",
+    "description": "Follow live football scores, today's match schedules, league standings, and match previews across top global competitions on ZimKickOff.",
     "publisher": {
       "@type": "Organization",
       "name": "ZimKickOff",
@@ -64,11 +100,6 @@ export default async function HomePage() {
         "@type": "ImageObject",
         "url": "https://zimkickoff.co.zw/ZKickoff_icon-512x512.png"
       }
-    },
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": "https://zimkickoff.co.zw/?search={search_term_string}",
-      "query-input": "required name=search_term_string"
     }
   };
 
@@ -77,8 +108,8 @@ export default async function HomePage() {
     "@type": "WebPage",
     "@id": "https://zimkickoff.co.zw/#webpage",
     "url": "https://zimkickoff.co.zw/",
-    "name": "ZimKickOff - Watch Live Football Matches Free",
-    "description": "Watch Free Live Football Streams In HD No Signup Required Stream Premier League UEFA Champions League La Liga And Top Matches Worldwide Instantly",
+    "name": "ZimKickOff — Live Football Scores, Today's Fixtures & Streams",
+    "description": "Follow live football scores, today's match schedules, league standings, and match previews across Premier League, Champions League, La Liga, and global competitions on ZimKickOff.",
     "isPartOf": {
       "@id": "https://zimkickoff.co.zw/#website"
     },
@@ -98,9 +129,7 @@ export default async function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(webpageSchema) }}
       />
-      <HomeClient />
-      {/* Server-rendered crawlable links for SEO — hidden from users */}
-      <UpcomingFixturesNav fixtures={upcomingFixtures} />
+      <HomeClient initialMatches={initialMatches} />
     </>
   );
 }

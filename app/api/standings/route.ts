@@ -28,7 +28,8 @@ function resolveSlug(competition: string): string | null {
     }
   }
 
-  // Fuzzy fallbacks for common keyword forms used by the homepage category filter
+  // Fuzzy fallbacks for legitimate supported competitions only.
+  // Never map unsupported leagues (e.g. Zimbabwe/ZPSL, J1/Japan) to unrelated leagues.
   const keywordMap: Record<string, string> = {
     'laliga': 'la-liga',
     'la liga': 'la-liga',
@@ -44,25 +45,38 @@ function resolveSlug(competition: string): string | null {
     'uefa': 'champions-league',
     'europa league': 'europa-league',
     'saudi': 'saudi-pro-league',
-    'pro league': 'saudi-pro-league',
     'mls': 'mls',
     'major league soccer': 'mls',
-    'j1': 'mls',
-    'j-league': 'mls',
-    'j.league': 'mls',
-    'japan': 'mls',
-    'zimbabwe': 'premier-league',
-    'zpsl': 'premier-league',
-    'premier soccer league': 'premier-league',
     'championship': 'championship',
-    'premier league': 'premier-league',
     'english premier league': 'premier-league',
   };
+
+  // Explicit guard: reject known unsupported regional premier leagues before generic matching
+  if (
+    comp.includes('zimbabwe') ||
+    comp.includes('zpsl') ||
+    comp.includes('premier soccer league') ||
+    comp.includes('j1') ||
+    comp.includes('j-league') ||
+    comp.includes('j.league') ||
+    comp.includes('japan') ||
+    comp.includes('south africa') ||
+    comp.includes('egypt') ||
+    comp.includes('russia') ||
+    comp.includes('ukraine') ||
+    comp.includes('scotland')
+  ) {
+    return null;
+  }
 
   for (const [keyword, slug] of Object.entries(keywordMap)) {
     if (comp.includes(keyword)) {
       return slug;
     }
+  }
+
+  if (comp === 'premier league') {
+    return 'premier-league';
   }
 
   return null;
@@ -77,14 +91,23 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const competitionParam = searchParams.get('competition') || 'ALL';
+    const normalizedParam = competitionParam.toLowerCase().trim();
+
+    if (normalizedParam === 'all' || normalizedParam === '') {
+      return NextResponse.json({
+        noLeagueSelected: true,
+        standings: [],
+      });
+    }
 
     const slug = resolveSlug(competitionParam);
 
-    // When activeCategory is "ALL", return an explicit empty state
-    // so the client can hide the standings card entirely
+    // Unsupported competition: return explicit honest unavailable state instead of unrelated table
     if (!slug) {
       return NextResponse.json({
-        noLeagueSelected: true,
+        unsupportedCompetition: true,
+        competition: competitionParam,
+        message: 'Standings are currently unavailable for this competition.',
         standings: [],
       });
     }

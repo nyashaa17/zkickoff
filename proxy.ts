@@ -44,15 +44,27 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // 3. Supabase session refreshing
+  // 3. Scoped Supabase session refreshing
+  // Only perform auth session refresh on protected/auth routes or when a Supabase
+  // session cookie is actually present. This eliminates unnecessary auth round-trips
+  // for anonymous visitors and search crawlers on public football pages without
+  // weakening access controls (route guards remain enforced in layouts & actions).
   let supabaseResponse = NextResponse.next({
     request,
   });
 
+  const isAuthOrProtectedPath =
+    url.pathname.startsWith('/admin') ||
+    url.pathname.startsWith('/developers') ||
+    url.pathname.startsWith('/auth');
+  const hasSupabaseAuthCookie = request.cookies
+    .getAll()
+    .some((cookie) => cookie.name.startsWith('sb-'));
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (supabaseUrl && supabaseAnonKey) {
+  if ((isAuthOrProtectedPath || hasSupabaseAuthCookie) && supabaseUrl && supabaseAnonKey) {
     const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
       cookies: {
         getAll() {

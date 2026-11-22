@@ -23,28 +23,26 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: 'ZimKickoff - Watch Free Live Football Streams & Scores',
+  title: 'ZimKickOff | Football Scores, Fixtures & Live Coverage',
   description:
-    'Watch live football streams in HD with no signup required. Stream Premier League, Champions League, La Liga, and follow live scores worldwide on ZimKickoff.',
+    'ZimKickOff football platform for live scores, match schedules, standings, and match previews worldwide.',
   keywords: [
-    'ZimKickoff',
+    'ZimKickOff',
     'Live Football Zimbabwe',
-    'free soccer stream',
-    'football live streams',
+    'football fixtures',
+    'football live scores',
     'Zimbabwe soccer',
+    'league standings',
     'live football',
-    'football streams',
-    'live scores',
   ],
 
   metadataBase: new URL('https://zimkickoff.co.zw'),
 
   openGraph: {
-    title: 'ZimKickoff - Free Live Football Streaming & Live Scores',
+    title: 'ZimKickOff | Football Scores, Fixtures & Live Coverage',
     description:
-      'Stream Premier League, Champions League & worldwide football in HD. 100% free with no signup or subscription needed.',
-    url: 'https://zimkickoff.co.zw/',
-    siteName: 'ZimKickoff',
+      'Follow live football scores, match schedules, league standings, and match previews worldwide on ZimKickOff.',
+    siteName: 'ZimKickOff',
     locale: 'en_ZW',
     type: 'website',
 
@@ -54,16 +52,16 @@ export const metadata: Metadata = {
         width: 1200,
         height: 630,
         type: 'image/png',
-        alt: 'ZimKickoff - Free Live Football Streams & Scores',
+        alt: 'ZimKickOff — Football Scores, Fixtures & Live Coverage',
       },
     ],
   },
 
   twitter: {
     card: 'summary_large_image',
-    title: 'ZimKickoff - Free Live Football Streaming & Live Scores',
+    title: 'ZimKickOff | Football Scores, Fixtures & Live Coverage',
     description:
-      'Stream Premier League, Champions League & worldwide matches free in HD. No signup required.',
+      'Follow live football scores, match schedules, and league standings worldwide on ZimKickOff.',
     images: ['/opengraph.png'],
   },
   icons: {
