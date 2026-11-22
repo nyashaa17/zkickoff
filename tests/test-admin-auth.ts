@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { NextRequest } from 'next/server';
-import { handleAuthCallback, GET as callbackHandler, ALLOWED_OTP_TYPES } from '../app/auth/callback/route';
+import { GET as callbackHandler } from '../app/auth/callback/route';
+import { handleAuthCallback, ALLOWED_OTP_TYPES } from '../lib/auth/auth-callback-handler';
 import { getTrustedAuthOrigin, getAuthCallbackRedirectUrl, TRUSTED_PRODUCTION_ORIGIN } from '../lib/supabase/auth-url';
 
 console.log('--- Running Admin Authentication & Password Recovery Test Suite ---');
@@ -97,7 +98,7 @@ async function main() {
 
   // 6. Auth callback anti-open-redirect security logic
   await test('Auth callback route handler sanitizes redirect destination to internal relative paths', () => {
-    const callbackCode = fs.readFileSync(path.join(__dirname, '../app/auth/callback/route.ts'), 'utf8');
+    const callbackCode = fs.readFileSync(path.join(__dirname, '../lib/auth/auth-callback-handler.ts'), 'utf8');
     assert.ok(callbackCode.includes('exchangeCodeForSession'), 'Callback must exchange PKCE code for session');
     assert.ok(callbackCode.includes('getTrustedAuthOrigin'), 'Callback must resolve trusted public origin');
     assert.ok(callbackCode.includes("next.startsWith('/')"), 'Callback must require leading slash');

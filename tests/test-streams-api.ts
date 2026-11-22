@@ -99,7 +99,8 @@ async function main() {
     MatchNotFoundError,
     UpstreamProviderError
   } = await import('../lib/api/streams-service');
-  const { handleStreamsRequest, GET: streamsRouteHandler } = await import('../app/api/v1/matches/[matchId]/streams/route');
+  const { GET: streamsRouteHandler } = await import('../app/api/v1/matches/[matchId]/streams/route');
+  const { handleStreamsRequest } = await import('../lib/api/streams/streams-request-handler');
   const { GET: liveMatchesHandler } = await import('../app/api/v1/matches/live/route');
   const { GET: fixturesHandler } = await import('../app/api/v1/matches/fixtures/route');
   const { clearApiCache, CACHE_PROFILES } = await import('../lib/api/cache');
@@ -1263,7 +1264,7 @@ async function main() {
 
   await test('31. F-22-01 Coordination waiter timeout produces 503 ANOTHER_WORKER_FETCHING, never 200 false empty streams', async () => {
     const { CoordinationTimeoutError } = await import('../lib/api/upstream-coordination');
-    const { handleStreamsRequest } = await import('../app/api/v1/matches/[matchId]/streams/route');
+    const { handleStreamsRequest } = await import('../lib/api/streams/streams-request-handler');
 
     // Simulate resolveStreams throwing a CoordinationTimeoutError (as when follower times out waiting for leader)
     const mockResolveTimeout = async () => {
@@ -1305,7 +1306,7 @@ async function main() {
 
   // Test 32: Genuine no-stream condition returns HTTP 200 with hasStreams: false
   await test('32. Genuine no-stream result returns HTTP 200 with hasStreams: false', async () => {
-    const { handleStreamsRequest } = await import('../app/api/v1/matches/[matchId]/streams/route');
+    const { handleStreamsRequest } = await import('../lib/api/streams/streams-request-handler');
 
     const mockResolveEmpty = async () => ({
       data: {
@@ -1342,7 +1343,7 @@ async function main() {
 
   // Test 33: Upstream HTTP timeout produces 503 UPSTREAM_UNAVAILABLE
   await test('33. Upstream HTTP timeout produces 503 UPSTREAM_UNAVAILABLE', async () => {
-    const { handleStreamsRequest } = await import('../app/api/v1/matches/[matchId]/streams/route');
+    const { handleStreamsRequest } = await import('../lib/api/streams/streams-request-handler');
 
     const mockResolveUpstreamTimeout = async () => {
       throw new UpstreamProviderError('TotalSportsLive upstream timed out after 5 seconds', 504, 30);

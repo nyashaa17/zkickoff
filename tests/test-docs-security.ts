@@ -91,7 +91,8 @@ async function runTests() {
 
   // Test 7: Download endpoint unauthenticated rejection (HTTP 401)
   console.log('\n7. Download Route Authorization Guard:');
-  const { GET: downloadRouteHandler, handleDocsDownload } = await import('@/app/api/admin/docs/download/route');
+  const { GET: downloadRouteHandler } = await import('@/app/api/admin/docs/download/route');
+  const { handleDocsDownload } = await import('@/lib/admin/docs-download-handler');
   const unauthReq = new NextRequest('http://localhost:3000/api/admin/docs/download?format=pdf');
   const unauthRes = await downloadRouteHandler(unauthReq);
   assert.equal(unauthRes.status, 401, 'Unauthenticated download request must return HTTP 401');
