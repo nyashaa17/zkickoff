@@ -13,6 +13,7 @@ export interface UpstreamStatus {
   cooldownRemainingSeconds: number;
   requestsInWindow: number;
   budgetCeiling: number;
+  degraded?: boolean;
 }
 
 export interface L2CacheRecord<T = any> {
@@ -28,6 +29,7 @@ export interface L2CacheRecord<T = any> {
 export interface LockAcquisitionResult {
   acquired: boolean;
   fencingToken?: number;
+  error?: boolean;
 }
 
 export class CoordinationTimeoutError extends Error {
@@ -224,6 +226,7 @@ export class InMemoryCoordinationStore implements IUpstreamCoordinationStore {
       cooldownRemainingSeconds,
       requestsInWindow: active.length,
       budgetCeiling: maxRequests,
+      degraded: false,
     };
   }
 
@@ -519,6 +522,7 @@ export class PostgreSqlCoordinationStore implements IUpstreamCoordinationStore {
         cooldownRemainingSeconds,
         requestsInWindow: count || 0,
         budgetCeiling: maxRequests,
+        degraded: false,
       };
     } catch {
       return {
@@ -526,6 +530,7 @@ export class PostgreSqlCoordinationStore implements IUpstreamCoordinationStore {
         cooldownRemainingSeconds: 0,
         requestsInWindow: 0,
         budgetCeiling: maxRequests,
+        degraded: true,
       };
     }
   }
@@ -545,18 +550,29 @@ export class PostgreSqlCoordinationStore implements IUpstreamCoordinationStore {
 
       if (error) {
         console.warn('[UpstreamCoordination] acquire_distributed_lock RPC error:', error.message);
-        return { acquired: false, fencingToken: 0 };
+        markPostgreSqlRuntimeDegraded(
+          `PostgreSQL distributed lock RPC failed for "${lockKey}": ${error.message}`
+        );
+        return { acquired: false, fencingToken: 0, error: true };
       }
 
       const row = Array.isArray(data) ? data[0] : data;
-      if (!row) return { acquired: false, fencingToken: 0 };
+      if (!row) {
+        markPostgreSqlRuntimeDegraded(
+          `PostgreSQL distributed lock RPC returned empty row for "${lockKey}"`
+        );
+        return { acquired: false, fencingToken: 0, error: true };
+      }
 
       return {
         acquired: Boolean(row.acquired),
         fencingToken: Number(row.fencing_token) || 0,
       };
-    } catch {
-      return { acquired: false, fencingToken: 0 };
+    } catch (err: any) {
+      markPostgreSqlRuntimeDegraded(
+        `PostgreSQL distributed lock exception for "${lockKey}": ${err?.message || 'Unknown error'}`
+      );
+      return { acquired: false, fencingToken: 0, error: true };
     }
   }
 
@@ -696,17 +712,558 @@ export class PostgreSqlCoordinationStore implements IUpstreamCoordinationStore {
       return { deletedReservations: 0, deletedLocks: 0, deletedCacheEntries: 0 };
     }
   }
+
+  /**
+   * Executes a bounded, strictly read-only readiness probe against the deployed
+   * `public.get_catalog_cache_entry(p_cache_key TEXT)` RPC.
+   *
+   * Safety guarantees:
+   * - Performs zero writes, consumes zero upstream request budget, and creates no locks.
+   * - Verifies actual Supabase/PostgreSQL connectivity, service_role auth, RPC existence,
+   *   and expected array response shape (`Array.isArray(data)`).
+   */
+  async verifyReadiness(timeoutMs = 3000): Promise<{ ok: boolean; reason?: string }> {
+    if (customReadinessProbe) {
+      try {
+        const probeResult = await customReadinessProbe();
+        if (!probeResult || typeof probeResult.ok !== 'boolean') {
+          return {
+            ok: false,
+            reason: 'PostgreSQL readiness probe returned malformed result.',
+          };
+        }
+        return probeResult;
+      } catch (err: any) {
+        return {
+          ok: false,
+          reason: `PostgreSQL readiness probe rejected: ${err?.message || 'Unknown error'}`,
+        };
+      }
+    }
+
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    try {
+      const adminClient = createAdminClient();
+      const rpcPromise = Promise.resolve(
+        adminClient.rpc('get_catalog_cache_entry', {
+          p_cache_key: '__coordination_readiness_probe__',
+        })
+      ).catch((err: any) => ({
+        data: null,
+        error: { message: err?.message || 'RPC promise rejected' },
+      }));
+
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => {
+          reject(new Error(`PostgreSQL readiness probe timed out after ${timeoutMs}ms`));
+        }, timeoutMs);
+      });
+
+      const response = await Promise.race([rpcPromise, timeoutPromise]);
+      return validateReadinessRpcResponse(response);
+    } catch (err: any) {
+      return {
+        ok: false,
+        reason: `PostgreSQL readiness probe failed: ${err?.message || 'Unknown error'}`,
+      };
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
 }
 
-// Global store reference (defaults to InMemory in development/test unless Supabase is configured)
-let activeCoordinationStore: IUpstreamCoordinationStore = new InMemoryCoordinationStore();
+/**
+ * Validates the raw Supabase RPC response returned by `get_catalog_cache_entry`.
+ * `get_catalog_cache_entry` is declared `RETURNS TABLE (...)`, so PostgREST must
+ * return an array (`[]` when empty). Any non-array or malformed payload is rejected.
+ */
+export function validateReadinessRpcResponse(
+  response: unknown
+): { ok: boolean; reason?: string } {
+  if (!response || typeof response !== 'object') {
+    return {
+      ok: false,
+      reason: 'PostgreSQL readiness RPC returned malformed response.',
+    };
+  }
+
+  const { data, error } = response as {
+    data?: unknown;
+    error?: { message?: string } | null;
+  };
+
+  if (error) {
+    return {
+      ok: false,
+      reason: `PostgreSQL readiness RPC failed: ${error.message || 'Unknown RPC error'}`,
+    };
+  }
+
+  if (!Array.isArray(data)) {
+    return {
+      ok: false,
+      reason: 'PostgreSQL readiness RPC returned unexpected non-array data shape.',
+    };
+  }
+
+  return { ok: true };
+}
+
+// -----------------------------------------------------------------------------
+// Coordination Health & Fail-Closed Degraded Store (Phase 3 Stage 3.2 / 3.2.1)
+// -----------------------------------------------------------------------------
+
+export type CoordinationMode = 'postgresql' | 'in_memory' | 'degraded';
+
+export interface CoordinationHealthStatus {
+  mode: CoordinationMode;
+  initialized: boolean;
+  ready: boolean;
+  degraded: boolean;
+  reason: string | null;
+  lastErrorAt: number | null;
+}
+
+export type CoordinationReadinessProbe = () => Promise<{ ok: boolean; reason?: string }>;
+
+/**
+ * Fail-closed store used ONLY when production is configured for PostgreSQL
+ * coordination but initialization, credentials, or readiness probe fail.
+ *
+ * Security / Operational Guarantees:
+ * - Never silently falls back to process-local InMemoryCoordinationStore in production.
+ * - Blocks all upstream budget leases and distributed lock acquisitions so global
+ *   upstream rate limits cannot be bypassed.
+ * - Returns null on L2 cache reads so callers may still serve valid existing L1
+ *   cached/stale data without crashing the application.
+ */
+export class DegradedFailClosedCoordinationStore implements IUpstreamCoordinationStore {
+  private readonly reason: string;
+
+  constructor(reason: string) {
+    this.reason = reason;
+  }
+
+  getReason(): string {
+    return this.reason;
+  }
+
+  async acquireBudgetLease(): Promise<BudgetReservationResult> {
+    return {
+      allowed: false,
+      reason: 'DATABASE_ERROR',
+      retryAfter: 30,
+      currentCount: 0,
+    };
+  }
+
+  async setCooldown(
+    _provider: string,
+    cooldownSeconds = 30
+  ): Promise<{ cooldownUntilMs: number }> {
+    return { cooldownUntilMs: Date.now() + cooldownSeconds * 1000 };
+  }
+
+  async recordSuccess(): Promise<void> {
+    // No-op in degraded mode
+  }
+
+  async getStatus(
+    _provider: string,
+    maxRequests = 120
+  ): Promise<UpstreamStatus> {
+    return {
+      inCooldown: true,
+      cooldownRemainingSeconds: 30,
+      requestsInWindow: maxRequests,
+      budgetCeiling: maxRequests,
+      degraded: true,
+    };
+  }
+
+  async acquireLock(): Promise<LockAcquisitionResult> {
+    return { acquired: false, fencingToken: 0, error: true };
+  }
+
+  async releaseLock(): Promise<boolean> {
+    return false;
+  }
+
+  async getL2Cache<T = any>(): Promise<L2CacheRecord<T> | null> {
+    return null;
+  }
+
+  async setL2Cache(): Promise<boolean> {
+    return false;
+  }
+
+  async clearL2Cache(): Promise<void> {
+    // No-op in degraded mode
+  }
+
+  async resetAll(): Promise<void> {
+    // No-op in degraded mode
+  }
+
+  async cleanupExpired(): Promise<{
+    deletedReservations: number;
+    deletedLocks: number;
+    deletedCacheEntries: number;
+  }> {
+    return { deletedReservations: 0, deletedLocks: 0, deletedCacheEntries: 0 };
+  }
+}
+
+// Singleton coordination store state
+const DEFAULT_RECOVERY_PROBE_THROTTLE_MS = 2000;
+
+let activeCoordinationStore: IUpstreamCoordinationStore | null = null;
+let hasExplicitStoreOverride = false;
+let initializationPromise: Promise<IUpstreamCoordinationStore> | null = null;
+let customReadinessProbe: CoordinationReadinessProbe | null = null;
+// Strictly monotonic epoch counter; NEVER reset or reused (prevents stale probe overwrites)
+let storeEpoch = 0;
+let recoveryProbeThrottleMs = DEFAULT_RECOVERY_PROBE_THROTTLE_MS;
+let lastProbeFailureMonotonicMs: number | null = null;
+let coordinationHealth: CoordinationHealthStatus = {
+  mode: 'in_memory',
+  initialized: false,
+  ready: false,
+  degraded: false,
+  reason: null,
+  lastErrorAt: null,
+};
+
+function hasSupabaseAdminEnv(): boolean {
+  return Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+}
+
+function shouldRequirePostgreSqlCoordination(): boolean {
+  if (process.env.NODE_ENV === 'production') {
+    return true;
+  }
+  // In non-production (development), use PostgreSQL only if explicitly opted in
+  // via COORDINATION_STORE=postgresql. Default local/test environments use in-memory.
+  return process.env.COORDINATION_STORE === 'postgresql';
+}
+
+function markPostgreSqlRuntimeDegraded(reason: string): void {
+  if (coordinationHealth.mode === 'postgresql') {
+    coordinationHealth = {
+      ...coordinationHealth,
+      ready: false,
+      degraded: true,
+      reason,
+      lastErrorAt: Date.now(),
+    };
+  }
+}
+
+function markPostgreSqlRuntimeHealthy(): void {
+  if (coordinationHealth.mode === 'postgresql' && (!coordinationHealth.ready || coordinationHealth.degraded)) {
+    coordinationHealth = {
+      ...coordinationHealth,
+      ready: true,
+      degraded: false,
+      reason: null,
+    };
+  }
+}
+
+/**
+ * Synchronously resolves the coordination store when called from synchronous entrypoints.
+ *
+ * Important (F-32-04):
+ * - Synchronous `createAdminClient()` construction does NOT prove PostgreSQL/RPC readiness.
+ *   Therefore `ready` remains `false` until `initializeGlobalCoordinationStore()` completes
+ *   its read-only RPC readiness probe or a live PostgreSQL coordination RPC succeeds.
+ * - Never silently falls back to `InMemoryCoordinationStore` in production.
+ */
+function ensureCoordinationStoreInitialized(): IUpstreamCoordinationStore {
+  if (activeCoordinationStore !== null) {
+    return activeCoordinationStore;
+  }
+
+  if (shouldRequirePostgreSqlCoordination()) {
+    if (!hasSupabaseAdminEnv()) {
+      const reason =
+        'PostgreSQL coordination required in production, but NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing.';
+      console.error(`[UpstreamCoordination] ${reason}`);
+      activeCoordinationStore = new DegradedFailClosedCoordinationStore(reason);
+      coordinationHealth = {
+        mode: 'degraded',
+        initialized: true,
+        ready: false,
+        degraded: true,
+        reason,
+        lastErrorAt: Date.now(),
+      };
+      return activeCoordinationStore;
+    }
+
+    try {
+      createAdminClient();
+      activeCoordinationStore = new PostgreSqlCoordinationStore();
+      coordinationHealth = {
+        mode: 'postgresql',
+        initialized: true,
+        ready: false,
+        degraded: false,
+        reason: null,
+        lastErrorAt: null,
+      };
+      return activeCoordinationStore;
+    } catch (err: any) {
+      const reason = `PostgreSQL coordination initialization failed: ${err?.message || 'Unknown error'}`;
+      console.error(`[UpstreamCoordination] ${reason}`);
+      activeCoordinationStore = new DegradedFailClosedCoordinationStore(reason);
+      coordinationHealth = {
+        mode: 'degraded',
+        initialized: true,
+        ready: false,
+        degraded: true,
+        reason,
+        lastErrorAt: Date.now(),
+      };
+      return activeCoordinationStore;
+    }
+  }
+
+  // Supported local/test environment: in-memory coordination store
+  activeCoordinationStore = new InMemoryCoordinationStore();
+  coordinationHealth = {
+    mode: 'in_memory',
+    initialized: true,
+    ready: true,
+    degraded: false,
+    reason: null,
+    lastErrorAt: null,
+  };
+  return activeCoordinationStore;
+}
+
+/**
+ * Concurrency-safe async singleton initializer and recovery coordinator (F-32-01, F-32-04).
+ *
+ * Guarantees:
+ * - Multiple concurrent callers share ONE initialization or recovery attempt.
+ * - Preserves explicit test overrides installed via `setGlobalCoordinationStore()`.
+ * - In production, verifies actual PostgreSQL RPC readiness via read-only
+ *   `get_catalog_cache_entry` before marking the store ready/healthy.
+ * - If initialization failed earlier (`DegradedFailClosedCoordinationStore`) or a
+ *   transient runtime `DATABASE_ERROR` marked health degraded, subsequent calls retry
+ *   through this single-flight promise and recover ONLY upon a successful PostgreSQL
+ *   readiness probe (never via a timer-only reset).
+ */
+export async function initializeGlobalCoordinationStore(): Promise<IUpstreamCoordinationStore> {
+  // 1. Respect explicit test-store injection unconditionally
+  if (hasExplicitStoreOverride && activeCoordinationStore !== null) {
+    return activeCoordinationStore;
+  }
+
+  // 2. O(1) Fast path: already initialized, ready, and healthy (zero readiness probes)
+  if (
+    activeCoordinationStore !== null &&
+    !(activeCoordinationStore instanceof DegradedFailClosedCoordinationStore) &&
+    coordinationHealth.ready &&
+    !coordinationHealth.degraded
+  ) {
+    return activeCoordinationStore;
+  }
+
+  // 3. Share any in-flight initialization or recovery probe across concurrent callers
+  if (initializationPromise) {
+    return initializationPromise;
+  }
+
+  // 4. Bounded probe-failure throttle (monotonic elapsed time; NEVER declares DB healthy on timer)
+  if (
+    activeCoordinationStore instanceof DegradedFailClosedCoordinationStore &&
+    lastProbeFailureMonotonicMs !== null &&
+    recoveryProbeThrottleMs > 0 &&
+    performance.now() - lastProbeFailureMonotonicMs < recoveryProbeThrottleMs
+  ) {
+    return activeCoordinationStore;
+  }
+
+  // 5. Single-flight initialization / recovery attempt guarded by monotonic storeEpoch
+  const capturedEpoch = storeEpoch;
+  const currentPromise = (async (): Promise<IUpstreamCoordinationStore> => {
+    if (!shouldRequirePostgreSqlCoordination()) {
+      if (hasExplicitStoreOverride || storeEpoch !== capturedEpoch) {
+        return activeCoordinationStore ?? new InMemoryCoordinationStore();
+      }
+      if (!activeCoordinationStore) {
+        activeCoordinationStore = new InMemoryCoordinationStore();
+      }
+      lastProbeFailureMonotonicMs = null;
+      coordinationHealth = {
+        mode: 'in_memory',
+        initialized: true,
+        ready: true,
+        degraded: false,
+        reason: null,
+        lastErrorAt: null,
+      };
+      return activeCoordinationStore;
+    }
+
+    if (!hasSupabaseAdminEnv()) {
+      const reason =
+        'PostgreSQL coordination required in production, but NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing.';
+      console.error(`[UpstreamCoordination] ${reason}`);
+      if (hasExplicitStoreOverride || storeEpoch !== capturedEpoch) {
+        return activeCoordinationStore ?? new DegradedFailClosedCoordinationStore(reason);
+      }
+      lastProbeFailureMonotonicMs = performance.now();
+      activeCoordinationStore = new DegradedFailClosedCoordinationStore(reason);
+      coordinationHealth = {
+        mode: 'degraded',
+        initialized: true,
+        ready: false,
+        degraded: true,
+        reason,
+        lastErrorAt: Date.now(),
+      };
+      return activeCoordinationStore;
+    }
+
+    let candidate: PostgreSqlCoordinationStore;
+    try {
+      createAdminClient();
+      candidate =
+        activeCoordinationStore instanceof PostgreSqlCoordinationStore
+          ? activeCoordinationStore
+          : new PostgreSqlCoordinationStore();
+    } catch (err: any) {
+      const reason = `PostgreSQL coordination initialization failed: ${err?.message || 'Unknown error'}`;
+      console.error(`[UpstreamCoordination] ${reason}`);
+      if (hasExplicitStoreOverride || storeEpoch !== capturedEpoch) {
+        return activeCoordinationStore ?? new DegradedFailClosedCoordinationStore(reason);
+      }
+      lastProbeFailureMonotonicMs = performance.now();
+      activeCoordinationStore = new DegradedFailClosedCoordinationStore(reason);
+      coordinationHealth = {
+        mode: 'degraded',
+        initialized: true,
+        ready: false,
+        degraded: true,
+        reason,
+        lastErrorAt: Date.now(),
+      };
+      return activeCoordinationStore;
+    }
+
+    // Verify actual PostgreSQL/RPC readiness using read-only get_catalog_cache_entry
+    const probe = await candidate.verifyReadiness();
+
+    // Epoch guard: reject stale probe result if store was explicitly replaced or reset during await
+    if (hasExplicitStoreOverride || storeEpoch !== capturedEpoch) {
+      return activeCoordinationStore ?? candidate;
+    }
+
+    if (!probe.ok) {
+      const reason = probe.reason || 'PostgreSQL coordination readiness probe failed.';
+      console.error(`[UpstreamCoordination] ${reason}`);
+      lastProbeFailureMonotonicMs = performance.now();
+      activeCoordinationStore = new DegradedFailClosedCoordinationStore(reason);
+      coordinationHealth = {
+        mode: 'degraded',
+        initialized: true,
+        ready: false,
+        degraded: true,
+        reason,
+        lastErrorAt: Date.now(),
+      };
+      return activeCoordinationStore;
+    }
+
+    lastProbeFailureMonotonicMs = null;
+    activeCoordinationStore = candidate;
+    coordinationHealth = {
+      mode: 'postgresql',
+      initialized: true,
+      ready: true,
+      degraded: false,
+      reason: null,
+      lastErrorAt: null,
+    };
+    return activeCoordinationStore;
+  })().finally(() => {
+    if (initializationPromise === currentPromise) {
+      initializationPromise = null;
+    }
+  });
+
+  initializationPromise = currentPromise;
+  return currentPromise;
+}
+
+export function setCoordinationReadinessProbe(probe: CoordinationReadinessProbe | null): void {
+  customReadinessProbe = probe;
+}
+
+export function setRecoveryProbeThrottleMs(throttleMs: number): void {
+  if (Number.isFinite(throttleMs) && throttleMs >= 0) {
+    recoveryProbeThrottleMs = Math.floor(throttleMs);
+  }
+}
 
 export function setGlobalCoordinationStore(store: IUpstreamCoordinationStore): void {
+  storeEpoch++;
   activeCoordinationStore = store;
+  hasExplicitStoreOverride = true;
+  initializationPromise = null;
+  lastProbeFailureMonotonicMs = null;
+  const isDegraded = store instanceof DegradedFailClosedCoordinationStore;
+  const isPostgres = store instanceof PostgreSqlCoordinationStore;
+  coordinationHealth = {
+    mode: isDegraded ? 'degraded' : isPostgres ? 'postgresql' : 'in_memory',
+    initialized: true,
+    ready: !isDegraded,
+    degraded: isDegraded,
+    reason: isDegraded ? store.getReason() : null,
+    lastErrorAt: isDegraded ? Date.now() : null,
+  };
+}
+
+/**
+ * Resets singleton coordination initialization state (for isolated test suites).
+ * Note: `storeEpoch` is incremented and NEVER reset to zero so in-flight probes
+ * from prior epochs cannot overwrite newer state.
+ */
+export function resetGlobalCoordinationInitialization(): void {
+  storeEpoch++;
+  activeCoordinationStore = null;
+  hasExplicitStoreOverride = false;
+  initializationPromise = null;
+  customReadinessProbe = null;
+  recoveryProbeThrottleMs = DEFAULT_RECOVERY_PROBE_THROTTLE_MS;
+  lastProbeFailureMonotonicMs = null;
+  coordinationHealth = {
+    mode: 'in_memory',
+    initialized: false,
+    ready: false,
+    degraded: false,
+    reason: null,
+    lastErrorAt: null,
+  };
 }
 
 export function getGlobalCoordinationStore(): IUpstreamCoordinationStore {
-  return activeCoordinationStore;
+  return ensureCoordinationStoreInitialized();
+}
+
+export function getCoordinationHealth(): CoordinationHealthStatus {
+  ensureCoordinationStoreInitialized();
+  return { ...coordinationHealth };
+}
+
+export function isExplicitCoordinationOverride(): boolean {
+  return hasExplicitStoreOverride;
 }
 
 // -----------------------------------------------------------------------------
@@ -718,7 +1275,17 @@ export async function acquireGlobalUpstreamBudget(
   maxRequests = 120,
   windowSeconds = 60
 ): Promise<BudgetReservationResult> {
-  return activeCoordinationStore.acquireBudgetLease(provider, maxRequests, windowSeconds);
+  const store = await initializeGlobalCoordinationStore();
+  const result = await store.acquireBudgetLease(provider, maxRequests, windowSeconds);
+  if (result.reason === 'DATABASE_ERROR') {
+    markPostgreSqlRuntimeDegraded(
+      `PostgreSQL budget lease RPC failed for provider "${provider}"`
+    );
+  } else if (result.allowed || result.reason === 'COOLDOWN' || result.reason === 'BUDGET_EXCEEDED') {
+    // Any valid non-error response from PostgreSQL confirms live RPC health
+    markPostgreSqlRuntimeHealthy();
+  }
+  return result;
 }
 
 export async function triggerGlobalFailureCooldown(
@@ -726,11 +1293,13 @@ export async function triggerGlobalFailureCooldown(
   cooldownSeconds = 30,
   reason?: string
 ): Promise<{ cooldownUntilMs: number }> {
-  return activeCoordinationStore.setCooldown(provider, cooldownSeconds, reason);
+  const store = await initializeGlobalCoordinationStore();
+  return store.setCooldown(provider, cooldownSeconds, reason);
 }
 
 export async function recordGlobalUpstreamSuccess(provider = 'vnres'): Promise<void> {
-  return activeCoordinationStore.recordSuccess(provider);
+  const store = await initializeGlobalCoordinationStore();
+  return store.recordSuccess(provider);
 }
 
 export async function getGlobalUpstreamStatus(
@@ -738,11 +1307,12 @@ export async function getGlobalUpstreamStatus(
   maxRequests = 120,
   windowSeconds = 60
 ): Promise<UpstreamStatus> {
-  return activeCoordinationStore.getStatus(provider, maxRequests, windowSeconds);
+  const store = await initializeGlobalCoordinationStore();
+  return store.getStatus(provider, maxRequests, windowSeconds);
 }
 
 export async function resetGlobalUpstreamCoordination(provider = 'vnres'): Promise<void> {
-  return activeCoordinationStore.resetAll(provider);
+  return getGlobalCoordinationStore().resetAll(provider);
 }
 
 export async function cleanupGlobalCoordinationData(): Promise<{
@@ -750,7 +1320,8 @@ export async function cleanupGlobalCoordinationData(): Promise<{
   deletedLocks: number;
   deletedCacheEntries: number;
 }> {
-  return activeCoordinationStore.cleanupExpired();
+  const store = await initializeGlobalCoordinationStore();
+  return store.cleanupExpired();
 }
 
 export interface LeaderContext {
@@ -793,7 +1364,7 @@ export async function withDistributedSingleFlight<T>(
   fetchFn: () => Promise<T>,
   options?: SingleFlightOptions<T>
 ): Promise<T> {
-  const store = getGlobalCoordinationStore();
+  const store = await initializeGlobalCoordinationStore();
   const ttlSeconds = options?.ttlSeconds ?? 10;
   const waitTimeoutMs = options?.waitTimeoutMs ?? 6500;
   const basePollIntervalMs = options?.pollIntervalMs ?? 50;
@@ -810,7 +1381,7 @@ export async function withDistributedSingleFlight<T>(
     }
   }
 
-  // Step 2: Attempt distributed lock acquisition (returns { acquired, fencingToken })
+  // Step 2: Attempt distributed lock acquisition (returns { acquired, fencingToken, error? })
   const lockAcq = await store.acquireLock(lockKey, workerId, ttlSeconds);
 
   if (lockAcq.acquired) {
@@ -832,10 +1403,19 @@ export async function withDistributedSingleFlight<T>(
     }
   }
 
+  // F-32-06: Fail fast on coordination backend error instead of spinning for 6.5s
+  if (lockAcq.error) {
+    throw new CoordinationTimeoutError(
+      'Coordination backend unavailable while acquiring distributed lock',
+      30
+    );
+  }
+
   // Step 3: Current worker is a FOLLOWER.
   // Another worker is actively fetching upstream. Wait and poll L2 cache with bounded backoff.
   const startTime = Date.now();
   let currentPollIntervalMs = basePollIntervalMs;
+  let consecutiveLockErrors = 0;
 
   while (Date.now() - startTime < waitTimeoutMs) {
     let sleepMs = currentPollIntervalMs;
@@ -859,6 +1439,18 @@ export async function withDistributedSingleFlight<T>(
 
     // Check if the previous leader crashed, failed, or finished and released lock
     const reacquired = await store.acquireLock(lockKey, workerId, ttlSeconds);
+    if (reacquired.error) {
+      consecutiveLockErrors++;
+      if (consecutiveLockErrors >= 2) {
+        throw new CoordinationTimeoutError(
+          'Coordination backend unavailable while polling distributed lock',
+          30
+        );
+      }
+    } else {
+      consecutiveLockErrors = 0;
+    }
+
     if (reacquired.acquired) {
       // Lock acquired by follower.
       // Re-check L2 cache one last time before dispatching upstream:
@@ -907,6 +1499,12 @@ export async function withDistributedSingleFlight<T>(
 
   // Final attempt to safely acquire the lock:
   const lastAttempt = await store.acquireLock(lockKey, workerId, ttlSeconds);
+  if (lastAttempt.error) {
+    throw new CoordinationTimeoutError(
+      'Coordination backend unavailable while acquiring distributed lock',
+      30
+    );
+  }
   if (lastAttempt.acquired) {
     try {
       const data = await fetchFn();
